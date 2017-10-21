@@ -1,4 +1,4 @@
-# Deep Speakerfrom Baidu Research -  Pytorch Implementation 
+# Deep Speaker from Baidu Research -  Pytorch Implementation 
 
 This is a slightly modified pytorch implementation of the model(modified Resnet + triplet loss) presented by Baidu Research in [Deep Speaker: an End-to-End Neural Speaker Embedding System](https://arxiv.org/pdf/1705.02304.pdf).
 
