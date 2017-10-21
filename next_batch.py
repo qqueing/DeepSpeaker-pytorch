@@ -1,16 +1,4 @@
-"""
-   filename                             chapter_id speaker_id dataset_id
-0  1272/128104/1272-128104-0000.wav     128104       1272  dev-clean
-1  1272/128104/1272-128104-0001.wav     128104       1272  dev-clean
-2  1272/128104/1272-128104-0002.wav     128104       1272  dev-clean
-3  1272/128104/1272-128104-0003.wav     128104       1272  dev-clean
-4  1272/128104/1272-128104-0004.wav     128104       1272  dev-clean
-5  1272/128104/1272-128104-0005.wav     128104       1272  dev-clean
-6  1272/128104/1272-128104-0006.wav     128104       1272  dev-clean
-7  1272/128104/1272-128104-0007.wav     128104       1272  dev-clean
-8  1272/128104/1272-128104-0008.wav     128104       1272  dev-clean
-9  1272/128104/1272-128104-0009.wav     128104       1272  dev-clean
-"""
+
 import os
 import numpy as np
 import pandas as pd
@@ -125,17 +113,3 @@ class MiniBatch:
 
         return x, y
 
-
-def stochastic_mini_batch(libri, batch_size):
-    mini_batch = MiniBatch(libri, batch_size)
-    return mini_batch
-
-
-def main():
-    from librispeech_wav_reader import read_librispeech_structure
-    libri = read_librispeech_structure(c.DATASET_DIR)
-    stochastic_mini_batch(libri, 3)
-
-
-if __name__ == '__main__':
-    main()
