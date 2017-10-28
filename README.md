@@ -31,10 +31,18 @@ Also, use the part of code:
 - [hbredin's git repository](https://github.com/hbredin/pyannote-db-voxceleb)
    - Voxceleb Database reader
 
+
 ## Features
+ - In test, length normalization
+   - This means extracting many input from single wave and averaging. This makes the results slightly better.
+ - In training, except pandas and preloading list. 
+   - This makes different training accuracy each epoch, but it does not matter.
+
+## To do list
 Work accomplished so far:
 - [x] Model implementation
 - [x] Data pipeline implementation - "Voxceleb"(Please note:Pytorch dataloader is so weak(High-load preprocessing and many thread))
+
 - [ ] Code cleanup
 - [ ] Modified preprocessing
 - [ ] Modified model

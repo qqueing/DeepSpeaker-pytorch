@@ -3,7 +3,6 @@ import os
 from glob import glob
 
 import numpy as np
-import pandas as pd
 
 np.set_printoptions(threshold=np.nan)
 
@@ -42,23 +41,19 @@ def find_files(directory, pattern='*/*/*/*.wav'):
 
 
 def read_voxceleb_structure(directory):
-
-
-
-    filelist = []
+    voxceleb = []
 
     #for path_txt in tqdm(glob(glob_exp)):
     for path_txt in glob(glob_exp):
         subset, uri, speaker, file_list = parse_txt(path_txt)
 
         for file in file_list:
-            filelist.append({'filename': file, 'speaker_id': speaker, 'uri': uri, 'subset': subset})
+            voxceleb.append({'filename': file, 'speaker_id': speaker, 'uri': uri, 'subset': subset})
 
-    voxceleb = pd.DataFrame(filelist)
-    num_speakers = len(voxceleb['speaker_id'].unique())
+    #voxceleb = pd.DataFrame(filelist)
+    num_speakers = len(set([datum['speaker_id'] for datum in voxceleb]))
     print('Found {} files with {} different speakers.'.format(str(len(voxceleb)).zfill(7), str(num_speakers).zfill(5)))
-    print(voxceleb.head(10))
+    #print(voxceleb.head(10))
     return voxceleb
-
 
 

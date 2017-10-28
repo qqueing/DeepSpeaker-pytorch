@@ -1,5 +1,5 @@
 import numpy as np
-
+from sklearn.model_selection import KFold
 from scipy import interpolate
 
 def evaluate(distances, labels):
@@ -36,6 +36,7 @@ def calculate_roc(thresholds, distances, labels):
 
     return tprs[best_threshold_index], fprs[best_threshold_index], acc_train[best_threshold_index]
 
+
 def calculate_accuracy(threshold, dist, actual_issame):
     predict_issame = np.less(dist, threshold)
     tp = np.sum(np.logical_and(predict_issame, actual_issame))
@@ -71,7 +72,6 @@ def calculate_val(thresholds, distances, labels, far_target=0.1):
 
 
     return val, far
-
 
 
 def calculate_val_far(threshold, dist, actual_issame):

@@ -3,27 +3,30 @@ from python_speech_features import fbank, delta
 
 import constants as c
 
-
-
 import librosa
 
 
-def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA):
+def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale = c.USE_SCALE,use_logscale = c.USE_LOGSCALE):
     audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
-    audio = audio.flatten()
+    #audio = audio.flatten()
 
 
     filter_banks, energies = fbank(audio, samplerate=sample_rate, nfilt=c.FILTER_BANK, winlen=0.025)
-    delta_1 = delta(filter_banks, N=1)
-    delta_2 = delta(delta_1, N=1)
 
-    filter_banks = normalize_frames(filter_banks)
-    delta_1 = normalize_frames(delta_1)
-    delta_2 = normalize_frames(delta_2)
+    if use_logscale:
+        filter_banks = 20 * np.log10(np.maximum(filter_banks,1e-5))
 
     if use_delta:
+        delta_1 = delta(filter_banks, N=1)
+        delta_2 = delta(delta_1, N=1)
+
+        filter_banks = normalize_frames(filter_banks, Scale=use_scale)
+        delta_1 = normalize_frames(delta_1, Scale=use_scale)
+        delta_2 = normalize_frames(delta_2, Scale=use_scale)
+
         frames_features = np.hstack([filter_banks, delta_1, delta_2])
     else:
+        filter_banks = normalize_frames(filter_banks, Scale=use_scale)
         frames_features = filter_banks
 
 
@@ -47,15 +50,27 @@ class truncatedinputfromMFB(object):
     size: size of the exactly size or the smaller edge
     interpolation: Default: PIL.Image.BILINEAR
     """
+    def __init__(self, input_per_file=1):
+
+        super(truncatedinputfromMFB, self).__init__()
+        self.input_per_file = input_per_file
 
     def __call__(self, frames_features):
 
         network_inputs = []
         num_frames = len(frames_features)
         import random
-        j = random.randrange(c.NUM_PREVIOUS_FRAME, num_frames - c.NUM_NEXT_FRAME)
-        frames_slice = frames_features[j - c.NUM_PREVIOUS_FRAME:j + c.NUM_NEXT_FRAME]
-        network_inputs.append(frames_slice)
+
+        for i in range(self.input_per_file):
+
+            j = random.randrange(c.NUM_PREVIOUS_FRAME, num_frames - c.NUM_NEXT_FRAME)
+            if not j:
+                frames_slice = np.zeros(c.NUM_FRAMES, c.FILTER_BANK, 'float64')
+                frames_slice[0:(frames_features.shape)[0]] = frames_features.shape
+            else:
+                frames_slice = frames_features[j - c.NUM_PREVIOUS_FRAME:j + c.NUM_NEXT_FRAME]
+            network_inputs.append(frames_slice)
+
         return np.array(network_inputs)
 
 
@@ -70,9 +85,11 @@ def read_audio(filename, sample_rate=c.SAMPLE_RATE):
 #def normalize_frames(m):
 #    return [(v - np.mean(v)) / (np.std(v) + 2e-12) for v in m]
 
-def normalize_frames(m):
-    return (m - np.mean(m,axis=0)) / (np.std(m,axis=0) + 2e-12)
-
+def normalize_frames(m,Scale=True):
+    if Scale:
+        return (m - np.mean(m, axis=0)) / (np.std(m, axis=0) + 2e-12)
+    else:
+        return (m - np.mean(m, axis=0))
 
 
 def pre_process_inputs(signal=np.random.uniform(size=32000), target_sample_rate=8000,use_delta = c.USE_DELTA):
