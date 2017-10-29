@@ -185,8 +185,8 @@ def main():
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
-    #start = args.start_epoch
-    start = 0
+    start = args.start_epoch
+    #start = 0
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
