@@ -151,7 +151,7 @@ class myResNet(nn.Module):
 
 
 class DeepSpeakerModel(nn.Module):
-    def __init__(self,embedding_size,num_classes):
+    def __init__(self,embedding_size,num_classes,feature_dim = 64):
         super(DeepSpeakerModel, self).__init__()
 
         self.embedding_size = embedding_size
@@ -160,8 +160,10 @@ class DeepSpeakerModel(nn.Module):
 
 
         self.model = myResNet(BasicBlock, [1, 1, 1, 1])
-        self.model.fc = nn.Linear(512*4, self.embedding_size)
-
+        if feature_dim == 64:
+            self.model.fc = nn.Linear(512*4, self.embedding_size)
+        elif feature_dim == 40:
+            self.model.fc = nn.Linear(512 * 3, self.embedding_size)
         self.model.classifier = nn.Linear(self.embedding_size, num_classes)
 
 
