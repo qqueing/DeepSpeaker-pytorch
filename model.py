@@ -163,7 +163,7 @@ class DeepSpeakerModel(nn.Module):
         if feature_dim == 64:
             self.model.fc = nn.Linear(512*4, self.embedding_size)
         elif feature_dim == 40:
-            self.model.fc = nn.Linear(512 * 3, self.embedding_size)
+            self.model.fc = nn.Linear(256 * 5, self.embedding_size)
         self.model.classifier = nn.Linear(self.embedding_size, num_classes)
 
 
