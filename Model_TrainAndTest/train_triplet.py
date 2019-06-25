@@ -51,7 +51,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/checkpoint_21.pth',
+                    default='Data/checkpoint/checkpoint_10k_21.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -133,7 +133,18 @@ l2_dist = PairwiseDistance(2)
 
 # Read file list from dataset path
 print("================================Reading Dataset File List==================================")
-voxceleb = read_my_voxceleb_structure(args.dataroot)
+voxceleb_list = "Data/voxceleb.npy"
+voxceleb_dev_list = "Data/voxceleb_dev.npy"
+voxceleb_dev_10k_list = "Data/voxceleb_dev_10k.npy"
+
+voxceleb = []
+voxceleb_dev = []
+voxceleb_dev_10k = []
+if os.path.isfile(voxceleb_list):
+    voxceleb = np.load(voxceleb_list, allow_pickle=True)
+else:
+    voxceleb = read_my_voxceleb_structure(args.dataroot)
+    np.save(voxceleb_list, voxceleb)
 
 # Make fbank feature if not yet.
 if args.makemfb:
@@ -165,7 +176,20 @@ else:
 print("Creating file loader for dataset completed!")
 
 # Get the file list of development set
-voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
+if os.path.isfile(voxceleb_dev_list):
+    voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
+    voxceleb_dev_10k = voxceleb_dev[:10000]
+else:
+    voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
+    np.save(voxceleb_dev_list, voxceleb_dev)
+
+    voxceleb_dev_10k = voxceleb_dev[:10000]
+    np.save(voxceleb_dev_10k_list, voxceleb_dev_10k)
+
+
+# Reduce the dev set
+voxceleb_dev = voxceleb_dev_10k
+
 train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
@@ -350,7 +374,7 @@ def train(train_loader, model, optimizer, epoch):
     # do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               '{}/checkpoint_10k_{}.pth'.format(CKP_DIR, epoch))
 
 
 def test(test_loader, model, epoch):

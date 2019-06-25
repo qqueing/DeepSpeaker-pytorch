@@ -7,23 +7,23 @@ Work accomplished so far:
 - [x] Model implementation
 - [x] Data pipeline implementation - "Voxceleb"(Please note:Pytorch dataloader is so weak(High-load preprocessing and many thread))
 - [x] Project structure cleanup.
-- [x] Trained simple ResNet7 with accuracy 0.84
+- [x] Trained simple ResNet10 with accuracy 0.84
 
 |LayerName|NumofDup|OutputSize|
 |:------------:|:----------:|:------------:|
 | conv1        |1           |              | 
-| conv2        |1           |              |
-| conv3        |1           |              |
-| conv4        |1           |              |
-| conv5        |1           |              |
+| conv2        |2           |              |
+| conv3        |2           |              |
+| conv4        |2           |              |
+| conv5        |2           |              |
 |avg_pool      |1           |              |
 |fc            |1           |              |
 
 - [ ] Extract x-vectors from trained Neural Network
 - [ ] Code cleanup
 - [ ] Modified preprocessing
-- [ ] Modified model for ResNet34
-- [ ] Modified model for ResNet50
+- [x] Modified model for ResNet34 in 20190625
+- [x] Modified model for ResNet50
 
 - [ ] Modified scoring
 

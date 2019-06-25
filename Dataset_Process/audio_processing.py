@@ -39,6 +39,7 @@ def read_MFB(filename):
     #audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
     audio = np.load(filename.replace('.wav', '.npy'))
+
     return audio
 
 class truncatedinputfromMFB(object):
