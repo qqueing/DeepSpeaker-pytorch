@@ -1,5 +1,7 @@
 # Deep Speaker from Baidu Research -  Pytorch Implementation 
 
+> This project is forked from the [qqueing/DeepSpeaker-pytorch](https://github.com/qqueing/DeepSpeaker-pytorch). Parts of code was modified for the server to process. And some module will be added in the future.
+
 This is a slightly modified pytorch implementation of the model(modified Resnet + triplet loss) presented by Baidu Research in [Deep Speaker: an End-to-End Neural Speaker Embedding System](https://arxiv.org/pdf/1705.02304.pdf).
 
 This code was tested using Voxceleb database. [Voxceleb database paper](https://www.robots.ox.ac.uk/~vgg/publications/2017/Nagrani17/nagrani17.pdf) shows shows 7.8% EER using CNN. But in my code can't reach that point.
