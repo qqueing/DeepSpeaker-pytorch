@@ -9,15 +9,15 @@ Work accomplished so far:
 - [x] Project structure cleanup.
 - [x] Trained simple ResNet7 with accuracy 0.84
 
-| LayerName | NumofDup | OutputSize |
-| - | :-: | -: | :-: |
-| conv1   |  1 |     | 
-| conv2   |  1 |     |
-| conv3   |  1 |     |
-| conv4   |  1 |     |
-| conv5   |  1 |     |
-|avg_pool |  1 |     |
-|   fc    |  1 |     |
+|LayerName|NumofDup|OutputSize|
+|:------------:|:----------:|:------------:|
+| conv1        |1           |              | 
+| conv2        |1           |              |
+| conv3        |1           |              |
+| conv4        |1           |              |
+| conv5        |1           |              |
+|avg_pool      |1           |              |
+|fc            |1           |              |
 
 - [ ] Extract x-vectors from trained Neural Network
 - [ ] Code cleanup
