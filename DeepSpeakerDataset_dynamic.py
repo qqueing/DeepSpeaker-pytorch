@@ -22,10 +22,15 @@ def create_indices(_features):
 
 
 def generate_triplets_call(indices,n_classes):
-
+    """
+    :param indices: {spks: wavs,...]
+    :param n_classes: len(spks)
+    :return: troplets group: class1_wav1, class1_wav2, class2_wav1, class1, class2
+    """
 
     # Indices = array of labels and each label is an array of indices
     #indices = create_indices(features)
+
 
 
     c1 = np.random.randint(0, n_classes)
@@ -46,7 +51,6 @@ def generate_triplets_call(indices,n_classes):
         n3 = 0
     else:
         n3 = np.random.randint(0, len(indices[c2]) - 1)
-
 
     return ([indices[c1][n1], indices[c1][n2], indices[c2][n3],c1,c2])
 

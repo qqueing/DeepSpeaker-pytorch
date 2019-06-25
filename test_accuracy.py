@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+"""
+@Author: yangwenhao
+@Contact: 874681044@qq.com
+@Software: PyCharm
+@File: test_accuracy.py
+@Time: 19-6-19 下午5:17
+@Overview:
+"""
 #from __future__ import print_function
 import argparse
 import torch
@@ -121,14 +132,12 @@ if not os.path.exists(args.log_dir):
 if args.cuda:
     cudnn.benchmark = True
 CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
+LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
     .format(args.optimizer, args.n_triplets, args.lr, args.wd,
             args.margin,args.embedding_size)
 
 # create logger
 logger = Logger(LOG_DIR)
-
-
 
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
@@ -214,148 +223,14 @@ def main():
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
-    start = args.start_epoch
-    print('start epoch is : ' + str(start))
-    #start = 0
-    end = start + args.epochs
-
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
+    # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
+    epoch = args.start_epoch
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    for epoch in range(start, end):
+    #for epoch in range(start, end):
 
-        train(train_loader, model, optimizer, epoch)
-        test(test_loader, model, epoch)
+        # train(train_loader, model, optimizer, epoch)
+    test(test_loader, model, epoch)
         #break;
-
-
-def train(train_loader, model, optimizer, epoch):
-    # switch to train mode
-    model.train()
-
-    labels, distances = [], []
-
-    pbar = tqdm(enumerate(train_loader))
-    for batch_idx, (data_a, data_p, data_n,label_p,label_n) in pbar:
-        #print("on training{}".format(epoch))
-        data_a, data_p, data_n = data_a.cuda(), data_p.cuda(), data_n.cuda()
-        data_a, data_p, data_n = Variable(data_a), Variable(data_p), \
-                                 Variable(data_n)
-
-        # compute output
-        out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
-
-
-        if epoch > args.min_softmax_epoch:
-            triplet_loss = TripletMarginLoss(args.margin).forward(out_a, out_p, out_n)
-            loss = triplet_loss
-            # compute gradient and update weights
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
-            #logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
-            logger.log_value('selected_total_loss', loss.data[0]).step()
-
-            if batch_idx % args.log_interval == 0:
-                pbar.set_description(
-                    'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f}'.format(
-                        epoch, batch_idx * len(data_a), len(train_loader.dataset),
-                        100. * batch_idx / len(train_loader),
-                        loss.data[0]))
-
-
-            dists = l2_dist.forward(out_a,out_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy())
-            labels.append(np.zeros(dists.size(0)))
-
-
-            dists = l2_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy())
-            labels.append(np.ones(dists.size(0)))
-
-
-
-        else:
-        # Choose the hard negatives
-            d_p = l2_dist.forward(out_a, out_p)
-            d_n = l2_dist.forward(out_a, out_n)
-            all = (d_n - d_p < args.margin).cpu().data.numpy().flatten()
-
-            # log loss value for mini batch.
-            total_coorect = np.where(all == 0)
-            logger.log_value('Minibatch Train Accuracy', len(total_coorect[0]))
-
-            total_dist = (d_n - d_p).cpu().data.numpy().flatten()
-            logger.log_value('Minibatch Train distance', np.mean(total_dist))
-
-            hard_triplets = np.where(all == 1)
-            if len(hard_triplets[0]) == 0:
-                continue
-            out_selected_a = Variable(torch.from_numpy(out_a.cpu().data.numpy()[hard_triplets]).cuda())
-            out_selected_p = Variable(torch.from_numpy(out_p.cpu().data.numpy()[hard_triplets]).cuda())
-            out_selected_n = Variable(torch.from_numpy(out_n.cpu().data.numpy()[hard_triplets]).cuda())
-
-            selected_data_a = Variable(torch.from_numpy(data_a.cpu().data.numpy()[hard_triplets]).cuda())
-            selected_data_p = Variable(torch.from_numpy(data_p.cpu().data.numpy()[hard_triplets]).cuda())
-            selected_data_n = Variable(torch.from_numpy(data_n.cpu().data.numpy()[hard_triplets]).cuda())
-
-            selected_label_p = torch.from_numpy(label_p.cpu().numpy()[hard_triplets])
-            selected_label_n= torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
-            triplet_loss = TripletMarginLoss(args.margin).forward(out_selected_a, out_selected_p, out_selected_n)
-
-            cls_a = model.forward_classifier(selected_data_a)
-            cls_p = model.forward_classifier(selected_data_p)
-            cls_n = model.forward_classifier(selected_data_n)
-
-            criterion = nn.CrossEntropyLoss()
-            predicted_labels = torch.cat([cls_a,cls_p,cls_n])
-            true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
-
-            cross_entropy_loss = criterion(predicted_labels.cuda(),true_labels.cuda())
-
-            loss = cross_entropy_loss + triplet_loss * args.loss_ratio
-            # compute gradient and update weights
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-
-            # log loss value for hard selected sample
-            logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
-            logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
-            logger.log_value('selected_total_loss', loss.data[0]).step()
-            if batch_idx % args.log_interval == 0:
-                pbar.set_description(
-                    'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \t # of Selected Triplets: {:4d}'.format(
-                        epoch, batch_idx * len(data_a), len(train_loader.dataset),
-                        100. * batch_idx / len(train_loader),
-                        loss.data[0],len(hard_triplets[0])))
-
-
-            dists = l2_dist.forward(out_selected_a,out_selected_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy())
-            labels.append(np.zeros(dists.size(0)))
-
-
-            dists = l2_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy())
-            labels.append(np.ones(dists.size(0)))
-
-
-    #accuracy for hard selected sample, not all sample.
-    labels = np.array([sublabel for label in labels for sublabel in label])
-    distances = np.array([subdist for dist in distances for subdist in dist])
-
-    tpr, fpr, accuracy, val, far = evaluate(distances,labels)
-    print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
-    logger.log_value('Train Accuracy', np.mean(accuracy))
-
-    # do checkpointing
-    torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
-
 
 def test(test_loader, model, epoch):
     # switch to evaluate mode
@@ -414,3 +289,4 @@ def create_optimizer(model, new_lr):
 
 if __name__ == '__main__':
     main()
+

@@ -1,7 +1,6 @@
-
 import os
 from glob import glob
-
+import pathlib
 import numpy as np
 
 np.set_printoptions(threshold=np.nan)
@@ -55,5 +54,29 @@ def read_voxceleb_structure(directory):
     print('Found {} files with {} different speakers.'.format(str(len(voxceleb)).zfill(7), str(num_speakers).zfill(5)))
     #print(voxceleb.head(10))
     return voxceleb
+
+def read_my_voxceleb_structure(directory):
+    voxceleb = []
+    data_root = pathlib.Path(directory)
+    data_root.cwd()
+    print('Data root is ' + str(data_root))
+    all_wav_path = list(data_root.glob('*/*/*/*/*.npy'))
+    # print(str(pathlib.Path.relative_to(all_wav_path[0], all_wav_path[0].parents[4])).rstrip('.wav'))
+    all_wav_path = [str(pathlib.Path.relative_to(path, path.parents[4])).rstrip('.npy') for path in all_wav_path]
+    subset = ['dev' if pathlib.Path(path).parent.parent.parent.parent.name=='vox1_dev_wav' else 'test' for path in all_wav_path]
+    speaker = [pathlib.Path(path).parent.parent.name for path in all_wav_path]
+    all_wav = np.transpose([all_wav_path, subset, speaker])
+    for file in all_wav:
+        voxceleb.append({'filename': file[0], 'speaker_id': file[2], 'uri': 0, 'subset': file[1]})
+        # print(str(file[0]))
+        # exit()
+    num_speakers = len(set([datum['speaker_id'] for datum in voxceleb]))
+    print('Found {} files with {} different speakers.'.format(str(len(voxceleb)), str(num_speakers)))
+    #print(voxceleb.head(10))
+    return voxceleb
+
+# read_my_voxceleb_structure('/data/voxceleb')
+
+
 
 

@@ -108,7 +108,7 @@ class myResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3])
 
         
-        self.avgpool = nn.AdaptiveAvgPool2d((1,None))
+        self.avgpool = nn.AdaptiveAvgPool2d((2,None))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -204,6 +204,7 @@ class DeepSpeakerModel(nn.Module):
         x = self.model.relu(x)
         x = self.model.layer4(x)
 
+        print(x.s)
         x = self.model.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.model.fc(x)
