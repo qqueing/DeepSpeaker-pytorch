@@ -19,13 +19,11 @@ Work accomplished so far:
 |avg_pool      |1           |              |
 |fc            |1           |              |
 
-- [ ] Extract x-vectors from trained Neural Network
+- [x] Extract x-vectors from trained Neural Network in 20190626
 - [ ] Code cleanup
 - [ ] Modified preprocessing
-- [x] Modified model for ResNet34 in 20190625
-- [x] Modified model for ResNet50
-
-- [ ] Modified scoring
+- [x] Modified model for ResNet34,50,101 in 20190625
+- [ ] Adding scoring for identification
 
 
 The following is part of the original description:

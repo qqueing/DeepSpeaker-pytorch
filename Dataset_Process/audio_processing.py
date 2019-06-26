@@ -38,7 +38,7 @@ def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale
 def read_MFB(filename):
     #audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
-    audio = np.load(filename.replace('.wav', '.npy'))
+    audio = np.load(filename[0].replace('.wav', '.npy'))
 
     return audio
 

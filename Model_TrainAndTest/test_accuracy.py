@@ -49,20 +49,18 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='data/dataset',
+parser.add_argument('--dataroot', type=str, default='Data/dataset',
                     help='path to dataset')
-parser.add_argument('--test-pairs-path', type=str, default='data/dataset/ver_list.txt',
+parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='data/checkpoint',
+parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume',
-                    default='data/checkpoint/checkpoint_21.pth',
-                    type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/checkpoint_35.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -189,8 +187,7 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size,
-                      num_classes=len(train_dir.classes))
+    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -204,17 +201,10 @@ def main():
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
             checkpoint = torch.load(args.resume)
-            # print(str(checkpoint['state_dict']))
-            #for k,v in model.state_dict().items():
-            #    print(k)
-            # load params
-            # model.load_state_dict(new_state_dict)
 
-            # model.load_state_dict({k.replace('module.',''):v for k,v in torch.load(checkpoint)['state_dict'].items()})
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k
                         }
-            # model = nn.DataParallel(model)
-            # model.load_state_dict(checkpoint['state_dict'])
+
             model.load_state_dict(filtered)
 
             optimizer.load_state_dict(checkpoint['optimizer'])
@@ -226,7 +216,6 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     #for epoch in range(start, end):
 
-        # train(train_loader, model, optimizer, epoch)
     test(test_loader, model, epoch)
         #break;
 
@@ -239,8 +228,8 @@ def test(test_loader, model, epoch):
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
         current_sample = data_a.size(0)
-        data_a = data_a.resize_(args.test_input_per_file *current_sample, 1, data_a.size(2), data_a.size(3))
-        data_p = data_p.resize_(args.test_input_per_file *current_sample, 1, data_a.size(2), data_a.size(3))
+        data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
+        data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
         data_a, data_p, label = Variable(data_a, volatile=True), \

@@ -43,16 +43,16 @@ parser.add_argument('--dataroot', type=str, default='Data/dataset',
                     help='path to dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
+parser.add_argument('--dev-set-size', default='all',
+                    help='part of dev set data for training, should be one of (all, 10k)')
 
 parser.add_argument('--log-dir', default='Data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint_34',
+parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume',
-                    default='Data/checkpoint_34/checkpoint_10k_.pth',
-                    type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/resnet34_devall/checkpoint_1.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -120,12 +120,14 @@ if not os.path.exists(args.log_dir):
 
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
-    .format(args.optimizer, args.n_triplets, args.lr, args.wd,
+CKP_DIR = args.ckp_dir + '/resnet{}_dev{}'.format(args.resnet_size, args.dev_set_size)
+LOG_DIR = args.log_dir + '/run-optim_{}-res{}-set{}-n{}-lr{}-wd{}-m{}-embed{}-msceleb-alpha10'\
+    .format(args.optimizer, args.resnet_size, args.dev_set_size, args.n_triplets, args.lr, args.wd,
             args.margin,args.embedding_size)
 
 # create logger
+if not os.path.exists(CKP_DIR):
+    os.makedirs(CKP_DIR)
 logger = Logger(LOG_DIR)
 
 
@@ -149,7 +151,7 @@ if args.makemfb:
     #pbar = tqdm(voxceleb)
     for datum in voxceleb:
         # print(datum['filename'])
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+        mk_MFB((args.dataroot +'/' + datum['filename']+'.wav'))
     print("Complete convert")
 
 # Create file loader for dataset
@@ -186,9 +188,10 @@ else:
 
 
 # Reduce the dev set
-# voxceleb_dev = voxceleb_dev_10k
+if args.dev_set_size == '10k':
+    voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev_10k, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
 del voxceleb
@@ -260,7 +263,7 @@ def train(train_loader, model, optimizer, epoch):
         data_a, data_p, data_n = Variable(data_a), Variable(data_p), \
                                  Variable(data_n)
 
-        # compute output
+        # compute output, which is embedding?
         out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
 
 
@@ -372,7 +375,7 @@ def train(train_loader, model, optimizer, epoch):
     # do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_10k_{}.pth'.format(CKP_DIR, epoch))
+               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
 
 def test(test_loader, model, epoch):

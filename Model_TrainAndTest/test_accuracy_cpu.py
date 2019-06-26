@@ -5,10 +5,11 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: extract_vector.py
-@Time: 19-6-25 下午3:47
-@Overview:Given audio samples, extract embeddings from checkpoint file in this script.
+@File: test_accuracy.py
+@Time: 19-6-19 下午5:17
+@Overview:
 """
+#from __future__ import print_function
 import argparse
 import torch
 import torch.optim as optim
@@ -18,18 +19,21 @@ from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
 
+
 import numpy as np
 from tqdm import tqdm
 from Model_Define.model import DeepSpeakerModel
 from eval_metrics import evaluate
 from logger import Logger
 
-from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerEnrollDataset
+#from DeepSpeakerDataset_static import DeepSpeakerDataset
+from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
 from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import read_extract_audio
+from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
 
 from Model_Define.model import PairwiseDistance
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+# Version conflict
 
 import torch._utils
 try:
@@ -43,33 +47,49 @@ except AttributeError:
     torch._utils._rebuild_tensor_v2 = _rebuild_tensor_v2
 
 # Training settings
-parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition Feature Extraction')
-
-# Dataset and model file path
-parser.add_argument('--dataroot', type=str, default='Data/enroll',
-                    help='path to dataset')
-parser.add_argument('--extract-path', type=str, default='Data/xvector',
-                    help='path to pairs file')
-parser.add_argument('--log-dir', default='Data/extract_feature_logs',
-                    help='folder to output model checkpoints')
-parser.add_argument('--model-path', default='Data/checkpoint/checkpoint_35.pth', type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
-
+parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
+parser.add_argument('--dataroot', type=str, default='Data/dataset',
+                    help='path to dataset')
+parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
+                    help='path to pairs file')
+
+parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
+                    help='folder to output model checkpoints')
+
+parser.add_argument('--ckp-dir', default='Data/checkpoint',
+                    help='folder to output model checkpoints')
+
+parser.add_argument('--resume', default='Data/checkpoint/checkpoint_35.pth', type=str, metavar='PATH',
+                    help='path to latest checkpoint (default: none)')
+parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
+                    help='manual epoch number (useful on restarts)')
+parser.add_argument('--epochs', type=int, default=29, metavar='E',
+                    help='number of epochs to train (default: 10)')
+# Training options
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
+
+parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+                    help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
+
+#parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
                     help='how many triplets will generate from the dataset')
+
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
+
 parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
+
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
+
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
@@ -79,7 +99,7 @@ parser.add_argument('--wd', default=0.0, type=float,
 parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
-parser.add_argument('--no-cuda', action='store_true', default=False,
+parser.add_argument('--no-cuda', action='store_true', default=True,
                     help='enables CUDA training')
 parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
@@ -88,7 +108,6 @@ parser.add_argument('--seed', type=int, default=0, metavar='S',
 parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
                     help='how many batches to wait before logging training status')
 
-# Spectrum feature options
 parser.add_argument('--mfb', action='store_true', default=True,
                     help='start from MFB file')
 parser.add_argument('--makemfb', action='store_true', default=False,
@@ -108,33 +127,25 @@ if not os.path.exists(args.log_dir):
 
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.model_path
-EXT_DIR = args.extract_path
-LOG_DIR = args.log_dir + '/enroll_{}-n{}-lr{}-wd{}-m{}-embed{}-alpha10'\
+CKP_DIR = args.ckp_dir
+LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
     .format(args.optimizer, args.n_triplets, args.lr, args.wd,
-            args.margin, args.embedding_size)
-if not os.path.exists(EXT_DIR):
-    os.makedirs(EXT_DIR)
+            args.margin,args.embedding_size)
 
 # create logger
 logger = Logger(LOG_DIR)
 
+
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 l2_dist = PairwiseDistance(2)
 
-audio_set_list = "Data/audio_set.npy"
-audio_set = []
-if os.path.isfile(audio_set_list):
-    audio_set = np.load(audio_set_list, allow_pickle=True)
-else:
-    audio_set = read_extract_audio(args.dataroot)
-    np.save(audio_set_list, audio_set)
 
+voxceleb = read_my_voxceleb_structure(args.dataroot)
 if args.makemfb:
     #pbar = tqdm(voxceleb)
-    for datum in audio_set:
+    for datum in voxceleb:
         # print(datum['filename'])
-        mk_MFB((datum['filename']+'.wav'))
+        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
     print("Complete convert")
 
 if args.mfb:
@@ -156,13 +167,16 @@ else:
                     ])
     file_loader = read_audio
 
-enroll_dir = DeepSpeakerEnrollDataset(audio_set=audio_set, dir=args.dataroot,loader=file_loader,transform=transform)
-try:
-    qwer = enroll_dir.__getitem__(3)
-except IndexError:
-    raise Exception("wav in enroll set is less than 3?")
 
-del audio_set
+voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
+train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+del voxceleb
+del voxceleb_dev
+
+test_dir = VoxcelebTestset(dir=args.dataroot,pairs_path=args.test_pairs_path,loader = file_loader, transform=transform_T)
+
+qwer = test_dir.__getitem__(3)
+
 
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
@@ -170,7 +184,7 @@ def main():
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Wav file:\n{}\n'.format(len(enroll_dir.indices)))
+    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
     model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=1211)
@@ -181,76 +195,67 @@ def main():
     optimizer = create_optimizer(model, args.lr)
 
     # optionally resume from a checkpoint
-    if args.model_path:
-        if os.path.isfile(args.model_path):
-            print('=> loading checkpoint {}'.format(args.model_path))
-            checkpoint = torch.load(args.model_path, map_location='cpu')
+    if args.resume:
+        if os.path.isfile(args.resume):
+            print('=> loading checkpoint {}'.format(args.resume))
+            checkpoint = torch.load(args.resume, map_location='cpu')
             args.start_epoch = checkpoint['epoch']
+            #checkpoint = torch.load(args.resume, map_location='cpu')
 
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k
+                        }
 
             model.load_state_dict(filtered)
 
             optimizer.load_state_dict(checkpoint['optimizer'])
         else:
-            raise Exception('=> no checkpoint found at {}'.format(args.model_path))
+            print('=> no checkpoint found at {}'.format(args.resume))
 
     # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     epoch = args.start_epoch
-    enroll_loader = torch.utils.data.DataLoader(enroll_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     #for epoch in range(start, end):
 
-    enroll(enroll_loader, model, epoch)
+    test(test_loader, model, epoch)
+        #break;
 
-
-def enroll(enroll_loader, model, epoch):
+def test(test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
-    labels, features = [], []
+    labels, distances = [], []
 
-    pbar = tqdm(enumerate(enroll_loader))
-    for batch_idx, (data_a, label) in pbar:
+    pbar = tqdm(enumerate(test_loader))
+    for batch_idx, (data_a, data_p, label) in pbar:
         current_sample = data_a.size(0)
         data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
+        data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
         if args.cuda:
-            data_a = data_a.cuda(),
-        data_a, label = Variable(data_a, volatile=True),  Variable(label)
+            data_a, data_p = data_a.cuda(), data_p.cuda()
+        data_a, data_p, label = Variable(data_a, volatile=True), \
+                                Variable(data_p, volatile=True), Variable(label)
 
         # compute output
-        out_a = model(data_a)
-        # dists = l2_dist.forward(out_a)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-        # dists = dists.data.cpu().numpy()
-        # dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
-        features.append(out_a)
+        out_a, out_p = model(data_a), model(data_p)
+        dists = l2_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = dists.data.cpu().numpy()
+        dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
+        distances.append(dists)
         labels.append(label.data.cpu().numpy())
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('enroll: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a), len(enroll_loader.dataset),
-                100. * batch_idx / len(enroll_loader)))
+            pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                epoch, batch_idx * len(data_a), len(test_loader.dataset),
+                100. * batch_idx / len(test_loader)))
 
-    # labels = np.array([sublabel for label in labels for sublabel in label])
-    # features = np.array([subdist for dist in features for subdist in features])
+    labels = np.array([sublabel for label in labels for sublabel in label])
+    distances = np.array([subdist for dist in distances for subdist in dist])
 
     #print("distance {.8f}".format(distances))
     #print("distance {.1f}".format(labels))
-    # tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
-    print('Xvector extraction completed!')
-    feature_np = []
-    for tensors in features:
-        for tensor in tensors:
-            feature_np.append(tensor)
-    label_np = []
-    for label in labels:
-        for lab in label:
-            label_np.append(lab)
-
-    wav_dict = dict(zip(label_np, feature_np))
-
-    np.save(EXT_DIR+'/enroll_{}-lr{}-wd{}-embed{}-alpha10.npy'.format(args.optimizer, args.lr, args.wd, args.embedding_size), wav_dict)
-
-    logger.log_value('Extracted Num', len(features))
+    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
+    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
 def create_optimizer(model, new_lr):
@@ -271,7 +276,4 @@ def create_optimizer(model, new_lr):
 
 if __name__ == '__main__':
     main()
-
-
-
 

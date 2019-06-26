@@ -3,6 +3,7 @@ from glob import glob
 import pathlib
 import numpy as np
 import sys
+import re
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -73,6 +74,25 @@ def read_my_voxceleb_structure(directory):
     print('>>Found {} files with {} different speakers.'.format(str(len(voxceleb)), str(num_speakers)))
     #print(voxceleb.head(10))
     return voxceleb
+
+def read_extract_audio(directory):
+    audio_set = []
+
+    print('>>Data root is %s' % str(directory))
+
+    all_wav_path = []
+    for dirs, dirnames, files in os.walk(directory):
+        for file in files:
+            # print(str(file))
+            if re.match(r'^[^\.].*\.npy', str(file)) is not None:
+                all_wav_path.append(str(os.path.join(dirs, file)))
+
+    for file in all_wav_path:
+        audio_set.append({'filename': file.rstrip('.npy'), 'utt_id': file.rstrip('.npy'), 'uri': 0, 'subset': file[1]})
+
+    print('>>Found {} wav files for extracting xvectors.'.format(len(audio_set)))
+    #print(voxceleb.head(10))
+    return audio_set
 
 # read_my_voxceleb_structure('/data/voxceleb')
 
