@@ -25,6 +25,13 @@ Work accomplished so far:
 - [x] Modified model for ResNet34,50,101 in 20190625
 - [ ] Adding scoring for identification
 
+## Train Result
+|Stage|Resnet Model|epoch|Loss Type|Loss value|Accuracy on Train/Test|
+|:--------:|:------------:|:---:|:--------------:|:--------------:|:------------:|
+|1| Resnet-10    |1:22 |Triplet | 6.6420:0.0113 | 0.8553/0.8431  | 
+| | ResNet-34    |1:8  |Triplet | 8.0285:0.0301 | 0.8360/0.8302  |
+|2| ...          |..:..|        |
+
 
 The following is part of the original description:
 
