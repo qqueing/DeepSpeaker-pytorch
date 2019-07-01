@@ -16,14 +16,15 @@ Work accomplished so far:
 | conv3        |2           |              |
 | conv4        |2           |              |
 | conv5        |2           |              |
-|avg_pool      |1           |              |
-|fc            |1           |              |
+| avg_pool     |1           |              |
+| fc           |1           |              |
 
 - [x] Extract x-vectors from trained Neural Network in 20190626
 - [ ] Code cleanup
 - [ ] Modified preprocessing
 - [x] Modified model for ResNet34,50,101 in 20190625
 - [ ] Adding scoring for identification
+  Fork plda for python from: https://github.com/RaviSoji/plda/blob/master/plda/
 
 ## Train Result
 |Stage|Resnet Model|epoch|Loss Type|Loss value|Accuracy on Train/Test|
