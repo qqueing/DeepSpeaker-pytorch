@@ -12,6 +12,12 @@ def find_classes(voxceleb):
     class_to_idx = {classes[i]: i for i in range(len(classes))}
     return classes, class_to_idx
 
+def find_speakers(voxceleb):
+    classes = list(set([datum['subset'] for datum in voxceleb]))
+    classes.sort()
+    class_to_idx = {classes[i]: i for i in range(len(classes))}
+    return classes, class_to_idx
+
 def create_indices(_features):
     inds = dict()
     for idx, (feature_path,label) in enumerate(_features):
@@ -111,7 +117,7 @@ class DeepSpeakerDataset(data.Dataset):
 
 class DeepSpeakerEnrollDataset(data.Dataset):
 
-    def __init__(self, audio_set, dir,loader, transform=None, *arg, **kw):
+    def __init__(self, audio_set, dir, loader, enroll=True, transform=None, *arg, **kw):
 
         print('Looking for audio [wav/npy] files in {}.'.format(dir))
 
@@ -120,19 +126,23 @@ class DeepSpeakerEnrollDataset(data.Dataset):
 
         #classes, class_to_idx = find_classes(audio_set)
         self.root = dir
+        self.enroll = enroll
+        classes, class_to_idx = find_speakers(audio_set)
         features = []
+        uttids = []
         for index, vox_item in enumerate(audio_set):
-            item = (vox_item['filename']+'.wav', index)
-            features.append(item)
+            feat_item = (vox_item['filename']+'.wav', class_to_idx[vox_item['subset']])
+            uttid_item = (vox_item['utt_id'], index)
 
-        #self.features = features
-        # self.classes = classes
-        # self.class_to_idx = class_to_idx
+            features.append(feat_item)
+            uttids.append(uttid_item)
+        self.uttid = uttids
+        self.features = features
+        self.classes = classes
+        self.class_to_idx = class_to_idx
         self.transform = transform
         self.loader = loader
 
-        # self.n_triplets = n_triplets
-        #print('Generating {} triplets'.format(self.n_triplets))
         self.indices = create_indices(features)
 
 
@@ -150,9 +160,14 @@ class DeepSpeakerEnrollDataset(data.Dataset):
             return self.transform(feature)
 
         # Get the index of feature in the indices
-        feature = self.indices[index]
-        feature = transform(feature)
-        return feature, index
+        feature = self.features[index]
+        feature = transform(feature[0])
+        if self.enroll:
+            label = self.features[index][1]
+        else:
+            label = self.uttid[index][1]
+
+        return feature, label
 
     def __len__(self):
-        return len(self.indices)
+        return len(self.features)

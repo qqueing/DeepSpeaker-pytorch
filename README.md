@@ -1,4 +1,4 @@
-# Deep Speaker from Baidu Research -  Pytorch Implementation 
+# Deep Speaker from Baidu Research - Pytorch Implementation 
 
 This project is forked from the [qqueing/DeepSpeaker-pytorch](https://github.com/qqueing/DeepSpeaker-pytorch). Parts of code was modified for the server to process. And some module will be added in the future.
 
@@ -7,7 +7,7 @@ Work accomplished so far:
 - [x] Model implementation
 - [x] Data pipeline implementation - "Voxceleb"(Please note:Pytorch dataloader is so weak(High-load preprocessing and many thread))
 - [x] Project structure cleanup.
-- [x] Trained simple ResNet10 with accuracy 0.84
+- [ ] Trained simple ResNet10 with softmax+triplet loss for pre-training 10 batch and triplet loss for 18 epoch , resulted in accuracy ???
 
 |LayerName|NumofDup|OutputSize|
 |:------------:|:----------:|:------------:|
@@ -23,8 +23,9 @@ Work accomplished so far:
 - [ ] Code cleanup
 - [ ] Modified preprocessing
 - [x] Modified model for ResNet34,50,101 in 20190625
+- [x] Added cosine distance in Triplet Loss(The previous distance is l2) in 20190703
 - [ ] Adding scoring for identification
-  Fork plda for python from: https://github.com/RaviSoji/plda/blob/master/plda/
+- [ ] Fork plda method for classification in python from: https://github.com/RaviSoji/plda/blob/master/plda/
 
 ## Train Result
 |Stage|Resnet Model|epoch|Loss Type|Loss value|Accuracy on Train/Test|

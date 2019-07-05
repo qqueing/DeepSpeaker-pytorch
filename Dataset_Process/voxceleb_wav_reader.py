@@ -15,6 +15,23 @@ data_mdtm = 'dataset/voxceleb1.{subset}.mdtm'
 list_txt = '{voxceleb_dir}/list.txt'.format(voxceleb_dir=voxceleb_dir)
 glob_exp = '{voxceleb_dir}/voxceleb1_txt/*/*.txt'.format(voxceleb_dir=voxceleb_dir)
 
+def check_mk_dir(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+def if_load_npy(data_path, npy_path):
+    """
+    Load npy features or wav from existed files.
+    :param data_path: data file's path
+    :param npy_path:
+    :return:
+    """
+    if os.path.isfile(npy_path):
+        return(np.load(npy_path, allow_pickle=True))
+    else:
+        dataset = read_extract_audio(data_path)
+        np.save(npy_path, dataset)
+        return(dataset)
 
 def parse_txt(txt):
     lines = [line.strip() for line in open(txt, 'r').readlines()]
@@ -88,9 +105,10 @@ def read_extract_audio(directory):
                 all_wav_path.append(str(os.path.join(dirs, file)))
 
     for file in all_wav_path:
-        audio_set.append({'filename': file.rstrip('.npy'), 'utt_id': file.rstrip('.npy'), 'uri': 0, 'subset': file[1]})
+        spkid = pathlib.Path(file).parent.parent.name
+        audio_set.append({'filename': file.rstrip('.npy'), 'utt_id': file.rstrip('.npy'), 'uri': 0, 'subset': spkid if spkid!='Data' else 'test'})
 
-    print('>>Found {} wav files for extracting xvectors.'.format(len(audio_set)))
+    print('>>Found {} wav/npy files for extracting xvectors.'.format(len(audio_set)))
     #print(voxceleb.head(10))
     return audio_set
 

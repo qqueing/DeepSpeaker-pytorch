@@ -8,6 +8,10 @@
 @File: extract_vector.py
 @Time: 19-6-25 下午3:47
 @Overview:Given audio samples, extract embeddings from checkpoint file in this script.
+Extractor vectors for enrollment and test sets.
+For enrollment set: Output (features, spkid)
+For test set: Output (features, uttid)
+
 """
 import argparse
 import torch
@@ -26,7 +30,7 @@ from logger import Logger
 
 from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerEnrollDataset
 from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import read_extract_audio
+from Dataset_Process.voxceleb_wav_reader import if_load_npy
 
 from Model_Define.model import PairwiseDistance
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
@@ -47,8 +51,10 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition Featur
 
 # Dataset and model file path
 parser.add_argument('--dataroot', type=str, default='Data/enroll',
-                    help='path to dataset')
-parser.add_argument('--extract-path', type=str, default='Data/xvector',
+                    help='path to extracting dataset')
+parser.add_argument('--enroll', action='store_true', default=False,
+                    help='enroll step or test step')
+parser.add_argument('--extract-path', type=str, default='Data/xvector/enroll',
                     help='path to pairs file')
 parser.add_argument('--log-dir', default='Data/extract_feature_logs',
                     help='folder to output model checkpoints')
@@ -96,6 +102,7 @@ parser.add_argument('--makemfb', action='store_true', default=False,
 
 args = parser.parse_args()
 
+
 # set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
 # order to prevent any memory allocation on unused GPUs
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
@@ -110,25 +117,31 @@ if args.cuda:
     cudnn.benchmark = True
 CKP_DIR = args.model_path
 EXT_DIR = args.extract_path
-LOG_DIR = args.log_dir + '/enroll_{}-n{}-lr{}-wd{}-m{}-embed{}-alpha10'\
+LOG_DIR = args.log_dir + '/extract_{}-n{}-lr{}-wd{}-m{}-embed{}-alpha10'\
     .format(args.optimizer, args.n_triplets, args.lr, args.wd,
             args.margin, args.embedding_size)
+
+data_set_list = "Data/enroll_set.npy"
+classes_to_label_list = "Data/enroll_classes.npy"
+dataroot = args.dataroot
+
+if not args.enroll:
+    dataroot = args.dataroot.replace("enroll", "test")
+    EXT_DIR = args.extract_path.replace("enroll", "test")
+    data_set_list = data_set_list.replace("enroll", "test")
+    classes_to_label_list = classes_to_label_list.replace("enroll", "test")
+
 if not os.path.exists(EXT_DIR):
     os.makedirs(EXT_DIR)
-
 # create logger
 logger = Logger(LOG_DIR)
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 l2_dist = PairwiseDistance(2)
 
-audio_set_list = "Data/audio_set.npy"
+
 audio_set = []
-if os.path.isfile(audio_set_list):
-    audio_set = np.load(audio_set_list, allow_pickle=True)
-else:
-    audio_set = read_extract_audio(args.dataroot)
-    np.save(audio_set_list, audio_set)
+audio_set = if_load_npy(dataroot, data_set_list)
 
 if args.makemfb:
     #pbar = tqdm(voxceleb)
@@ -156,16 +169,26 @@ else:
                     ])
     file_loader = read_audio
 
-enroll_dir = DeepSpeakerEnrollDataset(audio_set=audio_set, dir=args.dataroot,loader=file_loader,transform=transform)
+enroll_dir = DeepSpeakerEnrollDataset(audio_set=audio_set, dir=args.dataroot, loader=file_loader, transform=transform, enroll=args.enroll)
+
+classes_to_label = enroll_dir.class_to_idx
+if not os.path.isfile(classes_to_label_list):
+    if not args.enroll:
+        classes_to_label = enroll_dir.uttid
+    np.save(classes_to_label_list, classes_to_label)
+    print("update the classes to labels list files.")
+else:
+    # TODO: add new classes to the file
+    print("Classes to labels list files already existed!")
+
 try:
     qwer = enroll_dir.__getitem__(3)
 except IndexError:
-    raise Exception("wav in enroll set is less than 3?")
+    print("wav in enroll set is less than 3?")
 
 del audio_set
 
 def main():
-    # Views the training images and displays the distance on anchor-negative and anchor-positive
     test_display_triplet_distance = False
 
     # print the experiment configuration
@@ -219,36 +242,38 @@ def enroll(enroll_loader, model, epoch):
 
         # compute output
         out_a = model(data_a)
-        # dists = l2_dist.forward(out_a)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-        # dists = dists.data.cpu().numpy()
-        # dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
+
         features.append(out_a)
-        labels.append(label.data.cpu().numpy())
+        if not args.enroll:
+            labels.append(label)
+        else:
+            labels.append(label.data.cpu().numpy())
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('enroll: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a), len(enroll_loader.dataset),
+            pbar.set_description('{}: {} [{}/{} ({:.0f}%)]'.format(
+                "enroll" if args.enroll else "test",
+                epoch,
+                batch_idx * len(data_a),
+                len(enroll_loader.dataset),
                 100. * batch_idx / len(enroll_loader)))
 
-    # labels = np.array([sublabel for label in labels for sublabel in label])
-    # features = np.array([subdist for dist in features for subdist in features])
-
-    #print("distance {.8f}".format(distances))
-    #print("distance {.1f}".format(labels))
-    # tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
     print('Xvector extraction completed!')
     feature_np = []
     for tensors in features:
         for tensor in tensors:
             feature_np.append(tensor)
+
     label_np = []
     for label in labels:
-        for lab in label:
+       for lab in label:
             label_np.append(lab)
+    wav_dict = []
+    for index, label in enumerate(label_np):
+        wav_dict.append((label, feature_np[index]))
 
-    wav_dict = dict(zip(label_np, feature_np))
+    # wav_dict = dict(zip(label_np, feature_np))
 
-    np.save(EXT_DIR+'/enroll_{}-lr{}-wd{}-embed{}-alpha10.npy'.format(args.optimizer, args.lr, args.wd, args.embedding_size), wav_dict)
+    np.save(EXT_DIR+'/extract_{}-lr{}-wd{}-embed{}-alpha10.npy'.format(args.optimizer, args.lr, args.wd, args.embedding_size), wav_dict)
 
     logger.log_value('Extracted Num', len(features))
 

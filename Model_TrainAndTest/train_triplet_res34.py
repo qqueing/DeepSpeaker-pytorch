@@ -77,7 +77,7 @@ parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
 
-parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=10, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',

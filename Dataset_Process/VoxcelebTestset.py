@@ -38,7 +38,7 @@ def get_test_paths(pairs_path,db_dir,file_ext="wav"):
 class VoxcelebTestset(data.Dataset):
     '''
     '''
-    def __init__(self,  dir,pairs_path, loader, transform=None):
+    def __init__(self, dir,pairs_path, loader, transform=None):
 
 
         self.pairs_path = pairs_path

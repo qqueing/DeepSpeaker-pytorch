@@ -14,8 +14,25 @@ class PairwiseDistance(Function):
         assert x1.size() == x2.size()
         eps = 1e-4 / x1.size(1)
         diff = torch.abs(x1 - x2)
+        # The distance will be (Sum(|x1-x2|**p)+eps)**1/p
         out = torch.pow(diff, self.norm).sum(dim=1)
         return torch.pow(out + eps, 1. / self.norm)
+
+class PairwiseCosDistance(Function):
+    def __init__(self, p):
+        super(PairwiseCosDistance, self).__init__()
+        self.norm = p
+
+    def forward(self, x1, x2):
+        assert x1.size() == x2.size()
+        pair_dot = torch.dot(x1, x2)
+        x1_norm = torch.norm(x1, self.norm)
+        x2_norm = torch.norm(x2, self.norm)
+
+        diff = pair_dot / (x1_norm * x2_norm)
+
+        return diff
+
 class TripletMarginLoss(Function):
     """Triplet loss function.
     """
@@ -32,6 +49,21 @@ class TripletMarginLoss(Function):
         loss = torch.mean(dist_hinge)
         return loss
 
+class TripletMarginCosLoss(Function):
+    """Triplet loss function.
+    """
+    def __init__(self, margin):
+        super(TripletMarginCosLoss, self).__init__()
+        self.margin = margin
+        self.pdist = PairwiseCosDistance(2)  # norm 2
+
+    def forward(self, anchor, positive, negative):
+        d_p = self.pdist.forward(anchor, positive)
+        d_n = self.pdist.forward(anchor, negative)
+
+        dist_hinge = torch.clamp(self.margin + d_p - d_n, min=0.0)
+        loss = torch.mean(dist_hinge)
+        return loss
 
 class ReLU(nn.Hardtanh):
 
@@ -168,6 +200,7 @@ class DeepSpeakerModel(nn.Module):
         elif feature_dim == 40:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
         self.model.classifier = nn.Linear(self.embedding_size, num_classes)
+        # self.model.classifier = nn.Softmax(self.embedding_size, num_classes)
 
 
     def l2_norm(self,input):
