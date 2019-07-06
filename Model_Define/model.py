@@ -3,6 +3,7 @@ import torch.nn as nn
 import math
 
 from torch.autograd import Function
+from torch.nn import CosineSimilarity
 
 
 class PairwiseDistance(Function):
@@ -17,21 +18,6 @@ class PairwiseDistance(Function):
         # The distance will be (Sum(|x1-x2|**p)+eps)**1/p
         out = torch.pow(diff, self.norm).sum(dim=1)
         return torch.pow(out + eps, 1. / self.norm)
-
-class PairwiseCosDistance(Function):
-    def __init__(self, p):
-        super(PairwiseCosDistance, self).__init__()
-        self.norm = p
-
-    def forward(self, x1, x2):
-        assert x1.size() == x2.size()
-        pair_dot = torch.dot(x1, x2)
-        x1_norm = torch.norm(x1, self.norm)
-        x2_norm = torch.norm(x2, self.norm)
-
-        diff = pair_dot / (x1_norm * x2_norm)
-
-        return diff
 
 class TripletMarginLoss(Function):
     """Triplet loss function.
@@ -55,7 +41,7 @@ class TripletMarginCosLoss(Function):
     def __init__(self, margin):
         super(TripletMarginCosLoss, self).__init__()
         self.margin = margin
-        self.pdist = PairwiseCosDistance(2)  # norm 2
+        self.pdist = CosineSimilarity(dim=1, eps=1e-6)  # norm 2
 
     def forward(self, anchor, positive, negative):
         d_p = self.pdist.forward(anchor, positive)
@@ -64,6 +50,7 @@ class TripletMarginCosLoss(Function):
         dist_hinge = torch.clamp(self.margin + d_p - d_n, min=0.0)
         loss = torch.mean(dist_hinge)
         return loss
+
 
 class ReLU(nn.Hardtanh):
 
@@ -177,9 +164,6 @@ class myResNet(nn.Module):
         x = self.fc(x)
 
         return x
-
-
-
 
 
 class DeepSpeakerModel(nn.Module):
