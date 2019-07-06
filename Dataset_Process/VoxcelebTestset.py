@@ -9,7 +9,6 @@ def get_test_paths(pairs_path,db_dir,file_ext="wav"):
     path_list = []
     issame_list = []
 
-
     #pairs = random.sample(pairs, 100)
     #for i in tqdm(range(len(pairs))):
     for pair in pairs:

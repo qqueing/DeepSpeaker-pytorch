@@ -12,7 +12,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 from Model_Define.model import DeepSpeakerModel
-from eval_metrics import evaluate
+from eval_metrics import evaluate_eer
 from logger import Logger
 
 # from DeepSpeakerDataset_static import DeepSpeakerDataset
@@ -21,11 +21,10 @@ from Dataset_Process.VoxcelebTestset import VoxcelebTestset
 from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
 
 # from Model_Define.model import PairwiseDistance,TripletMarginLoss
-from Model_Define.model import PairwiseCosDistance,TripletMarginCosLoss
-
+from Model_Define.model import TripletMarginCosLoss
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
-# Version conflict
 
+# Version conflict
 import torch._utils
 try:
     torch._utils._rebuild_tensor_v2
@@ -68,7 +67,7 @@ parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -133,13 +132,15 @@ logger = Logger(LOG_DIR)
 
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
-#l2_dist = PairwiseDistance(2)
-cos_dist = PairwiseCosDistance(2)
+
+# Using defined consine similarity function
+cos_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 # Read file list from dataset path
 print("================================Reading Dataset File List==================================")
 voxceleb_list = "Data/voxceleb.npy"
 voxceleb_dev_list = "Data/voxceleb_dev.npy"
+# Subset for test
 # voxceleb_dev_10k_list = "Data/voxceleb_dev_10k.npy"
 
 if os.path.isfile(voxceleb_list):
@@ -188,7 +189,6 @@ else:
     # voxceleb_dev_10k = voxceleb_dev[:10000]
     # np.save(voxceleb_dev_10k_list, voxceleb_dev_10k)
 
-
 # Reduce the dev set
 # voxceleb_dev = voxceleb_dev_10k
 
@@ -230,7 +230,6 @@ def main():
 
             # Filter that remove uncessary component in checkpoint file
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-
             model.load_state_dict(filtered)
 
             optimizer.load_state_dict(checkpoint['optimizer'])
@@ -239,7 +238,6 @@ def main():
 
     start = args.start_epoch
     print('start epoch is : ' + str(start))
-    #start = 0
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
@@ -248,7 +246,6 @@ def main():
 
         train(train_loader, model, optimizer, epoch)
         test(test_loader, model, epoch)
-        #break;
 
 
 def train(train_loader, model, optimizer, epoch):
@@ -266,7 +263,6 @@ def train(train_loader, model, optimizer, epoch):
 
         # compute output
         out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
-
 
         if epoch > args.min_softmax_epoch:
             triplet_loss = TripletMarginCosLoss(args.margin).forward(out_a, out_p, out_n)
@@ -287,11 +283,9 @@ def train(train_loader, model, optimizer, epoch):
                         100. * batch_idx / len(train_loader),
                         loss.data[0]))
 
-
             dists = cos_dist.forward(out_a,out_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
             labels.append(np.zeros(dists.size(0)))
-
 
             dists = cos_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
@@ -342,7 +336,6 @@ def train(train_loader, model, optimizer, epoch):
             loss.backward()
             optimizer.step()
 
-
             # log loss value for hard selected sample
             logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
             logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
@@ -359,7 +352,6 @@ def train(train_loader, model, optimizer, epoch):
             distances.append(dists.data.cpu().numpy())
             labels.append(np.zeros(dists.size(0)))
 
-
             dists = cos_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
             labels.append(np.ones(dists.size(0)))
@@ -369,14 +361,14 @@ def train(train_loader, model, optimizer, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    tpr, fpr, accuracy, val, far = evaluate(distances,labels)
-    print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    tpr, fpr, fnr, accuracy, val, far = evaluate_eer(distances,labels)
+    print('\33[91mTrain set: Accuracy: {:.8f} EER: {}\n\33[0m'.format(np.mean(accuracy), fnr))
     logger.log_value('Train Accuracy', np.mean(accuracy))
 
     # do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_res{}_{}.pth'.format(args.resnet_size, epoch))
+               '{}/checkpoint_res{}_{}.pth'.format(CKP_DIR, args.resnet_size, epoch))
 
 
 def test(test_loader, model, epoch):
@@ -397,9 +389,9 @@ def test(test_loader, model, epoch):
 
         # compute output
         out_a, out_p = model(data_a), model(data_p)
-        dists = cos_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = cos_dist.forward(out_a, out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         dists = dists.data.cpu().numpy()
-        dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
+        dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
 
@@ -413,8 +405,8 @@ def test(test_loader, model, epoch):
 
     #print("distance {.8f}".format(distances))
     #print("distance {.1f}".format(labels))
-    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    tpr, fpr, fnr, accuracy, val,  far = evaluate_eer(distances,labels)
+    print('\33[91mTest set: Accuracy: {:.8f} EER: {}\n\33[0m'.format(np.mean(accuracy), fnr))
     logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
