@@ -23,7 +23,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 from Model_Define.model import DeepSpeakerModel
-from eval_metrics import evaluate
+from eval_metrics import evaluate_eer
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
@@ -60,7 +60,7 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume', default='Data/checkpoint/checkpoint_35.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/checkpoint_16.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -70,7 +70,7 @@ parser.add_argument('--epochs', type=int, default=29, metavar='E',
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 
-parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=256, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -140,13 +140,13 @@ kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 l2_dist = PairwiseDistance(2)
 
 
-voxceleb = read_my_voxceleb_structure(args.dataroot)
-if args.makemfb:
+# voxceleb = read_my_voxceleb_structure(args.dataroot)
+# if args.makemfb:
     #pbar = tqdm(voxceleb)
-    for datum in voxceleb:
-        # print(datum['filename'])
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
-    print("Complete convert")
+    # for datum in voxceleb:
+    #     # print(datum['filename'])
+    #     mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+    # print("Complete convert")
 
 if args.mfb:
     transform = transforms.Compose([
@@ -168,12 +168,12 @@ else:
     file_loader = read_audio
 
 
-voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
-train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
-del voxceleb
-del voxceleb_dev
+# voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
+# train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+# del voxceleb
+# del voxceleb_dev
 
-test_dir = VoxcelebTestset(dir=args.dataroot,pairs_path=args.test_pairs_path,loader = file_loader, transform=transform_T)
+test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
 qwer = test_dir.__getitem__(3)
 
@@ -184,7 +184,7 @@ def main():
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
+    print('\nNumber of Test utterance pair:\n{}\n'.format(len(test_dir.validation_images)))
 
     # instantiate model and initialize weights
     model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=1211)
@@ -206,7 +206,6 @@ def main():
                         }
 
             model.load_state_dict(filtered)
-
             optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -253,8 +252,8 @@ def test(test_loader, model, epoch):
 
     #print("distance {.8f}".format(distances))
     #print("distance {.1f}".format(labels))
-    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    tpr, fpr, fnr, accuracy, val,  far = evaluate_eer(distances,labels)
+    print('\33[91mTest set: Accuracy: {:.8f} EER:{:.8f} \n\33[0m'.format(np.mean(accuracy), fnr))
     logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

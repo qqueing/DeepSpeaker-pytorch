@@ -99,7 +99,7 @@ parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=10, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--mfb', action='store_true', default=True,
@@ -127,6 +127,8 @@ LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-a
             args.margin,args.embedding_size)
 
 # create logger
+if not os.path.exists(CKP_DIR):
+    os.makedirs(CKP_DIR)
 logger = Logger(LOG_DIR)
 
 
@@ -138,7 +140,7 @@ cos_dist = PairwiseCosDistance(2)
 print("================================Reading Dataset File List==================================")
 voxceleb_list = "Data/voxceleb.npy"
 voxceleb_dev_list = "Data/voxceleb_dev.npy"
-voxceleb_dev_10k_list = "Data/voxceleb_dev_10k.npy"
+# voxceleb_dev_10k_list = "Data/voxceleb_dev_10k.npy"
 
 if os.path.isfile(voxceleb_list):
     voxceleb = np.load(voxceleb_list, allow_pickle=True)
@@ -178,19 +180,19 @@ print(">>Creating file loader for dataset completed!")
 # Get the file list of development set
 if os.path.isfile(voxceleb_dev_list):
     voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
-    voxceleb_dev_10k = voxceleb_dev[:10000]
+    # voxceleb_dev_10k = voxceleb_dev[:10000]
 else:
     voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
     np.save(voxceleb_dev_list, voxceleb_dev)
 
-    voxceleb_dev_10k = voxceleb_dev[:10000]
-    np.save(voxceleb_dev_10k_list, voxceleb_dev_10k)
+    # voxceleb_dev_10k = voxceleb_dev[:10000]
+    # np.save(voxceleb_dev_10k_list, voxceleb_dev_10k)
 
 
 # Reduce the dev set
 # voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot, n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot, n_triplets=args.n_triplets, loader=file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
 del voxceleb
@@ -374,7 +376,7 @@ def train(train_loader, model, optimizer, epoch):
     # do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               '{}/checkpoint_res{}_{}.pth'.format(args.resnet_size, epoch))
 
 
 def test(test_loader, model, epoch):

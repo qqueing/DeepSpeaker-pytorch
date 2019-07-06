@@ -24,6 +24,8 @@ import numpy as np
 from tqdm import tqdm
 from Model_Define.model import DeepSpeakerModel
 from eval_metrics import evaluate
+from eval_metrics import evaluate_eer
+
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
@@ -32,6 +34,8 @@ from Dataset_Process.VoxcelebTestset import VoxcelebTestset
 from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
 
 from Model_Define.model import PairwiseDistance
+from Model_Define.model import PairwiseCosDistance
+
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
@@ -78,7 +82,7 @@ parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
@@ -138,7 +142,7 @@ logger = Logger(LOG_DIR)
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 l2_dist = PairwiseDistance(2)
-
+cos_dist = PairwiseCosDistance(2)
 
 voxceleb = read_my_voxceleb_structure(args.dataroot)
 if args.makemfb:
@@ -169,11 +173,11 @@ else:
 
 
 voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
-train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot, n_triplets=args.n_triplets, loader = file_loader, transform=transform)
 del voxceleb
 del voxceleb_dev
 
-test_dir = VoxcelebTestset(dir=args.dataroot,pairs_path=args.test_pairs_path,loader = file_loader, transform=transform_T)
+test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
 qwer = test_dir.__getitem__(3)
 
@@ -253,8 +257,8 @@ def test(test_loader, model, epoch):
 
     #print("distance {.8f}".format(distances))
     #print("distance {.1f}".format(labels))
-    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    tpr, fpr, fnr, accuracy, val,  far = evaluate_eer(distances,labels)
+    print('\33[91mTest set: Accuracy: {:.8f} EER:{:.8f} \n\33[0m'.format(np.mean(accuracy)), fnr)
     logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
