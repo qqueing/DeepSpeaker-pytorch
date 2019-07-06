@@ -32,7 +32,7 @@ def calculate_roc(thresholds, distances, labels):
     acc_train = np.zeros((nrof_thresholds))
     accuracy = 0.0
 
-    indices = np.a, range(nrof_pairs)
+    indices = np.arange(nrof_pairs)
 
 
     # Find the best threshold for the fold
@@ -82,7 +82,7 @@ def calculate_eer(thresholds, distances, labels):
             eer_index = threshold_idx
             fpr_fnr = np.abs(fprs[threshold_idx]-fnrs[threshold_idx])
 
-    print("Threshold for the eer is {}.".format(thresholds[eer_index]))
+    #print("Threshold for the eer is {}.".format(thresholds[eer_index]))
     return tprs[eer_index], fprs[eer_index], fnrs[eer_index], acc_train[eer_index]
 
 
