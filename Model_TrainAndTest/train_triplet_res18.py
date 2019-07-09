@@ -12,7 +12,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 from Model_Define.model import DeepSpeakerModel
-from eval_metrics import evaluate_eer
+from eval_metrics import evaluate
 from logger import Logger
 
 # from DeepSpeakerDataset_static import DeepSpeakerDataset
@@ -63,7 +63,7 @@ parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--resnet-size', type=int, default=18, metavar='BS',
                     help='resnet size for training (default: 34)')
-parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -296,13 +296,13 @@ def train(train_loader, model, optimizer, epoch):
         # Choose the hard negatives
             d_p = cos_dist.forward(out_a, out_p)
             d_n = cos_dist.forward(out_a, out_n)
-            all = (d_n - d_p < args.margin).cpu().data.numpy().flatten()
+            all = (d_p - d_n < args.margin).cpu().data.numpy().flatten()
 
             # log loss value for mini batch.
             total_coorect = np.where(all == 0)
             logger.log_value('Minibatch Train Accuracy', len(total_coorect[0]))
 
-            total_dist = (d_n - d_p).cpu().data.numpy().flatten()
+            total_dist = (d_p - d_n).cpu().data.numpy().flatten()
             logger.log_value('Minibatch Train distance', np.mean(total_dist))
 
             hard_triplets = np.where(all == 1)
@@ -355,20 +355,21 @@ def train(train_loader, model, optimizer, epoch):
             dists = cos_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
             labels.append(np.ones(dists.size(0)))
-
-
-    #accuracy for hard selected sample, not all sample.
-    labels = np.array([sublabel for label in labels for sublabel in label])
-    distances = np.array([subdist for dist in distances for subdist in dist])
-
-    tpr, fpr, fnr, accuracy, val, far = evaluate_eer(distances,labels)
-    print('\33[91mTrain set: Accuracy: {:.8f} EER: {}\n\33[0m'.format(np.mean(accuracy), fnr))
-    logger.log_value('Train Accuracy', np.mean(accuracy))
+            break
 
     # do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_res{}_{}.pth'.format(CKP_DIR, args.resnet_size, epoch))
+                '{}/checkpoint_res{}_{}.pth'.format(CKP_DIR, args.resnet_size, epoch))
+    #accuracy for hard selected sample, not all sample.
+    labels = np.array([sublabel for label in labels for sublabel in label])
+    distances = np.array([subdist for dist in distances for subdist in dist])
+
+    tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+    print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    logger.log_value('Train Accuracy', np.mean(accuracy))
+
+
 
 
 def test(test_loader, model, epoch):
@@ -405,8 +406,8 @@ def test(test_loader, model, epoch):
 
     #print("distance {.8f}".format(distances))
     #print("distance {.1f}".format(labels))
-    tpr, fpr, fnr, accuracy, val,  far = evaluate_eer(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f} EER: {}\n\33[0m'.format(np.mean(accuracy), fnr))
+    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
+    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
     logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

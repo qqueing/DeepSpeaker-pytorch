@@ -1,3 +1,11 @@
+"""
+@Overview:
+Implement Training ResNet 10 for Speaker Verification!
+    Enrollment set files will be in the 'Data/enroll_set.npy' and the classes-to-index file is 'Data/enroll_classes.npy'
+    Test set files are in the 'Data/test_set.npy' and the utterances-to-index file is 'Data/test_classes.npy'.
+
+    Training the net with Softmax for 10 epoch, and 15 epoch with Triplet Loss. The distance funtion for triplet loss is cosine similarity.
+"""
 #from __future__ import print_function
 import argparse
 import torch
@@ -21,8 +29,10 @@ from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
 from Dataset_Process.VoxcelebTestset import VoxcelebTestset
 from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
 
-from Model_Define.model import PairwiseDistance,TripletMarginLoss
+from Model_Define.model import PairwiseDistance,TripletMarginCosLoss
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from torch.nn import CosineSimilarity
+
 # Version conflict
 
 import torch._utils
@@ -56,15 +66,16 @@ parser.add_argument('--resume',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=29, metavar='E',
+parser.add_argument('--epochs', type=int, default=25, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-
+parser.add_argument('--resnet-size', type=int, default=10, metavar='BS',
+                    help='resnet size for training (default: 34)')
 parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=128, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -75,11 +86,10 @@ parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-
-parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=10, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=0.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
@@ -129,7 +139,9 @@ logger = Logger(LOG_DIR)
 
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
-l2_dist = PairwiseDistance(2)
+
+#l2_dist = PairwiseDistance(2)
+l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 # Read file list from dataset path
 print("================================Reading Dataset File List==================================")
@@ -190,7 +202,7 @@ else:
 # Reduce the dev set
 voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets, loader = file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
 del voxceleb
@@ -210,7 +222,7 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size,
+    model = DeepSpeakerModel(resnet_size=10, embedding_size=args.embedding_size,
                       num_classes=len(train_dir.classes))
 
     if args.cuda:
@@ -265,9 +277,8 @@ def train(train_loader, model, optimizer, epoch):
         # compute output
         out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
 
-
         if epoch > args.min_softmax_epoch:
-            triplet_loss = TripletMarginLoss(args.margin).forward(out_a, out_p, out_n)
+            triplet_loss = TripletMarginCosLoss(args.margin).forward(out_a, out_p, out_n)
             loss = triplet_loss
             # compute gradient and update weights
             optimizer.zero_grad()
@@ -285,11 +296,9 @@ def train(train_loader, model, optimizer, epoch):
                         100. * batch_idx / len(train_loader),
                         loss.data[0]))
 
-
             dists = l2_dist.forward(out_a,out_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
             labels.append(np.zeros(dists.size(0)))
-
 
             dists = l2_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
@@ -300,7 +309,7 @@ def train(train_loader, model, optimizer, epoch):
         # Choose the hard negatives
             d_p = l2_dist.forward(out_a, out_p)
             d_n = l2_dist.forward(out_a, out_n)
-            all = (d_n - d_p < args.margin).cpu().data.numpy().flatten()
+            all = (d_p - d_n < args.margin).cpu().data.numpy().flatten()
 
             # log loss value for mini batch.
             total_coorect = np.where(all == 0)
@@ -322,7 +331,7 @@ def train(train_loader, model, optimizer, epoch):
 
             selected_label_p = torch.from_numpy(label_p.cpu().numpy()[hard_triplets])
             selected_label_n= torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
-            triplet_loss = TripletMarginLoss(args.margin).forward(out_selected_a, out_selected_p, out_selected_n)
+            # triplet_loss = TripletMarginLoss(args.margin).forward(out_selected_a, out_selected_p, out_selected_n)
 
             cls_a = model.forward_classifier(selected_data_a)
             cls_p = model.forward_classifier(selected_data_p)
@@ -334,7 +343,7 @@ def train(train_loader, model, optimizer, epoch):
 
             cross_entropy_loss = criterion(predicted_labels.cuda(),true_labels.cuda())
 
-            loss = cross_entropy_loss + triplet_loss * args.loss_ratio
+            loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
             # compute gradient and update weights
             optimizer.zero_grad()
             loss.backward()
@@ -357,7 +366,6 @@ def train(train_loader, model, optimizer, epoch):
             distances.append(dists.data.cpu().numpy())
             labels.append(np.zeros(dists.size(0)))
 
-
             dists = l2_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
             labels.append(np.ones(dists.size(0)))
@@ -366,15 +374,14 @@ def train(train_loader, model, optimizer, epoch):
     #accuracy for hard selected sample, not all sample.
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
+    # do checkpointing
+    torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict()},
+               '{}/resnet10_devall/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
     tpr, fpr, accuracy, val, far = evaluate(distances,labels)
     print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
     logger.log_value('Train Accuracy', np.mean(accuracy))
-
-    # do checkpointing
-    torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()},
-               '{}/checkpoint_10k_{}.pth'.format(CKP_DIR, epoch))
 
 
 def test(test_loader, model, epoch):

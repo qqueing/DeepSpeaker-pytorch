@@ -29,7 +29,6 @@ from logger import Logger
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
 from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
 from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
 
 from Model_Define.model import PairwiseDistance
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
@@ -236,7 +235,7 @@ def test(test_loader, model, epoch):
 
         # compute output
         out_a, out_p = model(data_a), model(data_p)
-        dists = l2_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = l2_dist.forward(out_a, out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         dists = dists.data.cpu().numpy()
         dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
         distances.append(dists)
@@ -272,6 +271,7 @@ def create_optimizer(model, new_lr):
                                   lr_decay=args.lr_decay,
                                   weight_decay=args.wd)
     return optimizer
+
 
 if __name__ == '__main__':
     main()

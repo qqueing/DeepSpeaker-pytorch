@@ -95,6 +95,7 @@ def calculate_eer_accuracy(threshold, dist, actual_issame):
 
     tpr = 0 if (tp + fn == 0) else float(tp) / float(tp + fn)
     fpr = 0 if (fp + tn == 0) else float(fp) / float(fp + tn)
+
     fnr = 0 if (tp + fn == 0) else float(fn) / float(tp + fn)
 
     acc = float(tp + tn) / dist.size
@@ -105,7 +106,6 @@ def calculate_val(thresholds, distances, labels, far_target=0.1):
     nrof_thresholds = len(thresholds)
 
     indices = np.arange(nrof_pairs)
-
 
     # Find the threshold that gives FAR = far_target
     far_train = np.zeros(nrof_thresholds)

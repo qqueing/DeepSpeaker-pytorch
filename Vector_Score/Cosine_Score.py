@@ -12,6 +12,7 @@ Enrollment set files will be in the 'Data/enroll_set.npy' and the classes-to-ind
 Test set files are in the 'Data/test_set.npy' and the utterances-to-index file is 'Data/test_classes.npy'
 """
 import numpy as np
+import torch.nn as nn
 
 ENROLL_FILE = "Data/xvector/enroll/extract_adagrad-lr0.1-wd0.0-embed512-alpha10.npy"
 ENROLL_CLASS = "Data/enroll_classes.npy"

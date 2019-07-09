@@ -34,8 +34,6 @@ from Dataset_Process.VoxcelebTestset import VoxcelebTestset
 from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
 
 from Model_Define.model import PairwiseDistance
-from Model_Define.model import PairwiseCosDistance
-
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
@@ -142,7 +140,7 @@ logger = Logger(LOG_DIR)
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 l2_dist = PairwiseDistance(2)
-cos_dist = PairwiseCosDistance(2)
+# cos_dist = PairwiseCosDistance(2)
 
 voxceleb = read_my_voxceleb_structure(args.dataroot)
 if args.makemfb:
@@ -258,7 +256,7 @@ def test(test_loader, model, epoch):
     #print("distance {.8f}".format(distances))
     #print("distance {.1f}".format(labels))
     tpr, fpr, fnr, accuracy, val,  far = evaluate_eer(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f} EER:{:.8f} \n\33[0m'.format(np.mean(accuracy)), fnr)
+    print('\33[91mTest set: Accuracy: {:.8f} EER:{:.8f} \n\33[0m'.format(np.mean(accuracy), fnr))
     logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
