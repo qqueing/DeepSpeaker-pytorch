@@ -17,10 +17,10 @@ def evaluate_eer(distances, labels):
     thresholds = np.arange(0, 30, 0.01)
     tpr, fpr, fnr, accuracy = calculate_eer(thresholds, distances,
         labels)
-    thresholds = np.arange(0, 30, 0.001)
-    val,  far = calculate_val(thresholds, distances,
-        labels, 1e-3)
-    return tpr, fpr, fnr, accuracy, val,  far
+    # thresholds = np.arange(0, 30, 0.001)
+    # val,  far = calculate_val(thresholds, distances,
+    #     labels, 1e-3)
+    return tpr, fpr, fnr, accuracy # , val,  far
 
 def calculate_roc(thresholds, distances, labels):
 
