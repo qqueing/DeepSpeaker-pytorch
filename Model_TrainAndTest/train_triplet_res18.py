@@ -51,7 +51,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet18_devall',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint_18/checkpoint_0.pth',
+                    default='Data/checkpoint_18/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -71,7 +71,7 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=819200, metavar='N',
                     help='how many triplets will generate from the dataset')
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
@@ -328,16 +328,16 @@ def train(train_loader, model, optimizer, epoch):
             predicted_labels = torch.cat([cls_a,cls_p,cls_n])
             true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
 
-            cross_entropy_loss = criterion(predicted_labels.cuda(),true_labels.cuda())
+            cross_entropy_loss = criterion(predicted_labels.cuda(), true_labels.cuda())
 
-            loss = cross_entropy_loss + triplet_loss * args.loss_ratio
+            loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
             # compute gradient and update weights
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             # log loss value for hard selected sample
-            logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
+            # logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
             logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
             logger.log_value('selected_total_loss', loss.data[0]).step()
             if batch_idx % args.log_interval == 0:
@@ -355,7 +355,6 @@ def train(train_loader, model, optimizer, epoch):
             dists = cos_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
             distances.append(dists.data.cpu().numpy())
             labels.append(np.ones(dists.size(0)))
-            break
 
     # do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),

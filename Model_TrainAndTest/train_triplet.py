@@ -61,7 +61,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/checkpoint_10k_21.pth',
+                    default='Data/checkpoint/resnet10_devall/checkpoint_2.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -81,7 +81,7 @@ parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=819200, metavar='N',
                     help='how many triplets will generate from the dataset')
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
@@ -103,7 +103,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='0', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -200,9 +200,9 @@ else:
 
 
 # Reduce the dev set
-voxceleb_dev = voxceleb_dev_10k
+#voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets, loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb, dir=args.dataroot,n_triplets=args.n_triplets, loader = file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
 del voxceleb
@@ -236,13 +236,11 @@ def main():
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
-            checkpoint = torch.load(args.resume)
 
             # Filter that remove uncessary component in checkpoint file
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
-
             optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -339,10 +337,11 @@ def train(train_loader, model, optimizer, epoch):
 
             criterion = nn.CrossEntropyLoss()
             predicted_labels = torch.cat([cls_a,cls_p,cls_n])
-            true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
+            true_labels = torch.cat([Variable(selected_label_p.cuda()), Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
 
             cross_entropy_loss = criterion(predicted_labels.cuda(),true_labels.cuda())
-
+            correct = 0
+            correct += (predicted_labels.cuda() == true_labels.cuda()).sum()
             loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
             # compute gradient and update weights
             optimizer.zero_grad()
@@ -351,7 +350,7 @@ def train(train_loader, model, optimizer, epoch):
 
 
             # log loss value for hard selected sample
-            logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
+            # logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
             logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
             logger.log_value('selected_total_loss', loss.data[0]).step()
             if batch_idx % args.log_interval == 0:
