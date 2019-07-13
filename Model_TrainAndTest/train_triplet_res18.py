@@ -51,7 +51,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet18_devall',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint_18/checkpoint_1.pth',
+                    default='Data/checkpoint_18/checkpoint_0.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -328,16 +328,16 @@ def train(train_loader, model, optimizer, epoch):
             predicted_labels = torch.cat([cls_a,cls_p,cls_n])
             true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
 
-            cross_entropy_loss = criterion(predicted_labels.cuda(), true_labels.cuda())
+            cross_entropy_loss = criterion(predicted_labels.cuda(),true_labels.cuda())
 
-            loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
+            loss = cross_entropy_loss + triplet_loss * args.loss_ratio
             # compute gradient and update weights
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             # log loss value for hard selected sample
-            # logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
+            logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
             logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
             logger.log_value('selected_total_loss', loss.data[0]).step()
             if batch_idx % args.log_interval == 0:
