@@ -7,20 +7,24 @@ def evaluate(distances, labels):
     thresholds = np.arange(0, 30, 0.01)
     tpr, fpr, accuracy = calculate_roc(thresholds, distances,
         labels)
+
     thresholds = np.arange(0, 30, 0.001)
     val,  far = calculate_val(thresholds, distances,
         labels, 1e-3)
+
     return tpr, fpr, accuracy, val,  far
 
 def evaluate_eer(distances, labels):
     # Calculate evaluation metrics
-    thresholds = np.arange(0, 30, 0.01)
-    tpr, fpr, fnr, accuracy = calculate_eer(thresholds, distances,
+    max_threshold = np.max(distances)
+    thresholds = np.arange(0, max_threshold, 0.001)
+    tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
+    err, accuracy = calculate_eer(thresholds, distances,
         labels)
     # thresholds = np.arange(0, 30, 0.001)
     # val,  far = calculate_val(thresholds, distances,
     #     labels, 1e-3)
-    return tpr, fpr, fnr, accuracy # , val,  far
+    return err, best_accuracy
 
 def calculate_roc(thresholds, distances, labels):
 
@@ -33,7 +37,6 @@ def calculate_roc(thresholds, distances, labels):
     accuracy = 0.0
 
     indices = np.arange(nrof_pairs)
-
 
     # Find the best threshold for the fold
 
@@ -83,7 +86,7 @@ def calculate_eer(thresholds, distances, labels):
             fpr_fnr = np.abs(fprs[threshold_idx]-fnrs[threshold_idx])
 
     #print("Threshold for the eer is {}.".format(thresholds[eer_index]))
-    return tprs[eer_index], fprs[eer_index], fnrs[eer_index], acc_train[eer_index]
+    return  fnrs[eer_index], acc_train[eer_index]
 
 
 def calculate_eer_accuracy(threshold, dist, actual_issame):
