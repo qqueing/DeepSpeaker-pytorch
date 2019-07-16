@@ -22,15 +22,15 @@ import pdb
 import numpy as np
 from tqdm import tqdm
 from Model_Define.model import DeepSpeakerModel
-from eval_metrics import evaluate
+from eval_metrics import evaluate, evaluate_eer
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
 from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
 from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
+from Dataset_Process.voxceleb_wav_reader import wav_list_reader
 
-from Model_Define.model import PairwiseDistance,TripletMarginCosLoss
+from Model_Define.model import PairwiseDistance, TripletMarginCosLoss
 from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 from torch.nn import CosineSimilarity
 
@@ -146,18 +146,7 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 # Read file list from dataset path
 print("================================Reading Dataset File List==================================")
-voxceleb_list = "Data/voxceleb.npy"
-voxceleb_dev_list = "Data/voxceleb_dev.npy"
-voxceleb_dev_10k_list = "Data/voxceleb_dev_10k.npy"
-
-voxceleb = []
-voxceleb_dev = []
-voxceleb_dev_10k = []
-if os.path.isfile(voxceleb_list):
-    voxceleb = np.load(voxceleb_list, allow_pickle=True)
-else:
-    voxceleb = read_my_voxceleb_structure(args.dataroot)
-    np.save(voxceleb_list, voxceleb)
+voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
 
 # Make fbank feature if not yet.
 if args.makemfb:
@@ -188,22 +177,10 @@ else:
     file_loader = read_audio
 print("Creating file loader for dataset completed!")
 
-# Get the file list of development set
-if os.path.isfile(voxceleb_dev_list):
-    voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
-    voxceleb_dev_10k = voxceleb_dev[:10000]
-else:
-    voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
-    np.save(voxceleb_dev_list, voxceleb_dev)
-
-    voxceleb_dev_10k = voxceleb_dev[:10000]
-    np.save(voxceleb_dev_10k_list, voxceleb_dev_10k)
-
-
 # Reduce the dev set
 #voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb=voxceleb, dir=args.dataroot,n_triplets=args.n_triplets, loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets, loader = file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
 del voxceleb
@@ -265,8 +242,8 @@ def train(train_loader, model, optimizer, epoch):
     model.train()
 
     labels, distances = [], []
-    correct = 0
-    total_datasize = 0
+    correct = 0.
+    total_datasize = 0.
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data_a, data_p, data_n,label_p,label_n) in pbar:
         #print("on training{}".format(epoch))
@@ -346,9 +323,9 @@ def train(train_loader, model, optimizer, epoch):
             m = nn.Softmax() 
             predicted_one_labels = m(predicted_labels)
             predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
-            pdb.set_trace()
+            # pdb.set_trace()
             minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0])/len(predicted_one_labels)
-            correct += (predicted_one_labels.cuda() == true_labels.cuda()).sum()
+            correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0])
             total_datasize += len(predicted_one_labels)
             
             loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
@@ -364,21 +341,24 @@ def train(train_loader, model, optimizer, epoch):
             logger.log_value('selected_total_loss', loss.data[0]).step()
             logger.log_value('minibatch_accuracy', minibatch_acc).step()
             if batch_idx % args.log_interval == 0:
-                pbar.set_description(
-                    'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} Minibatch accuracy: {:.4f}\t # of Selected Triplets: {:4d}'.format(
-                        epoch, batch_idx * len(data_a), len(train_loader.dataset),
+                pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} Minibatch accuracy: {:.4f}\t # of Selected Triplets: {:4d}'.format(
+                        epoch,
+                        batch_idx * len(data_a),
+                        len(train_loader.dataset),
                         100. * batch_idx / len(train_loader),
+                        loss.data[0],
                         100. * minibatch_acc,
-                        loss.data[0],len(hard_triplets[0])))
+                        len(hard_triplets[0])
+                    ))
 
 
-            # dists = l2_dist.forward(out_selected_a,out_selected_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
-            # distances.append(dists.data.cpu().numpy())
-            # labels.append(np.zeros(dists.size(0)))
-            #
-            # dists = l2_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-            # distances.append(dists.data.cpu().numpy())
-            # labels.append(np.ones(dists.size(0)))
+            dists = l2_dist.forward(out_selected_a,out_selected_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
+            distances.append(dists.data.cpu().numpy())
+            labels.append(np.zeros(dists.size(0)))
+
+            dists = l2_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+            distances.append(dists.data.cpu().numpy())
+            labels.append(np.ones(dists.size(0)))
 
 
     #accuracy for hard selected sample, not all sample.
@@ -388,11 +368,11 @@ def train(train_loader, model, optimizer, epoch):
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                '{}/resnet10_devall/checkpoint_{}.pth'.format(CKP_DIR, epoch))
-    if epoch > args.min_softmax_epoch:
-        tpr, fpr, accuracy, val, far = evaluate(distances,labels)
-        print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
-        logger.log_value('Train Accuracy', np.mean(accuracy))
-    else:
+
+    err, accuracy = evaluate_eer(distances, labels)
+    print('\33[91mFor cos_distance verification:\n  Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
+
+    if not epoch > args.min_softmax_epoch:
         print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(float(correct)/total_datasize))   
         logger.log_value('Train Accuracy', float(correct)/total_datasize)
 
@@ -428,11 +408,11 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    #print("distance {.8f}".format(distances))
-    #print("distance {.1f}".format(labels))
-    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
-    logger.log_value('Test Accuracy', np.mean(accuracy))
+    err, accuracy = evaluate_eer(distances, labels)
+    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+
+    # print('\33[91mFor l2_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
+    print('\33[91mFor cos_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
 
 
 def create_optimizer(model, new_lr):
