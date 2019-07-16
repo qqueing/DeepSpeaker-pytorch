@@ -112,6 +112,32 @@ def read_extract_audio(directory):
     #print(voxceleb.head(10))
     return audio_set
 
+def wav_list_reader(data_path):
+    """
+        Check if resume dataset variables from local list(.npy).
+    :param data_path: the dataset root
+    :return: the data list
+    """
+    voxceleb_list = "Data/voxceleb.npy"
+    voxceleb_dev_list = "Data/voxceleb_dev.npy"
+
+    if os.path.isfile(voxceleb_list):
+        voxceleb = np.load(voxceleb_list, allow_pickle=True)
+        if len(voxceleb)!=153516:
+            raise ValueError("The number of wav files may be wrong!")
+    else:
+        voxceleb = read_my_voxceleb_structure(data_path)
+        np.save(voxceleb_list, voxceleb)
+
+    if os.path.isfile(voxceleb_dev_list):
+        voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
+    else:
+        voxceleb_dev = [datum for datum in voxceleb if datum['subset'] == 'dev']
+        np.save(voxceleb_dev_list, voxceleb_dev)
+
+    return voxceleb, voxceleb_dev
+
+
 # read_my_voxceleb_structure('/data/voxceleb')
 
 
