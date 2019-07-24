@@ -1,6 +1,6 @@
 """
 @Overview:
-Implement Training ResNet 10 for Speaker Verification!
+Implement Training ResNet 34 for Speaker Verification!
     Enrollment set files will be in the 'Data/enroll_set.npy' and the classes-to-index file is 'Data/enroll_classes.npy'
     Test set files are in the 'Data/test_set.npy' and the utterances-to-index file is 'Data/test_classes.npy'.
 
@@ -21,19 +21,17 @@ import pdb
 
 import numpy as np
 from tqdm import tqdm
-from Model_Define.model import DeepSpeakerModel
-from eval_metrics import evaluate, evaluate_eer
+from Define_Model.model import DeepSpeakerModel
+from eval_metrics import evaluate
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
-from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
-from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import wav_list_reader
+from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
+from Process_Data.VoxcelebTestset import VoxcelebTestset
+from Process_Data.voxceleb_wav_reader import read_my_voxceleb_structure
 
-from Model_Define.model import PairwiseDistance, TripletMarginCosLoss
-from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
-from torch.nn import CosineSimilarity
-
+from Define_Model.model import PairwiseDistance,TripletMarginCosLoss
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
 import torch._utils
@@ -54,6 +52,8 @@ parser.add_argument('--dataroot', type=str, default='Data/dataset',
                     help='path to dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
+parser.add_argument('--dev-set-size', default='all',
+                    help='part of dev set data for training, should be one of (all, 10k)')
 
 parser.add_argument('--log-dir', default='Data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
@@ -61,22 +61,20 @@ parser.add_argument('--log-dir', default='Data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10_devall/checkpoint_10.pth',
-                    type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/resnet34_devall/checkpoint_13.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=25, metavar='E',
+parser.add_argument('--epochs', type=int, default=30, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--resnet-size', type=int, default=10, metavar='BS',
+parser.add_argument('--resnet-size', type=int, default=34, metavar='BS',
                     help='resnet size for training (default: 34)')
-parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=256, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=128, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -87,10 +85,11 @@ parser.add_argument('--n-triplets', type=int, default=819200, metavar='N',
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--min-softmax-epoch', type=int, default=10, metavar='MINEPOCH',
+
+parser.add_argument('--min-softmax-epoch', type=int, default=25, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
-parser.add_argument('--loss-ratio', type=float, default=0.0, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
@@ -99,12 +98,12 @@ parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=0.0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='2,3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -130,30 +129,40 @@ if not os.path.exists(args.log_dir):
 
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
-    .format(args.optimizer, args.n_triplets, args.lr, args.wd,
+CKP_DIR = args.ckp_dir + '/resnet{}_dev{}'.format(args.resnet_size, args.dev_set_size)
+LOG_DIR = args.log_dir + '/run-optim_{}-res{}-set{}-n{}-lr{}-wd{}-m{}-embed{}-msceleb-alpha10'\
+    .format(args.optimizer, args.resnet_size, args.dev_set_size, args.n_triplets, args.lr, args.wd,
             args.margin,args.embedding_size)
 
 # create logger
+if not os.path.exists(CKP_DIR):
+    os.makedirs(CKP_DIR)
 logger = Logger(LOG_DIR)
 
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
-
-#l2_dist = PairwiseDistance(2)
+# l2_dist = PairwiseDistance(2)
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
+
 
 # Read file list from dataset path
 print("================================Reading Dataset File List==================================")
-voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+voxceleb_list = "Data/voxceleb.npy"
+voxceleb_dev_list = "Data/voxceleb_dev.npy"
+voxceleb_dev_10k_list = "Data/voxceleb_dev_10k.npy"
+
+if os.path.isfile(voxceleb_list):
+    voxceleb = np.load(voxceleb_list, allow_pickle=True)
+else:
+    voxceleb = read_my_voxceleb_structure(args.dataroot)
+    np.save(voxceleb_list, voxceleb)
 
 # Make fbank feature if not yet.
 if args.makemfb:
     #pbar = tqdm(voxceleb)
     for datum in voxceleb:
         # print(datum['filename'])
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+        mk_MFB((args.dataroot +'/' + datum['filename']+'.wav'))
     print("Complete convert")
 
 # Create file loader for dataset
@@ -175,12 +184,25 @@ else:
                         #tonormal()
                     ])
     file_loader = read_audio
-print("Creating file loader for dataset completed!")
+print(">>Creating file loader for dataset completed!")
+
+# Get the file list of development set
+if os.path.isfile(voxceleb_dev_list):
+    voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
+    voxceleb_dev_10k = voxceleb_dev[:10000]
+else:
+    voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
+    np.save(voxceleb_dev_list, voxceleb_dev)
+
+    voxceleb_dev_10k = voxceleb_dev[:10000]
+    np.save(voxceleb_dev_10k_list, voxceleb_dev_10k)
+
 
 # Reduce the dev set
-#voxceleb_dev = voxceleb_dev_10k
+if args.dev_set_size == '10k':
+    voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets, loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
 
 # Remove the reference to reduce memory usage
 del voxceleb
@@ -200,8 +222,8 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(resnet_size=10, embedding_size=args.embedding_size,
-                      num_classes=len(train_dir.classes))
+    print("================================Creating Resnet Modeling==================================")
+    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=args.resnet_size, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -214,12 +236,16 @@ def main():
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
+            checkpoint = torch.load(args.resume)
 
             # Filter that remove uncessary component in checkpoint file
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
+
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+
+            # pdb.set_trace()
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
@@ -228,7 +254,7 @@ def main():
     #start = 0
     end = start + args.epochs
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     for epoch in range(start, end):
 
@@ -243,7 +269,8 @@ def train(train_loader, model, optimizer, epoch):
 
     labels, distances = [], []
     correct = 0.
-    total_datasize = 0.
+    all_sample = 0.
+
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data_a, data_p, data_n,label_p,label_n) in pbar:
         #print("on training{}".format(epoch))
@@ -251,10 +278,14 @@ def train(train_loader, model, optimizer, epoch):
         data_a, data_p, data_n = Variable(data_a), Variable(data_p), \
                                  Variable(data_n)
 
-        # compute output
-        out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
+        label_a, label_p, label_n = label_p.cuda(), label_p.cuda(), label_n.cuda()
+        label_a, label_p, label_n = Variable(label_p), Variable(label_p), Variable(label_n)
+
 
         if epoch > args.min_softmax_epoch:
+            # compute output
+            out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
+
             triplet_loss = TripletMarginCosLoss(args.margin).forward(out_a, out_p, out_n)
             loss = triplet_loss
             # compute gradient and update weights
@@ -284,97 +315,101 @@ def train(train_loader, model, optimizer, epoch):
 
         else:
         # Choose the hard negatives
-            d_p = l2_dist.forward(out_a, out_p)
-            d_n = l2_dist.forward(out_a, out_n)
-            all = (d_p - d_n < args.margin).cpu().data.numpy().flatten()
-
-            # log loss value for mini batch.
-            total_coorect = np.where(all == 0)
-            logger.log_value('Minibatch Train Accuracy', len(total_coorect[0]))
-
-            total_dist = (d_n - d_p).cpu().data.numpy().flatten()
-            logger.log_value('Minibatch Train distance', np.mean(total_dist))
-
-            hard_triplets = np.where(all == 1)
-            if len(hard_triplets[0]) == 0:
-                continue
-            out_selected_a = Variable(torch.from_numpy(out_a.cpu().data.numpy()[hard_triplets]).cuda())
-            out_selected_p = Variable(torch.from_numpy(out_p.cpu().data.numpy()[hard_triplets]).cuda())
-            out_selected_n = Variable(torch.from_numpy(out_n.cpu().data.numpy()[hard_triplets]).cuda())
-
-            selected_data_a = Variable(torch.from_numpy(data_a.cpu().data.numpy()[hard_triplets]).cuda())
-            selected_data_p = Variable(torch.from_numpy(data_p.cpu().data.numpy()[hard_triplets]).cuda())
-            selected_data_n = Variable(torch.from_numpy(data_n.cpu().data.numpy()[hard_triplets]).cuda())
-
-            selected_label_p = torch.from_numpy(label_p.cpu().numpy()[hard_triplets])
-            selected_label_n= torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
+        #     d_p = l2_dist.forward(out_a, out_p)
+        #     d_n = l2_dist.forward(out_a, out_n)
+        #     all = (d_p - d_n  < args.margin).cpu().data.numpy().flatten()
+        #
+        #     # log loss value for mini batch.
+        #     total_coorect = np.where(all == 0)
+        #     logger.log_value('Minibatch Train Accuracy', len(total_coorect[0]))
+        #
+        #     total_dist = (d_n - d_p).cpu().data.numpy().flatten()
+        #     logger.log_value('Minibatch Train distance', np.mean(total_dist))
+        #
+        #     hard_triplets = np.where(all == 1)
+        #     if len(hard_triplets[0]) == 0:
+        #         continue
+            # out_selected_a = Variable(torch.from_numpy(out_a.cpu().data.numpy()[hard_triplets]).cuda())
+            # out_selected_p = Variable(torch.from_numpy(out_p.cpu().data.numpy()[hard_triplets]).cuda())
+            # out_selected_n = Variable(torch.from_numpy(out_n.cpu().data.numpy()[hard_triplets]).cuda())
+            #
+            # selected_data_a = Variable(torch.from_numpy(data_a.cpu().data.numpy()[hard_triplets]).cuda())
+            # selected_data_p = Variable(torch.from_numpy(data_p.cpu().data.numpy()[hard_triplets]).cuda())
+            # selected_data_n = Variable(torch.from_numpy(data_n.cpu().data.numpy()[hard_triplets]).cuda())
+            #
+            # selected_label_p = torch.from_numpy(label_p.cpu().numpy()[hard_triplets])
+            # selected_label_n= torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
             # triplet_loss = TripletMarginLoss(args.margin).forward(out_selected_a, out_selected_p, out_selected_n)
 
-            cls_a = model.forward_classifier(selected_data_a)
-            cls_p = model.forward_classifier(selected_data_p)
-            cls_n = model.forward_classifier(selected_data_n)
+            # cls_a = model.forward_classifier(selected_data_a)
+            # cls_p = model.forward_classifier(selected_data_p)
+            # cls_n = model.forward_classifier(selected_data_n)
+
+            cls_a = model.forward_classifier(data_a)
+            cls_p = model.forward_classifier(data_p)
+            cls_n = model.forward_classifier(data_n)
 
             criterion = nn.CrossEntropyLoss()
-            predicted_labels = torch.cat([cls_a,cls_p,cls_n])
-            # pdb.set_trace()
-            true_labels = torch.cat([Variable(selected_label_p.cuda()), Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
+            predicted_labels = torch.cat([cls_a, cls_p, cls_n])
+            # true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
+            true_labels = torch.cat([label_p.cuda(), label_p.cuda(), label_n.cuda()])
 
             cross_entropy_loss = criterion(predicted_labels.cuda(), true_labels.cuda())
-            m = nn.Softmax() 
+            loss = cross_entropy_loss #+ triplet_loss * args.loss_ratio
+
+            m = nn.Softmax()
             predicted_one_labels = m(predicted_labels)
             predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
             # pdb.set_trace()
-            minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0])/len(predicted_one_labels)
+            minibatch_acc = float((predicted_one_labels.cuda()==true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
             correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0])
-            total_datasize += len(predicted_one_labels)
-            
-            loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
-
+            all_sample += len(predicted_one_labels)
             # compute gradient and update weights
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
+
             # log loss value for hard selected sample
             # logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
             logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
-            logger.log_value('selected_total_loss', loss.data[0]).step()
-            logger.log_value('minibatch_accuracy', minibatch_acc).step()
+            #logger.log_value('minibatch accuracy', 100. * minibatch_acc).step()
+            # logger.log_value('selected_total_loss', loss.data[0]).step()
             if batch_idx % args.log_interval == 0:
-                pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} Minibatch accuracy: {:.4f}\t # of Selected Triplets: {:4d}'.format(
+                pbar.set_description(
+                    'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f}\tMinibatch Accuracy:{:.6f}%\t# Without Selected Triplets'.format(
                         epoch,
                         batch_idx * len(data_a),
                         len(train_loader.dataset),
                         100. * batch_idx / len(train_loader),
                         loss.data[0],
-                        100. * minibatch_acc,
-                        len(hard_triplets[0])
+                        100. * minibatch_acc
+                        # len(hard_triplets[0])
                     ))
 
-
-            dists = l2_dist.forward(out_selected_a,out_selected_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy())
-            labels.append(np.zeros(dists.size(0)))
-
-            dists = l2_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy())
-            labels.append(np.ones(dists.size(0)))
+            # dists = l2_dist.forward(out_selected_a,out_selected_n) #torch.sqrt(torch.sum((out_a - out_n) ** 2, 1))  # euclidean distance
+            # distances.append(dists.data.cpu().numpy())
+            # labels.append(np.zeros(dists.size(0)))
+            #
+            #
+            # dists = l2_dist.forward(out_selected_a,out_selected_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+            # distances.append(dists.data.cpu().numpy())
+            # labels.append(np.ones(dists.size(0)))
 
 
     #accuracy for hard selected sample, not all sample.
-    labels = np.array([sublabel for label in labels for sublabel in label])
-    distances = np.array([subdist for dist in distances for subdist in dist])
-    # do checkpointing
+    #labels = np.array([sublabel for label in labels for sublabel in label])
+    #distances = np.array([subdist for dist in distances for subdist in dist])
+    
+# do checkpointing
     torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/resnet10_devall/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+                '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
-    err, accuracy = evaluate_eer(distances, labels)
-    print('\33[91mFor cos_distance verification:\n  Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
+    #tpr, fpr, accuracy, val, far = evaluate(distances,labels)
+    print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(correct / all_sample))
+    #logger.log_value('Train Accuracy', np.mean(accuracy))
 
-    if not epoch > args.min_softmax_epoch:
-        print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(float(correct)/total_datasize))   
-        logger.log_value('Train Accuracy', float(correct)/total_datasize)
 
 def test(test_loader, model, epoch):
     # switch to evaluate mode
@@ -408,18 +443,18 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    err, accuracy = evaluate_eer(distances, labels)
-    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
-
-    # print('\33[91mFor l2_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
-    print('\33[91mFor cos_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
+    #print("distance {.8f}".format(distances))
+    #print("distance {.1f}".format(labels))
+    tpr, fpr, accuracy, val,  far = evaluate(distances,labels)
+    print('\33[91mTest set: Accuracy: {:.8f}\n\33[0m'.format(np.mean(accuracy)))
+    logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
 def create_optimizer(model, new_lr):
     # setup optimizer
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.9, dampening=0.9,
+                              momentum=0.99, dampening=0.9,
                               weight_decay=args.wd)
     elif args.optimizer == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=new_lr,

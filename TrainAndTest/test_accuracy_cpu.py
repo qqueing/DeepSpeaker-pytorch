@@ -18,23 +18,20 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
-
+import pdb
 
 import numpy as np
 from tqdm import tqdm
-from Model_Define.model import DeepSpeakerModel
-from eval_metrics import evaluate
+from Define_Model.model import DeepSpeakerModel
 from eval_metrics import evaluate_eer
-
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
-from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
-from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
+from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
+from Process_Data.VoxcelebTestset import VoxcelebTestset
 
-from Model_Define.model import PairwiseDistance
-from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from Define_Model.model import PairwiseDistance
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
 import torch._utils
@@ -62,7 +59,7 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume', default='Data/checkpoint/checkpoint_35.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/checkpoint_16.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -72,7 +69,7 @@ parser.add_argument('--epochs', type=int, default=29, metavar='E',
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 
-parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=256, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -80,7 +77,7 @@ parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
                     help='how many triplets will generate from the dataset')
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
@@ -101,7 +98,7 @@ parser.add_argument('--wd', default=0.0, type=float,
 parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
-parser.add_argument('--no-cuda', action='store_true', default=False,
+parser.add_argument('--no-cuda', action='store_true', default=True,
                     help='enables CUDA training')
 parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
@@ -140,15 +137,15 @@ logger = Logger(LOG_DIR)
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 l2_dist = PairwiseDistance(2)
-# cos_dist = PairwiseCosDistance(2)
 
-voxceleb = read_my_voxceleb_structure(args.dataroot)
-if args.makemfb:
+
+# voxceleb = read_my_voxceleb_structure(args.dataroot)
+# if args.makemfb:
     #pbar = tqdm(voxceleb)
-    for datum in voxceleb:
-        # print(datum['filename'])
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
-    print("Complete convert")
+    # for datum in voxceleb:
+    #     # print(datum['filename'])
+    #     mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+    # print("Complete convert")
 
 if args.mfb:
     transform = transforms.Compose([
@@ -170,10 +167,10 @@ else:
     file_loader = read_audio
 
 
-voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
-train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot, n_triplets=args.n_triplets, loader = file_loader, transform=transform)
-del voxceleb
-del voxceleb_dev
+# voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
+# train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
+# del voxceleb
+# del voxceleb_dev
 
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
@@ -186,10 +183,10 @@ def main():
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
+    print('\nNumber of Test utterance pair:\n{}\n'.format(len(test_dir.validation_images)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=1211)
 
     if args.cuda:
         model.cuda()
@@ -200,15 +197,14 @@ def main():
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
-            checkpoint = torch.load(args.resume)
+            checkpoint = torch.load(args.resume, map_location='cpu')
             args.start_epoch = checkpoint['epoch']
-            checkpoint = torch.load(args.resume)
+            #checkpoint = torch.load(args.resume, map_location='cpu')
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k
                         }
 
             model.load_state_dict(filtered)
-
             optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -239,8 +235,8 @@ def test(test_loader, model, epoch):
 
         # compute output
         out_a, out_p = model(data_a), model(data_p)
-
-        dists = l2_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        pdb.set_trace()
+        dists = l2_dist.forward(out_a, out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         dists = dists.data.cpu().numpy()
         dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
         distances.append(dists)
@@ -276,6 +272,7 @@ def create_optimizer(model, new_lr):
                                   lr_decay=args.lr_decay,
                                   weight_decay=args.wd)
     return optimizer
+
 
 if __name__ == '__main__':
     main()

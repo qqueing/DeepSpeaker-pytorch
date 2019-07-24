@@ -1,3 +1,10 @@
+"""
+@Overview: There are errors for computing eer and acc, when it comes to l2 and cosine distance.
+For l2 distacne: when the distance is less than the theshold, it should be true;
+For cosine distance: when the distance is greater than the theshold, it's true.
+"""
+import pdb
+
 import numpy as np
 from sklearn.model_selection import KFold
 from scipy import interpolate
@@ -19,12 +26,52 @@ def evaluate_eer(distances, labels):
     max_threshold = np.max(distances)
     thresholds = np.arange(0, max_threshold, 0.001)
     tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
-    err, accuracy = calculate_eer(thresholds, distances,
-        labels)
+    err, accuracy = calculate_eer(thresholds, distances, labels)
     # thresholds = np.arange(0, 30, 0.001)
     # val,  far = calculate_val(thresholds, distances,
     #     labels, 1e-3)
     return err, best_accuracy
+
+def evaluate_kaldi_eer(distances, labels, cos=True):
+    # split the target and non-target distance array
+    target = []
+    non_target = []
+
+    for (distance, label) in zip(distances, labels):
+        if cos:
+            distance = 1-distance
+        if label:
+            target.append(distance)
+        else:
+            non_target.append(distance)
+
+    target = np.sort(target)
+    non_target = np.sort(non_target)
+
+    target_size = target.size
+    target_position = 0
+    # pdb.set_trace()
+    while(target_position+1 < target_size):
+        nontarget_size = non_target.size
+        nontarget_n = nontarget_size * target_position * 1.0 / target_size
+        nontarget_position = int(nontarget_size - 1 - nontarget_n)
+
+        if (nontarget_position < 0):
+            nontarget_position = 0
+        # The cosine sim of 1-cos should be >, while l2 distance is <
+        if (non_target[nontarget_position] < target[target_position]):
+            break
+
+        target_position += 1
+
+    threshold = target[target_position]
+    eer = target_position * 1.0 / target_size
+
+    max_threshold = np.max(distances)
+    thresholds = np.arange(0, max_threshold, 0.001)
+    tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
+
+    return eer, best_accuracy
 
 def calculate_roc(thresholds, distances, labels):
 
@@ -61,7 +108,6 @@ def calculate_accuracy(threshold, dist, actual_issame):
     acc = float(tp+tn)/dist.size
     return tpr, fpr, acc
 
-
 def calculate_eer(thresholds, distances, labels):
 
     nrof_pairs = min(len(labels), len(distances))
@@ -90,7 +136,7 @@ def calculate_eer(thresholds, distances, labels):
 
 
 def calculate_eer_accuracy(threshold, dist, actual_issame):
-    predict_issame = np.less(dist, threshold)
+    predict_issame = np.greater(dist, threshold)
     tp = np.sum(np.logical_and(predict_issame, actual_issame))
     fp = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
     tn = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame)))

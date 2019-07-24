@@ -12,6 +12,7 @@
 #from __future__ import print_function
 import argparse
 import torch
+import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 
@@ -22,16 +23,20 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Model_Define.model import DeepSpeakerModel
+from Define_Model.model import DeepSpeakerModel
+from eval_metrics import evaluate
 from eval_metrics import evaluate_eer
+from eval_metrics import evaluate_kaldi_eer
+
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
-from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
-from Dataset_Process.VoxcelebTestset import VoxcelebTestset
+from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
+from Process_Data.VoxcelebTestset import VoxcelebTestset
+from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Model_Define.model import PairwiseDistance
-from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from Define_Model.model import PairwiseDistance
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
 import torch._utils
@@ -59,17 +64,18 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume', default='Data/checkpoint/checkpoint_16.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/resnet10_devall/checkpoint_42.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=29, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
+parser.add_argument('--cos-sim', action='store_true', default=True,
+                    help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-
-parser.add_argument('--batch-size', type=int, default=256, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -77,7 +83,7 @@ parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
@@ -98,9 +104,9 @@ parser.add_argument('--wd', default=0.0, type=float,
 parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
-parser.add_argument('--no-cuda', action='store_true', default=True,
+parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -136,16 +142,17 @@ logger = Logger(LOG_DIR)
 
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
-l2_dist = PairwiseDistance(2)
+if args.cos_sim:
+    l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
+else:
+    l2_dist = PairwiseDistance(2)
 
-
-# voxceleb = read_my_voxceleb_structure(args.dataroot)
-# if args.makemfb:
+voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+if args.makemfb:
     #pbar = tqdm(voxceleb)
-    # for datum in voxceleb:
-    #     # print(datum['filename'])
-    #     mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
-    # print("Complete convert")
+    for datum in voxceleb:
+        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+    print("Complete convert")
 
 if args.mfb:
     transform = transforms.Compose([
@@ -167,13 +174,11 @@ else:
     file_loader = read_audio
 
 
-# voxceleb_dev = [datum for datum in voxceleb if datum['subset']=='dev']
-# train_dir = DeepSpeakerDataset(voxceleb = voxceleb_dev, dir=args.dataroot,n_triplets=args.n_triplets,loader = file_loader,transform=transform)
-# del voxceleb
-# del voxceleb_dev
+train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot, n_triplets=args.n_triplets, loader = file_loader, transform=transform)
+del voxceleb
+del voxceleb_dev
 
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
-
 qwer = test_dir.__getitem__(3)
 
 
@@ -183,10 +188,10 @@ def main():
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Test utterance pair:\n{}\n'.format(len(test_dir.validation_images)))
+    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=1211)
+    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -197,25 +202,24 @@ def main():
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
-            checkpoint = torch.load(args.resume, map_location='cpu')
+            checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
-            #checkpoint = torch.load(args.resume, map_location='cpu')
+            checkpoint = torch.load(args.resume)
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k
                         }
 
             model.load_state_dict(filtered)
+
             optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
-    # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     epoch = args.start_epoch
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    #for epoch in range(start, end):
 
     test(test_loader, model, epoch)
-        #break;
+
 
 def test(test_loader, model, epoch):
     # switch to evaluate mode
@@ -236,7 +240,7 @@ def test(test_loader, model, epoch):
         # compute output
         out_a, out_p = model(data_a), model(data_p)
 
-        dists = l2_dist.forward(out_a, out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = l2_dist.forward(out_a, out_p)
         dists = dists.data.cpu().numpy()
         dists = dists.reshape(current_sample,args.test_input_per_file).mean(axis=1)
         distances.append(dists)
@@ -250,18 +254,25 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    #print("distance {.8f}".format(distances))
-    #print("distance {.1f}".format(labels))
-    tpr, fpr, fnr, accuracy, val,  far = evaluate_eer(distances,labels)
-    print('\33[91mTest set: Accuracy: {:.8f} EER:{:.8f} \n\33[0m'.format(np.mean(accuracy), fnr))
-    logger.log_value('Test Accuracy', np.mean(accuracy))
+    # err, accuracy= evaluate_eer(distances,labels)
+    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=False)
+
+    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+
+    if args.cos_sim:
+        print('\33[91mFor cos_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
+    else:
+        print('\33[91mFor l2_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
+
+
+    #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
 def create_optimizer(model, new_lr):
     # setup optimizer
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.9, dampening=0.9,
+                              momentum=0.99, dampening=0.9,
                               weight_decay=args.wd)
     elif args.optimizer == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=new_lr,
@@ -272,7 +283,6 @@ def create_optimizer(model, new_lr):
                                   lr_decay=args.lr_decay,
                                   weight_decay=args.wd)
     return optimizer
-
 
 if __name__ == '__main__':
     main()

@@ -20,17 +20,17 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Model_Define.model import DeepSpeakerModel
+from Define_Model.model import DeepSpeakerModel
 from eval_metrics import evaluate
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
-from Dataset_Process.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
-from Dataset_Process.VoxcelebTestset import VoxcelebTestset
-from Dataset_Process.voxceleb_wav_reader import read_my_voxceleb_structure
+from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
+from Process_Data.VoxcelebTestset import VoxcelebTestset
+from Process_Data.voxceleb_wav_reader import read_my_voxceleb_structure
 
-from Model_Define.model import PairwiseDistance,TripletMarginCosLoss
-from Dataset_Process.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from Define_Model.model import PairwiseDistance,TripletMarginCosLoss
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 from torch.nn import CosineSimilarity
 
 # Version conflict
@@ -61,7 +61,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10_devall/checkpoint_2.pth',
+                    default='Data/checkpoint/checkpoint_10k_21.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -236,11 +236,13 @@ def main():
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
+            checkpoint = torch.load(args.resume)
 
             # Filter that remove uncessary component in checkpoint file
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
+
             optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -337,11 +339,10 @@ def train(train_loader, model, optimizer, epoch):
 
             criterion = nn.CrossEntropyLoss()
             predicted_labels = torch.cat([cls_a,cls_p,cls_n])
-            true_labels = torch.cat([Variable(selected_label_p.cuda()), Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
+            true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
 
             cross_entropy_loss = criterion(predicted_labels.cuda(),true_labels.cuda())
-            correct = 0
-            correct += (predicted_labels.cuda() == true_labels.cuda()).sum()
+
             loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
             # compute gradient and update weights
             optimizer.zero_grad()
