@@ -255,7 +255,7 @@ def test(test_loader, model, epoch):
     distances = np.array([subdist for dist in distances for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=False)
+    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
 
     #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
