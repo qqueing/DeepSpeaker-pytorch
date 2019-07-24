@@ -33,13 +33,20 @@ def evaluate_eer(distances, labels):
     return err, best_accuracy
 
 def evaluate_kaldi_eer(distances, labels, cos=True):
+    """
+    The distance score should be larger when two samples are more similar.
+    :param distances:
+    :param labels:
+    :param cos:
+    :return:
+    """
     # split the target and non-target distance array
     target = []
     non_target = []
 
     for (distance, label) in zip(distances, labels):
-        if cos:
-            distance = 1-distance
+        if not cos:
+            distance = -distance
         if label:
             target.append(distance)
         else:
@@ -58,7 +65,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
 
         if (nontarget_position < 0):
             nontarget_position = 0
-        # The cosine sim of 1-cos should be >, while l2 distance is <
+        # The exceptions from non targets are samples where cosine score is > the target score
         if (non_target[nontarget_position] < target[target_position]):
             break
 
