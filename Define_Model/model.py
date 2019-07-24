@@ -51,7 +51,8 @@ class TripletMarginCosLoss(Function):
         d_n = self.pdist.forward(anchor, negative)
 
         dist_hinge = torch.clamp(self.margin - d_p + d_n, min=0.0)
-        loss = torch.sum(dist_hinge)
+        # loss = torch.sum(dist_hinge)
+        loss = torch.mean(dist_hinge)
         return loss
 
 
