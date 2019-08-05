@@ -171,3 +171,52 @@ class DeepSpeakerEnrollDataset(data.Dataset):
 
     def __len__(self):
         return len(self.features)
+
+class ClassificationDataset(data.Dataset):
+    def __init__(self, voxceleb, dir, loader, transform=None, *arg, **kw):
+        print('Looking for audio [wav] files in {}.'.format(dir))
+        if len(voxceleb) == 0:
+            raise(RuntimeError(('This is not data in the dataset')))
+
+        classes, class_to_idx = find_classes(voxceleb)
+        features = []
+        for vox_item in voxceleb:
+            item = (dir + "/" + vox_item['filename']+'.wav', class_to_idx[vox_item['speaker_id']])
+            features.append(item)
+
+        self.root = dir
+        self.features = features
+        self.classes = classes
+        self.class_to_idx = class_to_idx
+        self.transform = transform
+        self.loader = loader
+        #print('Generating {} triplets'.format(self.n_triplets))
+        self.indices = create_indices(features)
+
+    def __getitem__(self, index):
+        '''
+
+        Args:
+            index: Index of the triplet or the matches - not of a single feature
+
+        Returns:
+
+        '''
+        def transform(feature_path):
+            """Convert image into numpy array and apply transformation
+               Doing this so that it is consistent with all other datasets
+            """
+            feature = self.loader(feature_path)
+            return self.transform(feature)
+
+        # Get the index of feature
+        feature = self.features[index][0]
+        label = self.features[index][1]
+
+        # transform features if required
+        feature= transform(feature)
+        return feature, label
+
+    def __len__(self):
+        return len(self.features)
+
