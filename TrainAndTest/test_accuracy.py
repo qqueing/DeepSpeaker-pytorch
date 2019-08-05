@@ -64,17 +64,19 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume', default='Data/checkpoint/resnet10_devall/checkpoint_42.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/resnet34_devall/checkpoint_42.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=29, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
-parser.add_argument('--cos-sim', action='store_true', default=True,
+parser.add_argument('--cos-sim', action='store_true', default=False,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
+parser.add_argument('--resnet-size', type=int, default=34, metavar='E',
+                    help='depth of resnet to train (default: 34)')
 parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
@@ -184,14 +186,16 @@ qwer = test_dir.__getitem__(3)
 
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
-    test_display_triplet_distance = False
+    # test_display_triplet_distance = False
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = DeepSpeakerModel(embedding_size=args.embedding_size,
+                             resnet_size=args.resnet_size,
+                             num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -260,10 +264,9 @@ def test(test_loader, model, epoch):
     #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
+        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
-
+        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
 
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
