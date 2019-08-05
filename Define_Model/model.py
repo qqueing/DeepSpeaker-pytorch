@@ -4,7 +4,7 @@ import math
 
 from torch.autograd import Function
 from torch.nn import CosineSimilarity
-from torch import functional as F
+from Define_Model.SoftmaxLoss import *
 
 
 class PairwiseDistance(Function):
@@ -245,7 +245,11 @@ class DeepSpeakerModel(nn.Module):
         res = self.model.classifier(features)
         return res
 
+
 class ResSpeakerModel(nn.Module):
+    """
+    Define the Angular Softmax Loss model.
+    """
     def __init__(self, resnet_size, embedding_size, num_classes, feature_dim = 64):
         super(DeepSpeakerModel, self).__init__()
         resnet_type = {10:[1, 1, 1, 1],
@@ -262,9 +266,9 @@ class ResSpeakerModel(nn.Module):
             self.model.fc = nn.Linear(512*4, self.embedding_size)
         elif feature_dim == 40:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
-        self.model.classifier = nn.Linear(self.embedding_size, num_classes)
+        # self.model.classifier = nn.Linear(self.embedding_size, num_classes)
         # self.model.classifier = nn.Softmax(self.embedding_size, num_classes)
-
+        self.model.classifier = AngleLinear(self.embedding_size, num_classes)
 
     def l2_norm(self,input):
         input_size = input.size()
@@ -306,13 +310,11 @@ class ResSpeakerModel(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.model.fc(x)
         self.features = self.l2_norm(x)
+
         # Multiply by alpha = 10 as suggested in https://arxiv.org/pdf/1703.09507.pdf
         alpha=10
-        self.features = self.features*alpha
+        self.features = self.features * alpha
 
-        #x = x.resize(int(x.size(0) / 17),17 , 512)
-        #self.features =torch.mean(x,dim=1)
-        #x = self.model.classifier(self.features)
         return self.features
 
     def forward_classifier(self, x):
