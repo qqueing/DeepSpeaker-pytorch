@@ -71,7 +71,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
 
         target_position += 1
 
-    threshold = target[target_position]
+    # threshold = target[target_position]
     eer = target_position * 1.0 / target_size
 
     max_threshold = np.max(distances)
