@@ -63,18 +63,18 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume', default='Data/checkpoint/resnet10_devall/checkpoint_1.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/resnet34_devall/checkpoint_40.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=40, metavar='E',
+parser.add_argument('--epochs', type=int, default=15, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -100,7 +100,7 @@ parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=0.0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -188,7 +188,7 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -203,8 +203,7 @@ def main():
             args.start_epoch = checkpoint['epoch']
             checkpoint = torch.load(args.resume)
 
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k
-                        }
+            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
 
@@ -250,7 +249,7 @@ def train(train_loader, model, optimizer, epoch):
         criterion = nn.CrossEntropyLoss()
         true_labels = label.cuda()
 
-        cross_entropy_loss = criterion(predicted_labels.cuda(), true_labels.cuda())
+        cross_entropy_loss = criterion(out.cuda(), true_labels.cuda())
         loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
 
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
@@ -274,12 +273,12 @@ def train(train_loader, model, optimizer, epoch):
                 loss.data[0],
                 100. * minibatch_acc))
 
-    torch.save({'epoch': epoch, 'state_dict': model.state_dict(),
+    torch.save({'epoch': epoch+1, 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-               '{}/resnet10_devall/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               '{}/resnet34_devall/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
     print('\33[91mFor Softmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
-    writer.add_scalar('Train_Accuracy/per_epoch', correct/total_datasize, epoch)
+    writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
 
 
 def test(test_loader, model, epoch):
