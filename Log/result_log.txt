@@ -1,0 +1,10 @@
+20190805:
+Trained ResNet34 with softmax cross entropy for 42 epoch:
+
+    => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_42.pth
+    Test Epoch: 43 [113088/37720 (100%)]: : 590it [10:19,  1.11s/it]
+    For cos_distance Test set: ERR: 0.22773065	Best ACC:0.49997349
+
+    => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_42.pth
+    Test Epoch: 43 [113088/37720 (100%)]: : 590it [09:15,  1.09s/it]
+    For l2_distance Test set: ERR: 22.81018028%	Best ACC:0.77298515
