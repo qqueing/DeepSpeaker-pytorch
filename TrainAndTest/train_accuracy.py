@@ -194,6 +194,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
+    criterion = nn.CrossEntropyLoss()
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -219,12 +220,12 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     for epoch in range(start, end):
         # pdb.set_trace()
-        train(train_loader, model, optimizer,epoch)
+        train(train_loader, model, optimizer, criterion, epoch)
         #test(train_loader, model, epoch)
 
     writer.close()
 
-def train(train_loader, model, optimizer, epoch):
+def train(train_loader, model, optimizer, criterion, epoch):
     # switch to evaluate mode
     model.train()
     # labels, distances = [], []
@@ -246,7 +247,6 @@ def train(train_loader, model, optimizer, epoch):
         predicted_labels = output_softmax(out)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
-        criterion = nn.CrossEntropyLoss()
         true_labels = label.cuda()
 
         cross_entropy_loss = criterion(out.cuda(), true_labels.cuda())
