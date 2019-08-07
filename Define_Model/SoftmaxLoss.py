@@ -21,6 +21,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+import pdb
 
 __all__=["AngleLinear", "AngleSoftmaxLoss", "AngularSoftmax", "AMSoftmax"]
 
@@ -139,9 +140,10 @@ class AngularSoftmax(nn.Module):
         self.m = m
         self.in_feats = in_feats
         self.num_classes = num_classes
-        self.W = torch.nn.Parameter(torch.randn(in_feats, num_classes), requires_grad=True)
+        self.W = torch.nn.Parameter(torch.randn(in_feats, num_classes), requires_grad=True).cuda()
         self.ce = nn.CrossEntropyLoss()
-        nn.init.xavier_normal_(self.W, gain=1)
+        # nn.init.xavier_normal(self.W, gain=1)
+
         self.cos_function = [
             lambda x: x ** 0,
             lambda x: x ** 1,
@@ -160,6 +162,7 @@ class AngularSoftmax(nn.Module):
         w_modulus = w.pow(2).sum(0).pow(0.5) #[out_planes]
 
         # get w@x=||w||*||x||*cos(theta)
+        # w = w.cuda()
         inner_wx = x.mm(w) # [batch,out_planes]
         cos_theta = (inner_wx/x_modulus.view(-1,1))/w_modulus.view(1,-1)
         cos_theta = cos_theta.clamp(-1,1)
@@ -212,13 +215,15 @@ class AMSoftmax(nn.Module):
         self.m = m
         self.s = s
         self.in_feats = in_feats
-        self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes), requires_grad=True)
+        self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes), requires_grad=True).cuda()
         self.ce = nn.CrossEntropyLoss()
-        nn.init.xavier_normal_(self.W, gain=1)
+        # nn.init.xavier_normal(self.W, gain=1)
 
     def forward(self, x, label):
         assert x.size()[0] == label.size()[0]
         assert x.size()[1] == self.in_feats
+
+        # pdb.set_trace()
         x_norm = torch.norm(x, p=2, dim=1, keepdim=True).clamp(min=1e-12)
         x_norm = torch.div(x, x_norm)
         w_norm = torch.norm(self.W, p=2, dim=0, keepdim=True).clamp(min=1e-12)
@@ -228,10 +233,10 @@ class AMSoftmax(nn.Module):
 
         if lb_view.is_cuda:
             lb_view = lb_view.cpu()
-        delt_costh = torch.zeros(costh.size()).scatter_(1, lb_view, self.m)
+        delt_costh = torch.zeros(costh.size()).scatter_(1, lb_view.data, self.m)
 
         if x.is_cuda:
-            delt_costh = delt_costh.cuda()
+            delt_costh = Variable(delt_costh.cuda())
 
         costh_m = costh - delt_costh
         costh_m_s = self.s * costh_m
