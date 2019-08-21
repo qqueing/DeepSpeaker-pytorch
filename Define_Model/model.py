@@ -5,6 +5,7 @@ import math
 from torch.autograd import Function
 from torch.nn import CosineSimilarity
 from Define_Model.SoftmaxLoss import *
+from torch.autograd import Variable
 
 
 class PairwiseDistance(Function):
@@ -260,15 +261,16 @@ class ResSpeakerModel(nn.Module):
         self.embedding_size = embedding_size
 
         self.resnet_size = resnet_size
+        self.num_classes = num_classes
 
         self.model = myResNet(BasicBlock, resnet_type[resnet_size])
         if feature_dim == 64:
             self.model.fc = nn.Linear(512*4, self.embedding_size)
         elif feature_dim == 40:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
-        # self.model.classifier = nn.Linear(self.embedding_size, num_classes)
+        self.model.classifier = nn.Linear(self.embedding_size, self.num_classes)
         # self.model.classifier = nn.Softmax(self.embedding_size, num_classes)
-        self.model.classifier = AngleLinear(self.embedding_size, num_classes)
+        # self.model.classifier = AngleLinear(self.embedding_size, num_classes)
 
     def l2_norm(self,input):
         input_size = input.size()
@@ -321,3 +323,58 @@ class ResSpeakerModel(nn.Module):
         features = self.forward(x)
         res = self.model.classifier(features)
         return res
+
+    def AngularSoftmaxLoss(self, x, label):
+        x = self.forward(x)
+
+        assert x.size()[0] == label.size()[0]
+        # assert features.size()[1] == self.in_feats
+
+        w = self.model.classifier.renorm(2, 1, 1e-5).mul(1e5)  # [batch, out_planes]
+        x_modulus = x.pow(2).sum(1).pow(0.5)  # [batch]
+        w_modulus = w.pow(2).sum(0).pow(0.5)  # [out_planes]
+
+        # get w@x=||w||*||x||*cos(theta)
+        # w = w.cuda()
+        inner_wx = x.mm(w)  # [batch,out_planes]
+        cos_theta = (inner_wx / x_modulus.view(-1, 1)) / w_modulus.view(1, -1)
+        cos_theta = cos_theta.clamp(-1, 1)
+
+        # get cos(m*theta)
+        cos_m_theta = self.cos_function[self.m](cos_theta)
+        theta = Variable(cos_theta.data.acos())
+
+        # get k, theta is in [ k*pi/m , (k+1)*pi/m ]
+        k = (self.m * theta / math.pi).floor()
+        minus_one = k * 0 - 1
+
+        # get phi_theta = -1^k*cos(m*theta)-2*k
+        phi_theta = (minus_one ** k) * cos_m_theta - 2 * k
+
+        # get cos_x and phi_x
+        # cos_x = cos(theta)*||x||
+        # phi_x = phi(theta)*||x||
+        cos_x = cos_theta * x_modulus.view(-1, 1)
+        phi_x = phi_theta * x_modulus.view(-1, 1)
+
+        target = label.view(-1, 1)
+
+        # get one_hot mat
+        index = cos_x.data * 0.0  # size=(B,Classnum)
+        index.scatter_(1, target.data.view(-1, 1), 1)
+        index = index.byte()
+        index = Variable(index)
+
+        # set lamb, change the rate of softmax and A-softmax
+        self.lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.it))
+
+        # get a-softmax and softmax mat
+        output = cos_x * 1
+        output[index] -= (cos_x[index] * 1.0 / (+self.lamb))
+        output[index] += (phi_x[index] * 1.0 / (self.lamb))
+
+        loss = self.ce(output, label)
+
+        return loss
+
+
