@@ -23,8 +23,8 @@ def evaluate(distances, labels):
 
 def evaluate_eer(distances, labels):
     # Calculate evaluation metrics
-    max_threshold = np.max(distances)
-    thresholds = np.arange(0, max_threshold, 0.001)
+    # max_threshold = np.max(distances)
+    thresholds = np.arange(0, 30, 0.01)
     tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
     err, accuracy = calculate_eer(thresholds, distances, labels)
     # thresholds = np.arange(0, 30, 0.001)
@@ -45,7 +45,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
     non_target = []
 
     for (distance, label) in zip(distances, labels):
-        if not cos:
+        if cos:
             distance = -distance
         if label:
             target.append(distance)
