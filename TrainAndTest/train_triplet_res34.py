@@ -223,7 +223,10 @@ def main():
 
     # instantiate model and initialize weights
     print("================================Creating Resnet Modeling==================================")
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=args.resnet_size, num_classes=len(train_dir.classes))
+    model = DeepSpeakerModel(embedding_size=args.embedding_size,
+                             resnet_size=args.resnet_size,
+                             num_classes=len(train_dir.classes))
+    criterion = nn.CrossEntropyLoss()
 
     if args.cuda:
         model.cuda()
@@ -255,15 +258,16 @@ def main():
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    for epoch in range(start, end):
 
-        train(train_loader, model, optimizer, epoch)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    for epoch in range(start, end):
+        train(train_loader, model, optimizer, criterion, epoch)
         #test(test_loader, model, epoch)
         #break;
 
 
-def train(train_loader, model, optimizer, epoch):
+def train(train_loader, model, optimizer, criterion, epoch):
     # switch to train mode
     model.train()
 
@@ -349,7 +353,7 @@ def train(train_loader, model, optimizer, epoch):
             cls_p = model.forward_classifier(data_p)
             cls_n = model.forward_classifier(data_n)
 
-            criterion = nn.CrossEntropyLoss()
+
             predicted_labels = torch.cat([cls_a, cls_p, cls_n])
             # true_labels = torch.cat([Variable(selected_label_p.cuda()),Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
             true_labels = torch.cat([label_p.cuda(), label_p.cuda(), label_n.cuda()])

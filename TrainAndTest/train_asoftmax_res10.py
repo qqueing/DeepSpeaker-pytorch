@@ -6,11 +6,14 @@
 @Contact: 874681044@qq.com
 @Software: PyCharm
 @File: test_accuracy.py
-@Time: 19-6-19 下午5:17
-@Overview:
+@Time: 19-8-6 下午1:29
+@Overview: Train the resnet 10 with asoftmax.
 """
 #from __future__ import print_function
 import argparse
+import pdb
+from tensorboardX import SummaryWriter
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -20,26 +23,24 @@ from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
 
-
 import numpy as np
 from tqdm import tqdm
 from Define_Model.model import DeepSpeakerModel, ResSpeakerModel
-from eval_metrics import evaluate
-from eval_metrics import evaluate_eer
+from Process_Data.VoxcelebTestset import VoxcelebTestset
 from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
 
-#from DeepSpeakerDataset_static import DeepSpeakerDataset
-from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
-from Process_Data.VoxcelebTestset import VoxcelebTestset
+from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from Define_Model.SoftmaxLoss import *
 # Version conflict
 
 import torch._utils
+
 try:
     torch._utils._rebuild_tensor_v2
 except AttributeError:
@@ -64,20 +65,21 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--resume', default='Data/checkpoint/resnet34_asoftmax/checkpoint_26.pth', type=str, metavar='PATH',
+parser.add_argument('--resume',
+                    default='Data/checkpoint/resnet10_asoftmax/checkpoint_2.pth',
+                    type=str,
+                    metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=29, metavar='E',
+parser.add_argument('--epochs', type=int, default=45, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
-parser.add_argument('--cos-sim', action='store_true', default=False,
+parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--resnet-size', type=int, default=34, metavar='E',
-                    help='depth of resnet to train (default: 34)')
-parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -122,7 +124,7 @@ parser.add_argument('--makemfb', action='store_true', default=False,
 
 args = parser.parse_args()
 
-# set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
+# Set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
 # order to prevent any memory allocation on unused GPUs
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
@@ -141,7 +143,8 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 
 # create logger
 logger = Logger(LOG_DIR)
-
+# Define visulaize SummaryWriter instance
+writer = SummaryWriter('Log/asoftmax_res10_new')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -176,31 +179,30 @@ else:
     file_loader = read_audio
 
 
-train_dir = DeepSpeakerDataset(voxceleb=voxceleb_dev, dir=args.dataroot, n_triplets=args.n_triplets, loader=file_loader, transform=transform)
+train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+
 del voxceleb
 del voxceleb_dev
-
-test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
-qwer = test_dir.__getitem__(3)
 
 
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
-    # test_display_triplet_distance = False
+    test_display_triplet_distance = False
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size,
-                             resnet_size=args.resnet_size,
-                             num_classes=len(train_dir.classes))
+    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
+    # criterion = AngularSoftmax(in_feats=args.embedding_size,
+    #                           num_classes=len(train_dir.classes))
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -213,21 +215,95 @@ def main():
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
-
             optimizer.load_state_dict(checkpoint['optimizer'])
+            # criterion.load_state_dict(checkpoint['criterion'])
+
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
-    epoch = args.start_epoch
+    start = args.start_epoch
+    print('start epoch is : ' + str(start))
+    # start = 0
+    end = start + args.epochs
+
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-    test(test_loader, model, epoch)
+    for epoch in range(start, end):
+        # pdb.set_trace()
+        train(train_loader, model, optimizer, epoch)
+        test(test_loader, model, start)
+        #break
 
+    writer.close()
+
+def train(train_loader, model, optimizer, epoch):
+    # switch to evaluate mode
+    model.train()
+    # labels, distances = [], []
+    correct = 0.
+    total_datasize = 0.
+    total_loss = 0.
+
+    pbar = tqdm(enumerate(train_loader))
+    #pdb.set_trace()
+    output_softmax = nn.Softmax()
+
+    for batch_idx, (data, label) in pbar:
+        if args.cuda:
+            data = data.cuda()
+        data, label = Variable(data), Variable(label)
+
+        # pdb.set_trace()
+        feats = model(data)
+        classfier = model.forward_classifier(feats)
+
+
+        predicted_labels = output_softmax(classfier)
+        predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
+
+        true_labels = label.cuda()
+
+        loss = model.AngularSoftmaxLoss(feats, true_labels.cuda())
+        # loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
+
+        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
+        correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().data[0])
+        total_datasize += len(predicted_one_labels)
+        total_loss += loss.data[0]
+        # Visualize loss and acc
+        writer.add_scalar('Train_Loss/epoch_%d' % epoch, loss.data[0], batch_idx)
+        writer.add_scalar('Train_Accuracy/epoch_%d' % epoch, minibatch_acc, batch_idx)
+        #pdb.set_trace()
+
+        # compute gradient and update weights
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if batch_idx % args.log_interval == 0:
+            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \tMinibatch Accuracy: {:.6f}%'.format(
+                epoch,
+                batch_idx * len(data),
+                len(train_loader.dataset),
+                100. * batch_idx / len(train_loader),
+                loss.data[0],
+                100. * minibatch_acc))
+
+    torch.save({'epoch': epoch+1,
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict()},
+                #'criterion': criterion.state_dict()
+               '{}/resnet10_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+
+
+    print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
+    writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
+    writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
 
 def test(test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
-
     labels, distances = [], []
 
     pbar = tqdm(enumerate(test_loader))
@@ -259,14 +335,14 @@ def test(test_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
-
+    writer.add_scalar('Test_Result/eer', eer, epoch)
+    writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
     #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
         print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     else:
         print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
-
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

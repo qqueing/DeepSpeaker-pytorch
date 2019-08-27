@@ -25,7 +25,7 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import DeepSpeakerModel
+from Define_Model.model import DeepSpeakerModel, ResSpeakerModel
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from eval_metrics import evaluate_kaldi_eer
 
@@ -195,14 +195,12 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
+    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
-    criterion = AMSoftmax(in_feats=args.embedding_size,
-                          n_classes=len(train_dir.classes))
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -215,10 +213,8 @@ def main():
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
-
             optimizer.load_state_dict(checkpoint['optimizer'])
-
-            criterion.load_state_dict(checkpoint['criterion'])
+            #criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
@@ -232,12 +228,12 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        train(train_loader, model, optimizer, criterion, epoch)
+        train(train_loader, model, optimizer, epoch)
         test(test_loader, model, epoch)
 
     writer.close()
 
-def train(train_loader, model, optimizer, criterion, epoch):
+def train(train_loader, model, optimizer, epoch):
     # switch to evaluate mode
     model.train()
     # labels, distances = [], []
@@ -254,15 +250,16 @@ def train(train_loader, model, optimizer, criterion, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        out = model.forward_classifier(data)
+        out = model(data)
+        classifier_out = model.forward_classifier(out)
 
         output_softmax = nn.Softmax()
-        predicted_labels = output_softmax(out)
+        predicted_labels = output_softmax(classifier_out)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
         true_labels = label.cuda()
 
-        cross_entropy_loss = criterion(model(data).cuda(), true_labels.cuda())
+        cross_entropy_loss = model.AMSoftmaxLoss(out, true_labels.cuda())
         loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
 
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
@@ -290,7 +287,8 @@ def train(train_loader, model, optimizer, criterion, epoch):
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'criterion': criterion.state_dict()},
+                # 'criterion': criterion.state_dict()
+                },
                '{}/resnet34_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
     print('\33[91mFor AMSoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
