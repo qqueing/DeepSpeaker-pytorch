@@ -2,8 +2,9 @@ import numpy as np
 from python_speech_features import fbank, delta
 
 from Process_Data import constants as c
-
+import torch
 import librosa
+import pdb
 
 
 def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale = c.USE_SCALE,use_logscale = c.USE_LOGSCALE):
@@ -29,9 +30,7 @@ def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale
         filter_banks = normalize_frames(filter_banks, Scale=use_scale)
         frames_features = filter_banks
 
-
-
-    np.save(filename.replace('.wav', '.npy'),frames_features)
+    np.save(filename.replace('.wav', '.npy'), frames_features)
 
     return
 
@@ -74,7 +73,39 @@ class truncatedinputfromMFB(object):
 
         return np.array(network_inputs)
 
+class concateinputfromMFB(object):
+    """Rescales the input PIL.Image to the given 'size'.
+    If 'size' is a 2-element tuple or list in the order of (width, height), it will be the exactly size to scale.
+    If 'size' is a number, it will indicate the size of the smaller edge.
+    For example, if height > width, then image will be
+    rescaled to (size * height / width, size)
+    size: size of the exactly size or the smaller edge
+    interpolation: Default: PIL.Image.BILINEAR
+    """
+    def __init__(self, input_per_file=1):
 
+        super(concateinputfromMFB, self).__init__()
+        self.input_per_file = input_per_file
+
+    def __call__(self, frames_features):
+
+        network_inputs = []
+        num_frames = len(frames_features)
+
+        import math
+        # pdb.set_trace()
+        num_utt = math.ceil(float(num_frames) / c.NUM_FRAMES)
+        output = np.zeros((int(num_utt*c.NUM_FRAMES)-num_frames, frames_features.shape[1]))
+        output = np.concatenate((frames_features, output), axis=0)
+
+        for i in range(int(num_utt)):
+            frames_slice = output[i*c.NUM_FRAMES:(i+1)*c.NUM_FRAMES]
+            network_inputs.append(frames_slice)
+        # pdb.set_trace()
+        network_inputs = np.array(network_inputs)
+        #return_output = network_inputs.reshape((1, network_inputs.shape[0], network_inputs.shape[1], network_inputs.shape[2]))
+
+        return network_inputs
 
 
 def read_audio(filename, sample_rate=c.SAMPLE_RATE):
@@ -158,7 +189,8 @@ class toMFB(object):
 
         output = pre_process_inputs(input, target_sample_rate=c.SAMPLE_RATE)
         return output
-import torch
+
+
 class totensor(object):
     """Rescales the input PIL.Image to the given 'size'.
     If 'size' is a 2-element tuple or list in the order of (width, height), it will be the exactly size to scale.
@@ -168,8 +200,6 @@ class totensor(object):
     size: size of the exactly size or the smaller edge
     interpolation: Default: PIL.Image.BILINEAR
     """
-
-
 
     def __call__(self, pic):
         """
@@ -183,6 +213,7 @@ class totensor(object):
             # handle numpy array
             #img = torch.from_numpy(pic.transpose((0, 2, 1)))
             #return img.float()
+            # pdb.set_trace()
             img = torch.FloatTensor(pic.transpose((0, 2, 1)))
             #img = np.float32(pic.transpose((0, 2, 1)))
             return img
@@ -190,6 +221,34 @@ class totensor(object):
             #img = torch.from_numpy(pic)
             # backward compatibility
 
+class to4tensor(object):
+    """Rescales the input PIL.Image to the given 'size'.
+    If 'size' is a 2-element tuple or list in the order of (width, height), it will be the exactly size to scale.
+    If 'size' is a number, it will indicate the size of the smaller edge.
+    For example, if height > width, then image will be
+    rescaled to (size * height / width, size)
+    size: size of the exactly size or the smaller edge
+    interpolation: Default: PIL.Image.BILINEAR
+    """
+
+    def __call__(self, pic):
+        """
+        Args:
+            pic (PIL.Image or numpy.ndarray): Image to be converted to tensor.
+
+        Returns:
+            Tensor: Converted image.
+        """
+        if isinstance(pic, np.ndarray):
+            # handle numpy array
+            img = torch.from_numpy(pic.transpose((0, 2, 1)))
+            #return img.float()
+            # pdb.set_trace()
+            #img = torch.FloatTensor(pic.transpose((1, 0, 3, 2)))
+            #img = np.float32(pic.transpose((0, 2, 1)))
+            return img.unsqueeze(0)
+            #img = torch.from_numpy(pic)
+            # backward compatibility
 
 class tonormal(object):
 
