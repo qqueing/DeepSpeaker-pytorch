@@ -116,7 +116,7 @@ class AngleSoftmaxLoss(nn.Module):
         output[index] += (phi_x[index] * 1.0/(self.lamb))
 
         # get loss, which is equal to Cross Entropy.
-        logpt = F.log_softmax(output,dim=1) #[batch,classes_num]
+        logpt = F.log_softmax(output, dim=1) #[batch,classes_num]
         logpt = logpt.gather(1, target) #[batch]
         pt = logpt.data.exp()
         loss = -1 * logpt * (1-pt)**self.gamma
@@ -142,7 +142,7 @@ class AngularSoftmax(nn.Module):
         self.num_classes = num_classes
         self.W = torch.nn.Parameter(torch.randn(in_feats, num_classes), requires_grad=True).cuda()
         self.ce = nn.CrossEntropyLoss()
-        # nn.init.xavier_normal(self.W, gain=1)
+        nn.init.xavier_normal(self.W, gain=1)
 
         self.cos_function = [
             lambda x: x ** 0,
@@ -157,6 +157,7 @@ class AngularSoftmax(nn.Module):
         assert x.size()[0] == label.size()[0]
         assert x.size()[1] == self.in_feats
 
+        # pdb.set_trace()
         w = self.W.renorm(2, 1, 1e-5).mul(1e5) #[batch, out_planes]
         x_modulus = x.pow(2).sum(1).pow(0.5) #[batch]
         w_modulus = w.pow(2).sum(0).pow(0.5) #[out_planes]
@@ -197,9 +198,10 @@ class AngularSoftmax(nn.Module):
 
         # get a-softmax and softmax mat
         output = cos_x * 1
-        output[index] -= (cos_x[index] * 1.0 / (+self.lamb))
-        output[index] += (phi_x[index] * 1.0 / (self.lamb))
-
+        # output[index] -= (cos_x[index] * 1.0 / (+self.lamb))
+        # output[index] += (phi_x[index] * 1.0 / (self.lamb))
+        output[index] -= cos_x[index]
+        output[index] += phi_x[index]
         loss = self.ce(output, label)
 
         return loss
@@ -217,7 +219,7 @@ class AMSoftmax(nn.Module):
         self.in_feats = in_feats
         self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes), requires_grad=True).cuda()
         self.ce = nn.CrossEntropyLoss()
-        # nn.init.xavier_normal(self.W, gain=1)
+        nn.init.xavier_normal(self.W, gain=1)
 
     def forward(self, x, label):
         assert x.size()[0] == label.size()[0]
@@ -247,18 +249,18 @@ class AMSoftmax(nn.Module):
 
 
 # Testing those Loss Classes
-# a = torch.tensor([[1., 1., 3.],
+# a = Variable(torch.Tensor([[1., 1., 3.],
 #                   [1., 2., 0.],
 #                   [1., 4., 3.],
-#                   [5., 0., 3.]])
+#                   [5., 0., 3.]]).cuda())
 #
-# a_label = torch.tensor([2, 1, 1, 1])
+# a_label = Variable(torch.LongTensor([2, 1, 1, 0]).cuda())
 #
 # linear = AngleLinear(in_planes=3, out_planes=3, m=4)
 # Asoft = AngleSoftmaxLoss()
 # a_linear = linear(a)
 # a_asoft = Asoft(a_linear, a_label)
-# print("asoftmax loss is {}".format(a_asoft))
+# print("axsoftmax loss is {}".format(a_asoft))
 #
 # asoft = AngularSoftmax(in_feats=3, num_classes=3)
 # a_loss = asoft(a, a_label)
