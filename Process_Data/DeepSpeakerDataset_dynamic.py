@@ -2,6 +2,7 @@ from __future__ import print_function
 
 
 import numpy as np
+import pdb
 
 import torch.utils.data as data
 
@@ -122,7 +123,7 @@ class DeepSpeakerEnrollDataset(data.Dataset):
         print('Looking for audio [wav/npy] files in {}.'.format(dir))
 
         if len(audio_set) == 0:
-            raise(RuntimeError(('This is not data in the dataset')))
+            raise(RuntimeError(('This is not data in the dataset for path: {}'.format(dir))))
 
         #classes, class_to_idx = find_classes(audio_set)
         self.root = dir
