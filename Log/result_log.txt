@@ -8,3 +8,27 @@ Trained ResNet34 with softmax cross entropy for 42 epoch:
     => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_42.pth
     Test Epoch: 43 [113088/37720 (100%)]: : 590it [09:15,  1.09s/it]
     For l2_distance Test set: ERR: 22.81018028%	Best ACC:0.77298515
+
+    => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_50.pth
+    Test Epoch: 51 [113088/37720 (100%)]: : 590it [09:02,  1.07s/it]
+    For cos_distance Test set: ERR: 23.36691410%	Best ACC:0.49997349
+
+    => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_50.pth
+    Test Epoch: 51 [113088/37720 (100%)]: : 590it [10:39,  1.10s/it]
+    For l2_distance Test set: ERR: 23.48356310%	Best ACC:0.76574761
+
+    => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_55.pth
+    Test Epoch: 56 [113088/37720 (100%)]: : 590it [23:06,  2.54s/it]
+    For cos_distance Test set: ERR: 23.22905620%	Best ACC:0.49997349
+
+    => loading checkpoint Data/checkpoint/resnet34_devall/checkpoint_55.pth
+    Test Epoch: 56 [113088/37720 (100%)]: : 590it [22:35,  2.59s/it]
+    For l2_distance Test set: ERR: 23.02757158%	Best ACC:0.77014846
+
+20190827
+Trained ResNet10 with asoftmax loss for 45 epoch:
+
+    => loading checkpoint Data/checkpoint/resnet10_asoftmax/deprecated/checkpoint_45.pth
+    start epoch is : 46
+    Test Epoch: 46 [113088/37720 (100%)]: : 590it [08:01,  1.42s/it]
+    For cos_distance Test set: ERR: 9.47507953%	Best ACC:0.50037116
