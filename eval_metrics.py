@@ -46,7 +46,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
 
     for (distance, label) in zip(distances, labels):
         if cos:
-            distance = -distance
+            distance = 1. - distance
         if label:
             target.append(distance)
         else:
@@ -72,7 +72,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
         target_position += 1
 
     # threshold = target[target_position]
-    eer = target_position * 1.0 / target_size
+    eer = 1 - target_position * 1.0 / target_size
 
     max_threshold = np.max(distances)
     thresholds = np.arange(0, max_threshold, 0.001)
