@@ -75,7 +75,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
     eer = 1 - target_position * 1.0 / target_size
 
     max_threshold = np.max(distances)
-    thresholds = np.arange(0, max_threshold, 0.001)
+    thresholds = np.arange(0, max_threshold, 0.01)
     tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
 
     return eer, best_accuracy
