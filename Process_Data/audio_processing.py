@@ -4,13 +4,18 @@ from python_speech_features import fbank, delta
 from Process_Data import constants as c
 import torch
 import librosa
+
+from scipy import signal
+from scipy.io import wavfile
+import os
+import pathlib
 import pdb
+
 
 
 def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale = c.USE_SCALE,use_logscale = c.USE_LOGSCALE):
     audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
-
 
     filter_banks, energies = fbank(audio, samplerate=sample_rate, nfilt=c.FILTER_BANK, winlen=0.025)
 
@@ -34,7 +39,63 @@ def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale
 
     return
 
+
+def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT):
+    """
+    Pre-computing spectrograms for wav files
+    :param wav_path: path of the wav file
+    :param write_path: where to write the spectrogram .npy file
+    :param windowsize:
+    :param stride:
+    :param nfft:
+    :return: None
+    """
+    if not os.path.exists(wav_path):
+        raise ValueError('wav file does not exist.')
+    #pdb.set_trace()
+
+    sample_rate, samples = wavfile.read(wav_path)
+    sample_rate_norm = int(sample_rate / 1e3)
+    frequencies, times, spectrogram = signal.spectrogram(x=samples, fs=sample_rate, window=signal.hamming(windowsize * sample_rate_norm), noverlap=(windowsize-stride) * sample_rate_norm, nfft=nfft)
+
+    # Todo: store the whole spectrogram
+    # spectrogram = spectrogram[:, :300]
+    # while spectrogram.shape[1]<300:
+    #     # Copy padding
+    #     spectrogram = np.concatenate((spectrogram, spectrogram), axis=1)
+    #
+    #     # raise ValueError("The dimension of spectrogram is less than 300")
+    # spectrogram = spectrogram[:, :300]
+    # maxCol = np.max(spectrogram,axis=0)
+    # spectrogram = np.nan_to_num(spectrogram / maxCol)
+    # spectrogram = spectrogram * 255
+    # spectrogram = spectrogram.astype(np.uint8)
+
+    # For voxceleb1
+    # file_path = wav_path.replace('Data/Voxceleb1', 'Data/voxceleb1')
+    # file_path = file_path.replace('.wav', '.npy')
+
+    file_path = pathlib.Path(write_path)
+    if not file_path.parent.exists():
+        os.makedirs(str(file_path.parent))
+
+    np.save(write_path, spectrogram)
+
+    # return spectrogram
+
 def read_MFB(filename):
+    #audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
+    #audio = audio.flatten()
+    audio = np.load(filename.replace('.wav', '.npy'))
+
+    return audio
+
+def read_from_npy(filename):
+    """
+    read features from npy files
+    :param filename: the path of wav files.
+    :return:
+    """
     #audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
     audio = np.load(filename.replace('.wav', '.npy'))
@@ -107,6 +168,40 @@ class concateinputfromMFB(object):
 
         return network_inputs
 
+class truncatedinputfromSpectrogram(object):
+    """truncated input from Spectrogram
+    """
+    def __init__(self, input_per_file=1):
+
+        super(truncatedinputfromSpectrogram, self).__init__()
+        self.input_per_file = input_per_file
+
+    def __call__(self, frames_features):
+
+        network_inputs = []
+        frames_features = np.swapaxes(frames_features, 0, 1)
+        num_frames = len(frames_features)
+        import random
+
+        for i in range(self.input_per_file):
+
+            j=0
+
+            if c.NUM_PREVIOUS_FRAME_SPECT <= (num_frames - c.NUM_NEXT_FRAME_SPECT):
+                j = random.randrange(c.NUM_PREVIOUS_FRAME_SPECT, num_frames - c.NUM_NEXT_FRAME_SPECT)
+
+            #j = random.randrange(c.NUM_PREVIOUS_FRAME_SPECT, num_frames - c.NUM_NEXT_FRAME_SPECT)
+            # If len(frames_features)<NUM__FRAME_SPECT, then apply zero padding.
+            if j==0:
+                frames_slice = np.zeros((c.NUM_FRAMES_SPECT, c.NUM_FFT/2+1), dtype=np.float32)
+                frames_slice[0:(frames_features.shape[0])] = frames_features
+            else:
+                frames_slice = frames_features[j - c.NUM_PREVIOUS_FRAME_SPECT:j + c.NUM_NEXT_FRAME_SPECT]
+
+            network_inputs.append(frames_slice)
+
+        return np.array(network_inputs)
+
 
 def read_audio(filename, sample_rate=c.SAMPLE_RATE):
     audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
@@ -117,7 +212,7 @@ def read_audio(filename, sample_rate=c.SAMPLE_RATE):
 #def normalize_frames(m):
 #    return [(v - np.mean(v)) / (np.std(v) + 2e-12) for v in m]
 
-def normalize_frames(m,Scale=True):
+def normalize_frames(m, Scale=True):
     if Scale:
         return (m - np.mean(m, axis=0)) / (np.std(m, axis=0) + 2e-12)
     else:
