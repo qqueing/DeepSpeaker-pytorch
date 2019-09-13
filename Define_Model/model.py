@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+"""
+@Author: yangwenhao
+@Contact: 874681044@qq.com
+@Software: PyCharm
+@File: model.py
+@Overview: The deep speaker model is not entirely the same as ResNet, as there are convolutional layers between blocks.
+"""
+
 import torch
 import torch.nn as nn
 import math
@@ -174,7 +185,7 @@ class myResNet(nn.Module):
 
 
 class DeepSpeakerModel(nn.Module):
-    def __init__(self, resnet_size, embedding_size, num_classes, feature_dim = 64):
+    def __init__(self, resnet_size, embedding_size, num_classes, feature_dim=64):
         super(DeepSpeakerModel, self).__init__()
         resnet_type = {10:[1, 1, 1, 1],
                        18:[2, 2, 2, 2],
@@ -322,9 +333,9 @@ class DeepSpeakerModel(nn.Module):
 
 class ResSpeakerModel(nn.Module):
     """
-    Define the Angular Softmax Loss model.
+    Define the ResNet model with A-softmax and AM-softmax loss.
     """
-    def __init__(self, resnet_size, embedding_size, num_classes, feature_dim = 64):
+    def __init__(self, resnet_size, embedding_size, num_classes, feature_dim=64):
         super(ResSpeakerModel, self).__init__()
         resnet_type = {10:[1, 1, 1, 1],
                        18:[2, 2, 2, 2],
@@ -338,8 +349,10 @@ class ResSpeakerModel(nn.Module):
 
         self.model = myResNet(BasicBlock, resnet_type[resnet_size])
         if feature_dim == 64:
-            self.model.fc = nn.Linear(512*4, self.embedding_size)
+            self.model.fc = nn.Linear(512 * 4, self.embedding_size)
         elif feature_dim == 40:
+            self.model.fc = nn.Linear(256 * 5, self.embedding_size)
+        elif feature_dim == 257:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
 
         self.model.classifier = nn.Linear(self.embedding_size, self.num_classes)
@@ -347,7 +360,9 @@ class ResSpeakerModel(nn.Module):
         # TAP Encoding Layer
         self.model.encodinglayer = nn.AdaptiveAvgPool2d((1, 512))
 
-        # TODO: SAP, LDE Encoding Layer
+        # TODO: SAP, LDE Encoding Layer after the embedding layers
+        # SAP Encoding Layer
+
 
         self.model.W = torch.nn.Parameter(torch.randn(self.embedding_size, num_classes))
         nn.init.xavier_normal(self.model.W, gain=1)
@@ -361,7 +376,9 @@ class ResSpeakerModel(nn.Module):
         self.LambdaMin = 5.0
         self.LambdaMax = 1500.0
         self.lamb = 1500.0
-        self.m = 4
+
+        # default 4, based on the voxceleb 1, set to 3
+        self.m = 5
         self.ce = nn.CrossEntropyLoss()
 
         # cos(2thera) = 2cos(theta)**2 - 1
@@ -377,6 +394,7 @@ class ResSpeakerModel(nn.Module):
         ]
 
         # Parameters for am-softmax
+        # default 0.4, based on the voxceleb1, set to 0.3
         self.margin = 0.4
         self.s = 30
 
