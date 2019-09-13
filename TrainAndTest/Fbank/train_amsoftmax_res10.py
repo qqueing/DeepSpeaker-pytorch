@@ -72,7 +72,7 @@ parser.add_argument('--resume',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=45, metavar='E',
+parser.add_argument('--epochs', type=int, default=55, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
@@ -110,7 +110,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -144,7 +144,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter('Log/amsoftmax_res10_new')
+writer = SummaryWriter('Log/amsoftmax_res10', comment='margin0.3')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -232,7 +232,7 @@ def main():
     for epoch in range(start, end):
         #pdb.set_trace()
         train(train_loader, model, optimizer, epoch)
-        test(test_loader, model, start)
+        test(test_loader, model, epoch)
         #break
 
     writer.close()
@@ -297,7 +297,7 @@ def train(train_loader, model, optimizer, epoch):
                '{}/resnet10_amsoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
 
-    print('\33[91mFor AMSoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
+    print('\33[91mFor AM-Softmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
     writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
 

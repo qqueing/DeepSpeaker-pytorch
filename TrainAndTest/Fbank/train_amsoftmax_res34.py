@@ -6,8 +6,8 @@
 @Contact: 874681044@qq.com
 @Software: PyCharm
 @File: test_accuracy.py
-@Time: 19-8-6 下午1:29
-@Overview: Train the resnet 10 with asoftmax.
+@Time: 19-8-6 下午18:02
+@Overview: Train the resnet 34 with am-softmax.
 """
 #from __future__ import print_function
 import argparse
@@ -66,7 +66,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10_asoftmax/checkpoint_2.pth',
+                    default='Data/checkpoint/resnet34_amsoftmax/checkpoint_1.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -105,12 +105,12 @@ parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=0.0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -124,7 +124,7 @@ parser.add_argument('--makemfb', action='store_true', default=False,
 
 args = parser.parse_args()
 
-# Set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
+# set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
 # order to prevent any memory allocation on unused GPUs
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
@@ -144,7 +144,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter('Log/asoftmax_res10_new')
+writer = SummaryWriter('Log/amsoftmax_resnet34')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -195,14 +195,12 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
-    # criterion = AngularSoftmax(in_feats=args.embedding_size,
-    #                           num_classes=len(train_dir.classes))
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -216,8 +214,7 @@ def main():
 
             model.load_state_dict(filtered)
             optimizer.load_state_dict(checkpoint['optimizer'])
-            # criterion.load_state_dict(checkpoint['criterion'])
-
+            #criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
@@ -232,8 +229,7 @@ def main():
     for epoch in range(start, end):
         # pdb.set_trace()
         train(train_loader, model, optimizer, epoch)
-        test(test_loader, model, start)
-        #break
+        test(test_loader, model, epoch)
 
     writer.close()
 
@@ -247,7 +243,6 @@ def train(train_loader, model, optimizer, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
-    output_softmax = nn.Softmax()
 
     for batch_idx, (data, label) in pbar:
         if args.cuda:
@@ -255,16 +250,16 @@ def train(train_loader, model, optimizer, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model(data)
-        classfier = model.forward_classifier(feats)
+        out = model(data)
+        classifier_out = model.forward_classifier(out)
 
-
-        predicted_labels = output_softmax(classfier)
+        output_softmax = nn.Softmax()
+        predicted_labels = output_softmax(classifier_out)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
         true_labels = label.cuda()
 
-        loss = model.AngularSoftmaxLoss(feats, true_labels.cuda())
+        loss = model.AMSoftmaxLoss(out, true_labels.cuda())
         # loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
 
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
@@ -284,26 +279,27 @@ def train(train_loader, model, optimizer, epoch):
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \tMinibatch Accuracy: {:.6f}%'.format(
                 epoch,
-                batch_idx * len(data),
-                len(train_loader.dataset),
+                batch_idx * len(data),                                                               len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
                 loss.data[0],
                 100. * minibatch_acc))
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()},
-                #'criterion': criterion.state_dict()
-               '{}/resnet10_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+                'optimizer': optimizer.state_dict(),
+                # 'criterion': criterion.state_dict()
+                },
+               '{}/resnet34_amsoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
-
-    print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
+    print('\33[91mFor AMSoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
     writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
+
 
 def test(test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
+
     labels, distances = [], []
 
     pbar = tqdm(enumerate(test_loader))
@@ -343,6 +339,7 @@ def test(test_loader, model, epoch):
         print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     else:
         print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

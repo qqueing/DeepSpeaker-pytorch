@@ -7,9 +7,9 @@
 @Software: PyCharm
 @File: test_accuracy.py
 @Time: 19-8-6 下午1:29
-@Overview: Train the resnet 34 with asoftmax.
+@Overview: Train the resnet 10 with asoftmax.
 """
-#from __future__ import print_function
+from __future__ import print_function
 import argparse
 import pdb
 from tensorboardX import SummaryWriter
@@ -35,6 +35,7 @@ from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
+from Process_Data.audio_processing import GenerateSpect
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 from Define_Model.SoftmaxLoss import *
 # Version conflict
@@ -66,7 +67,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet34_asoftmax/checkpoint_2.pth',
+                    default='Data/checkpoint/resnet10_asoftmax/checkpoint_45.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -105,7 +106,7 @@ parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=0.0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='sgd', type=str,
+parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -117,10 +118,12 @@ parser.add_argument('--seed', type=int, default=0, metavar='S',
 parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
                     help='how many batches to wait before logging training status')
 
-parser.add_argument('--mfb', action='store_true', default=True,
-                    help='start from MFB file')
+parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
+                    help='choose the acoustic features type.')
 parser.add_argument('--makemfb', action='store_true', default=False,
                     help='need to make mfb file')
+parser.add_argument('--makespec', action='store_true', default=True,
+                    help='need to make spectrograms file')
 
 args = parser.parse_args()
 
@@ -144,7 +147,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter('Log/asoftmax_new')
+writer = SummaryWriter('Log/asoftmax_res10', comment='asoftm5')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -159,7 +162,19 @@ if args.makemfb:
         mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
     print("Complete convert")
 
-if args.mfb:
+if args.makespec:
+    num_pro = 1.
+    for datum in voxceleb:
+        # Data/Voxceleb1/
+        # /data/voxceleb/voxceleb1_wav/
+        GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
+                      write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
+        print('\rprocessed {:2f}% {}/{}.'.format(num_pro/len(voxceleb), num_pro, len(voxceleb)), end='\r')
+        num_pro += 1
+    print('\nComputing Spectrograms success!')
+    exit(1)
+
+if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
         truncatedinputfromMFB(),
         totensor()
@@ -169,6 +184,18 @@ if args.mfb:
         totensor()
     ])
     file_loader = read_MFB
+elif args.acoustic_feature=='spectrogram':
+    # Start from spectrogram
+    transform = transforms.Compose([
+        truncatedinputfromMFB(),
+        totensor()
+    ])
+    transform_T = transforms.Compose([
+        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
+        totensor()
+    ])
+    file_loader = read_MFB
+
 else:
     transform = transforms.Compose([
                         truncatedinput(),
@@ -195,7 +222,7 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
+    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -233,7 +260,7 @@ def main():
         # pdb.set_trace()
         train(train_loader, model, optimizer, epoch)
         test(test_loader, model, epoch)
-        # break
+        #break
 
     writer.close()
 
@@ -247,6 +274,7 @@ def train(train_loader, model, optimizer, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
+    output_softmax = nn.Softmax()
 
     for batch_idx, (data, label) in pbar:
         if args.cuda:
@@ -257,7 +285,7 @@ def train(train_loader, model, optimizer, epoch):
         feats = model(data)
         classfier = model.forward_classifier(feats)
 
-        output_softmax = nn.Softmax()
+
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
@@ -283,7 +311,8 @@ def train(train_loader, model, optimizer, epoch):
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \tMinibatch Accuracy: {:.6f}%'.format(
                 epoch,
-                batch_idx * len(data),                                                               len(train_loader.dataset),
+                batch_idx * len(data),
+                len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
                 loss.data[0],
                 100. * minibatch_acc))
@@ -292,7 +321,7 @@ def train(train_loader, model, optimizer, epoch):
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
-               '{}/resnet34_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               '{}/resnet10_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
 
     print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
@@ -359,6 +388,7 @@ def create_optimizer(model, new_lr):
                                   lr_decay=args.lr_decay,
                                   weight_decay=args.wd)
     return optimizer
+
 
 if __name__ == '__main__':
     main()
