@@ -175,12 +175,13 @@ class DeepSpeakerEnrollDataset(data.Dataset):
 
 class ClassificationDataset(data.Dataset):
     def __init__(self, voxceleb, dir, loader, transform=None, *arg, **kw):
-        print('Looking for audio [wav] files in {}.'.format(dir))
+        print('Looking for audio [npy] features files in {}.'.format(dir))
         if len(voxceleb) == 0:
             raise(RuntimeError(('This is not data in the dataset')))
 
         classes, class_to_idx = find_classes(voxceleb)
         features = []
+        # pdb.set_trace()
         for vox_item in voxceleb:
             item = (dir + "/" + vox_item['filename']+'.wav', class_to_idx[vox_item['speaker_id']])
             features.append(item)
