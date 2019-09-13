@@ -42,7 +42,7 @@ class VoxcelebTestset(data.Dataset):
 
         self.pairs_path = pairs_path
         self.loader = loader
-        self.validation_images = get_test_paths(self.pairs_path,dir)
+        self.validation_images = get_test_paths(self.pairs_path, dir)
         self.transform = transform
 
 
@@ -51,7 +51,6 @@ class VoxcelebTestset(data.Dataset):
 
         Args:
             index: Index of the triplet or the matches - not of a single features
-
         Returns:
 
         '''
@@ -60,7 +59,6 @@ class VoxcelebTestset(data.Dataset):
             """Convert image into numpy array and apply transformation
                Doing this so that it is consistent with all other datasets
             """
-
             img = self.loader(img_path)
             return self.transform(img)
 
