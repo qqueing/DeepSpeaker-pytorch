@@ -7,20 +7,21 @@ import librosa
 
 from scipy import signal
 from scipy.io import wavfile
+from pydub import AudioSegment
+
 import os
 import pathlib
 import pdb
 
 
-
-def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale = c.USE_SCALE,use_logscale = c.USE_LOGSCALE):
+def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE, use_logscale=c.USE_LOGSCALE):
     audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
 
     filter_banks, energies = fbank(audio, samplerate=sample_rate, nfilt=c.FILTER_BANK, winlen=0.025)
 
     if use_logscale:
-        filter_banks = 20 * np.log10(np.maximum(filter_banks,1e-5))
+        filter_banks = 20 * np.log10(np.maximum(filter_banks, 1e-5))
 
     if use_delta:
         delta_1 = delta(filter_banks, N=1)
@@ -39,6 +40,46 @@ def mk_MFB(filename, sample_rate=c.SAMPLE_RATE,use_delta = c.USE_DELTA,use_scale
 
     return
 
+def make_Fbank(filename,
+               write_path, # sample_rate=c.SAMPLE_RATE,
+               use_delta=c.USE_DELTA,
+               use_scale=c.USE_SCALE,
+               nfilt=c.FILTER_BANK,
+               use_logscale=c.USE_LOGSCALE):
+
+    if not os.path.exists(filename):
+        raise ValueError('wav file does not exist.')
+
+    sample_rate, audio = wavfile.read(filename)
+    # audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
+    #audio = audio.flatten()
+
+    filter_banks, energies = fbank(audio, samplerate=sample_rate, nfilt=nfilt, winlen=0.025)
+
+    if use_logscale:
+        filter_banks = 20 * np.log10(np.maximum(filter_banks, 1e-5))
+
+    if use_delta:
+        delta_1 = delta(filter_banks, N=1)
+        delta_2 = delta(delta_1, N=1)
+
+        filter_banks = normalize_frames(filter_banks, Scale=use_scale)
+        delta_1 = normalize_frames(delta_1, Scale=use_scale)
+        delta_2 = normalize_frames(delta_2, Scale=use_scale)
+
+        frames_features = np.hstack([filter_banks, delta_1, delta_2])
+    else:
+        filter_banks = normalize_frames(filter_banks, Scale=use_scale)
+        frames_features = filter_banks
+
+    file_path = pathlib.Path(write_path)
+    if not file_path.parent.exists():
+        os.makedirs(str(file_path.parent))
+
+    np.save(write_path, frames_features)
+
+    # np.save(filename.replace('.wav', '.npy'), frames_features)
+    return
 
 def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT):
     """
@@ -82,6 +123,20 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
     np.save(write_path, spectrogram)
 
     # return spectrogram
+
+def conver_to_wav(filename, write_path, format='m4a'):
+    """
+    Convert other formats into wav.
+    :param filename: file path for the audio.
+    :param write_path:
+    :param format: formats that ffmpeg supports.
+    :return: None. write the wav to local.
+    """
+    if not os.path.exists(filename):
+        raise ValueError('File may not exist.')
+
+    sound = AudioSegment.from_file(filename, format=format)
+    sound.export(write_path, format="wav")
 
 def read_MFB(filename):
     #audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
@@ -213,6 +268,12 @@ def read_audio(filename, sample_rate=c.SAMPLE_RATE):
 #    return [(v - np.mean(v)) / (np.std(v) + 2e-12) for v in m]
 
 def normalize_frames(m, Scale=True):
+    """
+    Normalize frames with mean and variance
+    :param m:
+    :param Scale:
+    :return:
+    """
     if Scale:
         return (m - np.mean(m, axis=0)) / (np.std(m, axis=0) + 2e-12)
     else:
