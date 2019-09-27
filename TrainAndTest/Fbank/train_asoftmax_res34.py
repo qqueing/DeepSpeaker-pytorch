@@ -11,7 +11,6 @@
 """
 #from __future__ import print_function
 import argparse
-import pdb
 from tensorboardX import SummaryWriter
 
 import torch
@@ -25,7 +24,7 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import DeepSpeakerModel, ResSpeakerModel
+from Define_Model import ResSpeakerModel
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from eval_metrics import evaluate_kaldi_eer
 
@@ -34,9 +33,8 @@ from logger import Logger
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model.model import PairwiseDistance
+from Define_Model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
-from Define_Model.SoftmaxLoss import *
 # Version conflict
 
 import torch._utils

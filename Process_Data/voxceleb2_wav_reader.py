@@ -51,8 +51,8 @@ def read_voxceleb2_structure(directory):
 
     # print(str(pathlib.Path.relative_to(all_wav_path[0], all_wav_path[0].parents[4])).rstrip('.wav'))
 
-    all_dev_path = [str(pathlib.Path.relative_to(path, path.parents[4])).rstrip('.wav') for path in all_dev_path]
-    all_test_path = [str(pathlib.Path.relative_to(path, path.parents[3])).rstrip('.m4a') for path in all_test_path]
+    all_dev_path = [str(pathlib.Path.relative_to(path, path.parents[4])).rstrip(".wav") for path in all_dev_path]
+    all_test_path = [str(pathlib.Path.relative_to(path, path.parents[3])).rstrip(".m4a") for path in all_test_path]
     all_wav_path = np.concatenate((all_dev_path, all_test_path))
 
     dev_subset = ['dev' for path in all_dev_path]

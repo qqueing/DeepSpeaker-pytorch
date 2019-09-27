@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import os
+import pathlib
 
 import numpy as np
 import pdb
@@ -182,9 +184,22 @@ class ClassificationDataset(data.Dataset):
         classes, class_to_idx = find_classes(voxceleb)
         features = []
         # pdb.set_trace()
+        null_spks = []
         for vox_item in voxceleb:
+            vox_path = dir + "/" + vox_item['filename']+'.npy'
+            if not os.path.exists(vox_path):
+                vox_path_item = pathlib.Path(vox_path)
+                null_spks.append(vox_path_item.parent.parent.name)
+
             item = (dir + "/" + vox_item['filename']+'.wav', class_to_idx[vox_item['speaker_id']])
             features.append(item)
+
+        null_spks = list(set(null_spks))
+        null_spks.sort()
+        if len(null_spks) != 0:
+            print('{} of speaker feats are missing!'.format(len(null_spks)))
+            print(null_spks)
+            exit(1)
 
         self.root = dir
         self.features = features
@@ -200,7 +215,6 @@ class ClassificationDataset(data.Dataset):
 
         Args:
             index: Index of the triplet or the matches - not of a single feature
-
         Returns:
 
         '''
@@ -216,7 +230,7 @@ class ClassificationDataset(data.Dataset):
         label = self.features[index][1]
 
         # transform features if required
-        feature= transform(feature)
+        feature = transform(feature)
         return feature, label
 
     def __len__(self):

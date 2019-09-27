@@ -1,9 +1,12 @@
 import os
+import pdb
+
 import torch.utils.data as data
 
 
-def get_test_paths(pairs_path,db_dir,file_ext="wav"):
+def get_test_paths(pairs_path, db_dir, file_ext="wav"):
     print('Verification list file is in: ' + pairs_path)
+    print('Verification acoustic feature file is in: ' + db_dir)
     pairs = [line.strip().split() for line in open(pairs_path, 'r').readlines()]
     nrof_skipped_pairs = 0
     path_list = []
@@ -23,14 +26,16 @@ def get_test_paths(pairs_path,db_dir,file_ext="wav"):
         path0_npy = db_dir +'/vox1_test_wav/wav/' + pair[1].rstrip('.wav') + '.npy'
         path1_npy = db_dir +'/vox1_test_wav/wav/' + pair[2].rstrip('.wav') + '.npy'
 
+        # pdb.set_trace()
         # print(path1_npy)
         if os.path.exists(path0_npy) and os.path.exists(path1_npy):    # Only add the pair if both paths exist
-            path_list.append((path0,path1,issame))
+            path_list.append((path0, path1, issame))
             issame_list.append(issame)
         else:
             nrof_skipped_pairs += 1
+
     if nrof_skipped_pairs>0:
-        print('Skipped %d image pairs' % nrof_skipped_pairs)
+        print('Skipped %d pairs' % nrof_skipped_pairs)
     print('The number of Verification pairs is %d.' % len(path_list))
     return path_list
 
@@ -39,10 +44,9 @@ class VoxcelebTestset(data.Dataset):
     '''
     def __init__(self, dir, pairs_path, loader, transform=None):
 
-
         self.pairs_path = pairs_path
         self.loader = loader
-        self.validation_images = get_test_paths(self.pairs_path, dir)
+        self.validation_images = get_test_paths(pairs_path=self.pairs_path, db_dir=dir)
         self.transform = transform
 
 

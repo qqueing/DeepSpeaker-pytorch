@@ -19,6 +19,8 @@ import time
 
 from Process_Data.audio_processing import make_Fbank, conver_to_wav
 
+
+NUM_JOB = 4
 missing_spks = ['id06996', 'id07001', 'id07002', 'id07008', 'id07017', 'id07031', 'id07032', 'id07043', 'id07044', 'id07057', 'id07062', 'id07063', 'id07065', 'id07072', 'id07080', 'id07084', 'id07085', 'id07117', 'id07118', 'id07133', 'id07135', 'id07148', 'id07153', 'id07165', 'id07179', 'id07181', 'id07182', 'id07183', 'id07186', 'id07187', 'id07200', 'id07205', 'id07206', 'id07220', 'id07232', 'id07243', 'id07256', 'id07273', 'id07275', 'id07278', 'id07293', 'id07299', 'id07305', 'id07308', 'id07334', 'id07341', 'id07342']
 # pdb.set_trace()
 num_make = 0
@@ -58,7 +60,6 @@ def make_feats_spks(spk_id):
         num_pro += 1
 
 
-
 class MyThread(threading.Thread):
     def __init__(self, spk_ids, threadid):
         super(MyThread, self).__init__()  # 重构run函数必须要写
@@ -71,6 +72,7 @@ class MyThread(threading.Thread):
             make_feats_spks(spk_id)
             num_make += 1
             print('\t{:4d} of speakers making feats completed!'.format(num_make))
+
 
 class MyProcess(Process):
     def __init__(self, spk_ids, proid, queue):
@@ -87,20 +89,20 @@ class MyProcess(Process):
             self.queue.put(spk_id)
             print('\t{:4d} of speakers making feats completed!'.format(self.queue.qsize()))
 
+
 if __name__ == "__main__":
     num_spk = len(missing_spks)
-    trunk = int(num_spk / 4)
+    trunk = int(num_spk / NUM_JOB)
     start_time = time.time()
 
     # threadpool = []
     queue = Queue()
     processpool = []
-    for i in range(0, 4):
+    for i in range(0, NUM_JOB):
         j = (i+1)*trunk
-        if i==3:
-            j=num_spk
+        if i==(NUM_JOB-1):
+            j = num_spk
 
-        print(i*trunk, j)
         # t = MyThread(missing_spks[i*trunk:j], i)
         # t.start()
         # threadpool.append(t)

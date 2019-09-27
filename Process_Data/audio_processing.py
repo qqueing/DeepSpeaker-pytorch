@@ -135,13 +135,19 @@ def conver_to_wav(filename, write_path, format='m4a'):
     if not os.path.exists(filename):
         raise ValueError('File may not exist.')
 
+    if not pathlib.Path(write_path).parent.exists():
+        os.makedirs(str(pathlib.Path(write_path).parent))
+
     sound = AudioSegment.from_file(filename, format=format)
     sound.export(write_path, format="wav")
 
 def read_MFB(filename):
     #audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
-    audio = np.load(filename.replace('.wav', '.npy'))
+    try:
+        audio = np.load(filename.replace('.wav', '.npy'))
+    except Exception:
+        raise ValueError("Load {} error!".format(filename))
 
     return audio
 

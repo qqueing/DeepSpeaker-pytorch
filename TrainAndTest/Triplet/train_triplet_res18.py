@@ -11,7 +11,7 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import DeepSpeakerModel
+from Define_Model import DeepSpeakerModel
 from eval_metrics import evaluate
 from logger import Logger
 
@@ -21,7 +21,7 @@ from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb_wav_reader import read_my_voxceleb_structure
 
 # from Define_Model.model import PairwiseDistance,TripletMarginLoss
-from Define_Model.model import TripletMarginCosLoss
+from Define_Model import TripletMarginCosLoss
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 
 # Version conflict

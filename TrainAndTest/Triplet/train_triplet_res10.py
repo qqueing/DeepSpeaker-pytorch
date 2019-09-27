@@ -13,16 +13,16 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
+from tensorboardX import SummaryWriter
 
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
-import pdb
 
 import numpy as np
 from tqdm import tqdm
 from Define_Model.model import DeepSpeakerModel
-from eval_metrics import evaluate, evaluate_eer
+from eval_metrics import evaluate_eer
 from logger import Logger
 
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
@@ -30,9 +30,8 @@ from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model.model import PairwiseDistance, TripletMarginCosLoss
+from Define_Model.model import TripletMarginCosLoss
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
-from torch.nn import CosineSimilarity
 
 # Version conflict
 
@@ -87,7 +86,7 @@ parser.add_argument('--n-triplets', type=int, default=819200, metavar='N',
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=10, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
 parser.add_argument('--loss-ratio', type=float, default=0.0, metavar='LOSSRATIO',
@@ -104,7 +103,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -137,6 +136,7 @@ LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-a
 
 # create logger
 logger = Logger(LOG_DIR)
+writer = SummaryWriter('Log/triplet_res10')
 
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
@@ -147,6 +147,7 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 # Read file list from dataset path
 print("================================Reading Dataset File List==================================")
 voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+# voxceleb2, voxceleb_dev2 = voxceleb2_list_reader(args.dataroot)
 
 # Make fbank feature if not yet.
 if args.makemfb:
@@ -233,7 +234,7 @@ def main():
     for epoch in range(start, end):
 
         train(train_loader, model, optimizer, epoch)
-        #test(test_loader, model, epoch)
+        test(test_loader, model, epoch)
         #break;
 
 
@@ -245,7 +246,7 @@ def train(train_loader, model, optimizer, epoch):
     correct = 0.
     total_datasize = 0.
     pbar = tqdm(enumerate(train_loader))
-    for batch_idx, (data_a, data_p, data_n,label_p,label_n) in pbar:
+    for batch_idx, (data_a, data_p, data_n, label_p,label_n) in pbar:
         #print("on training{}".format(epoch))
         data_a, data_p, data_n = data_a.cuda(), data_p.cuda(), data_n.cuda()
         data_a, data_p, data_n = Variable(data_a), Variable(data_p), \
@@ -257,6 +258,8 @@ def train(train_loader, model, optimizer, epoch):
         if epoch > args.min_softmax_epoch:
             triplet_loss = TripletMarginCosLoss(args.margin).forward(out_a, out_p, out_n)
             loss = triplet_loss
+
+            writer.add_scalar('Train_Loss/epoch_%d' % epoch, loss.data[0], batch_idx)
             # compute gradient and update weights
             optimizer.zero_grad()
             loss.backward()
@@ -309,9 +312,14 @@ def train(train_loader, model, optimizer, epoch):
             selected_label_n= torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
             # triplet_loss = TripletMarginLoss(args.margin).forward(out_selected_a, out_selected_p, out_selected_n)
 
-            cls_a = model.forward_classifier(selected_data_a)
-            cls_p = model.forward_classifier(selected_data_p)
-            cls_n = model.forward_classifier(selected_data_n)
+            cls_a_out = model(selected_data_a)
+            cls_a = model.forward_classifier(cls_a_out)
+
+            cls_p_out = model(selected_data_p)
+            cls_p = model.forward_classifier(cls_p_out)
+
+            cls_n_out = model(selected_data_n)
+            cls_n = model.forward_classifier(cls_n_out)
 
             criterion = nn.CrossEntropyLoss()
             predicted_labels = torch.cat([cls_a,cls_p,cls_n])
@@ -319,7 +327,7 @@ def train(train_loader, model, optimizer, epoch):
             true_labels = torch.cat([Variable(selected_label_p.cuda()), Variable(selected_label_p.cuda()),Variable(selected_label_n.cuda())])
 
             cross_entropy_loss = criterion(predicted_labels.cuda(), true_labels.cuda())
-            m = nn.Softmax() 
+            m = nn.Softmax(dim=1)
             predicted_one_labels = m(predicted_labels)
             predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
             # pdb.set_trace()
@@ -328,7 +336,7 @@ def train(train_loader, model, optimizer, epoch):
             total_datasize += len(predicted_one_labels)
             
             loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
-
+            writer.add_scalar('Train_Loss/epoch_%d' % epoch, loss.data[0], batch_idx)
             # compute gradient and update weights
             optimizer.zero_grad()
             loss.backward()
@@ -339,8 +347,9 @@ def train(train_loader, model, optimizer, epoch):
             logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
             logger.log_value('selected_total_loss', loss.data[0]).step()
             logger.log_value('minibatch_accuracy', minibatch_acc).step()
+
             if batch_idx % args.log_interval == 0:
-                pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} Minibatch accuracy: {:.4f}\t # of Selected Triplets: {:4d}'.format(
+                pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f}\tMinibatch Accuracy: {:.4f}%\tSelected Triplets: {:4d}'.format(
                         epoch,
                         batch_idx * len(data_a),
                         len(train_loader.dataset),
@@ -368,8 +377,12 @@ def train(train_loader, model, optimizer, epoch):
                 'optimizer': optimizer.state_dict()},
                '{}/resnet10_devall/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
-    err, accuracy = evaluate_eer(distances, labels)
-    print('\33[91mFor cos_distance verification:\n  Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
+    eer, accuracy = evaluate_eer(distances, labels)
+
+    writer.add_scalar('Train/Train_EER', eer, epoch)
+    writer.add_scalar('Train/Train_Accuracy', accuracy, epoch)
+
+    print('\33[91mFor cos_distance verification:\tTrain set: ERR: {:.8f}\tBest Accuracy:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
 
     if not epoch > args.min_softmax_epoch:
         print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(float(correct)/total_datasize))   
@@ -407,10 +420,13 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    err, accuracy = evaluate_eer(distances, labels)
+    eer, accuracy = evaluate_eer(distances, labels)
+    writer.add_scalar('Test/Test_EER', eer, epoch)
+    writer.add_scalar('Test/Test_Accuracy', accuracy, epoch)
+
     # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
     # print('\33[91mFor l2_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
-    print('\33[91mFor cos_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(err, np.mean(accuracy)))
+    print('\33[91mFor cos_distance Test set: ERR: {:.8f}\tBest ACC:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
 
 
 def create_optimizer(model, new_lr):

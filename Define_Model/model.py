@@ -15,8 +15,6 @@ import math
 
 from torch.autograd import Function
 from torch.nn import CosineSimilarity
-import torch.nn.functional as F
-from Define_Model.SoftmaxLoss import *
 from torch.autograd import Variable
 import pdb
 
@@ -198,7 +196,7 @@ class DeepSpeakerModel(nn.Module):
 
         self.model = myResNet(BasicBlock, resnet_type[resnet_size])
         if feature_dim == 64:
-            self.model.fc = nn.Linear(512*4, self.embedding_size)
+            self.model.fc = nn.Linear(512 * 4, self.embedding_size)
         elif feature_dim == 40:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
 
@@ -378,7 +376,7 @@ class ResSpeakerModel(nn.Module):
         self.lamb = 1500.0
 
         # default 4, based on the voxceleb 1, set to 3
-        self.m = 5
+        self.m = 4
         self.ce = nn.CrossEntropyLoss()
 
         # cos(2thera) = 2cos(theta)**2 - 1
@@ -412,6 +410,7 @@ class ResSpeakerModel(nn.Module):
         return output
 
     def forward(self, x):
+        # pdb.set_trace()
 
         x = self.model.conv1(x)
         x = self.model.bn1(x)

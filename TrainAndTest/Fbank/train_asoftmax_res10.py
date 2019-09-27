@@ -12,6 +12,7 @@
 from __future__ import print_function
 import argparse
 import pdb
+
 from tensorboardX import SummaryWriter
 
 import torch
@@ -25,8 +26,9 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import DeepSpeakerModel, ResSpeakerModel
+from Define_Model.model import ResSpeakerModel
 from Process_Data.VoxcelebTestset import VoxcelebTestset
+from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
@@ -36,8 +38,7 @@ from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import GenerateSpect
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
-from Define_Model.SoftmaxLoss import *
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
 # Version conflict
 
 import torch._utils
@@ -55,19 +56,21 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='Data/dataset',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb2/fbank64',
                     help='path to dataset')
+parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+                    help='path to voxceleb1 test dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint',
+parser.add_argument('--ckp-dir', default='/home/cca01/work2019/yangwenhao/mydataset/checkpoint/resnet10_asoft_vox2',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10_asoftmax/checkpoint_45.pth',
+                    default='/home/cca01/work2019/yangwenhao/mydataset/checkpoint/resnet10_asoft_vox2/checkpoint_0.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -122,7 +125,7 @@ parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc
                     help='choose the acoustic features type.')
 parser.add_argument('--makemfb', action='store_true', default=False,
                     help='need to make mfb file')
-parser.add_argument('--makespec', action='store_true', default=True,
+parser.add_argument('--makespec', action='store_true', default=False,
                     help='need to make spectrograms file')
 
 args = parser.parse_args()
@@ -147,7 +150,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter('Log/asoftmax_res10', comment='asoftm5')
+writer = SummaryWriter(logdir='Log/asoftmax_res10', filename_suffix='vox2')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -155,7 +158,9 @@ if args.cos_sim:
 else:
     l2_dist = PairwiseDistance(2)
 
-voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
+voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
+
 if args.makemfb:
     #pbar = tqdm(voxceleb)
     for datum in voxceleb:
@@ -184,6 +189,7 @@ if args.acoustic_feature=='fbank':
         totensor()
     ])
     file_loader = read_MFB
+
 elif args.acoustic_feature=='spectrogram':
     # Start from spectrogram
     transform = transforms.Compose([
@@ -205,9 +211,10 @@ else:
                     ])
     file_loader = read_audio
 
+# pdb.set_trace()
 
-train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
 del voxceleb
 del voxceleb_dev
@@ -274,7 +281,7 @@ def train(train_loader, model, optimizer, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
-    output_softmax = nn.Softmax()
+    output_softmax = nn.Softmax(dim=1)
 
     for batch_idx, (data, label) in pbar:
         if args.cuda:
@@ -317,11 +324,26 @@ def train(train_loader, model, optimizer, epoch):
                 loss.data[0],
                 100. * minibatch_acc))
 
+        if int(100. * batch_idx / len(train_loader)) == 30:
+            torch.save({'epoch': epoch + 1,
+                        'state_dict': model.state_dict(),
+                        'optimizer': optimizer.state_dict()},
+                       # 'criterion': criterion.state_dict()
+                       '{}/checkpoint_30%_{}.pth'.format(CKP_DIR, epoch))
+
+        if int(100. * batch_idx / len(train_loader)) == 60:
+            torch.save({'epoch': epoch + 1,
+                        'state_dict': model.state_dict(),
+                        'optimizer': optimizer.state_dict()},
+                       # 'criterion': criterion.state_dict()
+                       '{}/checkpoint_60%_{}.pth'.format(CKP_DIR, epoch))
+
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
-               '{}/resnet10_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+
 
 
     print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
