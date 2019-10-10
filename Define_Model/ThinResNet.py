@@ -7,7 +7,7 @@
 @Software: PyCharm
 @File: ThinResNet.py
 @Time: 2019/9/11 下午9:01
-@Overview: Todo: prjection mapping! 20190913
+@Overview: Todo: projection mapping! 20190913
 """
 import torch.nn as nn
 import torch

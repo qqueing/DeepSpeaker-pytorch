@@ -12,6 +12,8 @@
 fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
+import pdb
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -64,9 +66,9 @@ class TDNN(nn.Module):
 
     def special_convolution(self, x, kernel, context, bias):
         """
-        This function performs the weight multiplication given an arbitrary context. Cannot directly use convolution because in case of only particular frames of context,
-        one needs to select only those frames and perform a convolution across all batch items and all output dimensions of the kernel.
+        This function performs the weight multiplication given an arbitrary context. Cannot directly use convolution because in case of only particular frames of context, one needs to select only those frames and perform a convolution across all batch items and all output dimensions of the kernel.
         """
+        x = x.squeeze()
         input_size = x.size()
         assert len(input_size) == 3, 'Input tensor dimensionality is incorrect. Should be a 3D tensor'
         [batch_size, input_dim, input_sequence_length] = input_size
@@ -76,12 +78,19 @@ class TDNN(nn.Module):
         valid_steps = self.get_valid_steps(self.context, input_sequence_length)
         #xs = torch.Tensor(self.bias.data.new(batch_size, kernel.size()[0], len(valid_steps)))
         xs = torch.zeros((batch_size, kernel.size()[0], len(valid_steps)))
-        device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
-        xs = xs.to(device)
+
+        if torch.cuda.is_available():
+            xs = Variable(xs.cuda())
         # Perform the convolution with relevant input frames
+        # pdb.set_trace()
         for c, i in enumerate(valid_steps):
-            features = torch.index_select(x, 2, context+i)
-            xs[:,:,c] = F.conv1d(features, kernel, bias = bias)[:,:,0]
+            features = torch.index_select(x, 2, Variable(context+i))
+            # torch.index_selec:
+            # Returns a new tensor which indexes the input tensor along dimension dim using the entries in index which is a LongTensor.
+            # The returned tensor has the same number of dimensions as the original tensor (input). The dim th dimension has the same
+            # size as the length of index; other dimensions have the same size as in the original tensor.
+            xs[:,:,c] = F.conv1d(features, kernel, bias=bias)[:,:,0]
+
         return xs
 
     @staticmethod
@@ -96,7 +105,15 @@ class TDNN(nn.Module):
         return len(context), context
 
     @staticmethod
-    def get_valid_steps(context, input_sequence_length): #确定给定长度的序列，卷积之后的长度
+    def get_valid_steps(context, input_sequence_length):
+        """
+        Return the valid index frames considering the context.
+        确定给定长度的序列，卷积之后的长度，及其帧
+        :param context:
+        :param input_sequence_length:
+        :return:
+        """
+
         start = 0 if context[0] >= 0 else -1*context[0]
         end = input_sequence_length if context[-1] <= 0 else input_sequence_length - context[-1]
         return range(start, end)
@@ -128,14 +145,19 @@ class Time_Delay(nn.Module):
         mean_std = torch.cat((mean_x, std_x), 1)
         return mean_std
 
-    def forward(self, x):
+    def pre_forward(self, x):
         a1 = F.relu(self.batch_norm1(self.tdnn1(x)))
         a2 = F.relu(self.batch_norm2(self.tdnn2(a1)))
         a3 = F.relu(self.batch_norm3(self.tdnn3(a2)))
         a4 = F.relu(self.batch_norm4(self.tdnn4(a3)))
         a5 = F.relu(self.batch_norm5(self.tdnn5(a4)))
         a6 = self.statistic_pooling(a5)
-        a7 = F.relu(self.batch_norm6(self.fc1(a6)))
+        x_vectors = F.relu(self.batch_norm6(self.fc1(a6)))
+
+        return x_vectors
+
+    def forward(self, x):
+        a7 = self.pre_forward(x)
         a8 = F.relu(self.batch_norm7(self.fc2(a7)))
         output = self.fc3(a8)
         return output
