@@ -11,6 +11,10 @@
 """
 #from __future__ import print_function
 import argparse
+import pathlib
+import pdb
+import time
+
 from tensorboardX import SummaryWriter
 
 import torch
@@ -24,8 +28,9 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model import ResSpeakerModel
+from Define_Model.model import ResSpeakerModel
 from Process_Data.VoxcelebTestset import VoxcelebTestset
+from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
@@ -33,7 +38,7 @@ from logger import Logger
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model import PairwiseDistance
+from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
@@ -52,22 +57,46 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='Data/dataset',
+
+# options for vox1
+# parser.add_argument('--dataroot', type=str, default='Data/dataset',
+#                     help='path to dataset')
+# parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
+#                     help='path to pairs file')
+#
+# parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
+#                     help='folder to output model checkpoints')
+#
+# parser.add_argument('--ckp-dir', default='Data/checkpoint',
+#                     help='folder to output model checkpoints')
+#
+# parser.add_argument('--resume',
+#                     default='Data/checkpoint/res34_asoft_vox2/checkpoint_1.pth',
+#                     type=str,
+#                     metavar='PATH',
+#                     help='path to latest checkpoint (default: none)')
+
+# options for vox2
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb2/fbank64',
                     help='path to dataset')
+parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+                    help='path to voxceleb1 test dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint',
+parser.add_argument('--check-path', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet34_asoftmax/checkpoint_2.pth',
+                    default='Data/checkpoint/resnet34_asoft_vox2/checkpoint_0.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+
+
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=30, metavar='E',
@@ -112,7 +141,7 @@ parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=50, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--mfb', action='store_true', default=True,
@@ -128,21 +157,25 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
+torch.manual_seed(args.seed)
 
 if not os.path.exists(args.log_dir):
     os.makedirs(args.log_dir)
 
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
 LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
     .format(args.optimizer, args.n_triplets, args.lr, args.wd,
             args.margin,args.embedding_size)
 
 # create logger
 logger = Logger(LOG_DIR)
+
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter('Log/asoftmax_res34')
+# writer = SummaryWriter('Log/asoft_res34_vox1')
+
+# options for vox2
+writer = SummaryWriter('Log/asoft_res34_vox2')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -150,12 +183,17 @@ if args.cos_sim:
 else:
     l2_dist = PairwiseDistance(2)
 
-voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
-if args.makemfb:
-    #pbar = tqdm(voxceleb)
-    for datum in voxceleb:
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
-    print("Complete convert")
+# options for vox2
+# voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+
+# options for vox2
+voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
+
+# if args.makemfb:
+#     #pbar = tqdm(voxceleb)
+#     for datum in voxceleb:
+#         mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+#     print("Complete convert")
 
 if args.mfb:
     transform = transforms.Compose([
@@ -177,11 +215,17 @@ else:
     file_loader = read_audio
 
 
-train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+# train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+# test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+#
+# del voxceleb
+# del voxceleb_dev
 
-del voxceleb
-del voxceleb_dev
+train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+
+del voxceleb2
+del voxceleb2_dev
 
 
 def main():
@@ -189,6 +233,7 @@ def main():
     test_display_triplet_distance = False
 
     # print the experiment configuration
+    print('Current time is {}'.format(str(time.asctime())))
     print('\nparsed options:\n{}\n'.format(vars(args)))
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
@@ -244,9 +289,10 @@ def train(train_loader, model, optimizer, epoch):
     total_loss = 0.
 
     pbar = tqdm(enumerate(train_loader))
-    #pdb.set_trace()
+    # pdb.set_trace()
 
     for batch_idx, (data, label) in pbar:
+
         if args.cuda:
             data = data.cuda()
         data, label = Variable(data), Variable(label)
@@ -286,13 +332,19 @@ def train(train_loader, model, optimizer, epoch):
                 100. * batch_idx / len(train_loader),
                 loss.data[0],
                 100. * minibatch_acc))
+    # options for vox1
+    # '{}/resnet34_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch)
+
+    # options for vox2
+    check_path = pathlib.Path('{}/resnet34_asoft_vox2/checkpoint_{}.pth'.format(args.check_path, epoch))
+    if not check_path.parent.exists():
+        os.makedirs(str(check_path.parent))
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
-               '{}/resnet34_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
-
+               str(check_path))
 
     print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
@@ -324,7 +376,7 @@ def test(test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a), len(test_loader.dataset),
+                epoch, batch_idx * len(data_a) / args.test_input_per_file, len(test_loader.dataset),
                 100. * batch_idx / len(test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])

@@ -158,26 +158,26 @@ if args.cos_sim:
 else:
     l2_dist = PairwiseDistance(2)
 
-voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
+# voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
 voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
 
-if args.makemfb:
-    #pbar = tqdm(voxceleb)
-    for datum in voxceleb:
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
-    print("Complete convert")
-
-if args.makespec:
-    num_pro = 1.
-    for datum in voxceleb:
-        # Data/Voxceleb1/
-        # /data/voxceleb/voxceleb1_wav/
-        GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
-                      write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
-        print('\rprocessed {:2f}% {}/{}.'.format(num_pro/len(voxceleb), num_pro, len(voxceleb)), end='\r')
-        num_pro += 1
-    print('\nComputing Spectrograms success!')
-    exit(1)
+# if args.makemfb:
+#     #pbar = tqdm(voxceleb)
+#     for datum in voxceleb:
+#         mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
+#     print("Complete convert")
+#
+# if args.makespec:
+#     num_pro = 1.
+#     for datum in voxceleb:
+#         # Data/Voxceleb1/
+#         # /data/voxceleb/voxceleb1_wav/
+#         GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
+#                       write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
+#         print('\rprocessed {:2f}% {}/{}.'.format(num_pro/len(voxceleb), num_pro, len(voxceleb)), end='\r')
+#         num_pro += 1
+#     print('\nComputing Spectrograms success!')
+#     exit(1)
 
 if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
@@ -216,8 +216,8 @@ else:
 train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
-del voxceleb
-del voxceleb_dev
+# del voxceleb
+# del voxceleb_dev
 
 
 def main():
@@ -324,27 +324,12 @@ def train(train_loader, model, optimizer, epoch):
                 loss.data[0],
                 100. * minibatch_acc))
 
-        if int(100. * batch_idx / len(train_loader)) == 30:
-            torch.save({'epoch': epoch + 1,
-                        'state_dict': model.state_dict(),
-                        'optimizer': optimizer.state_dict()},
-                       # 'criterion': criterion.state_dict()
-                       '{}/checkpoint_30%_{}.pth'.format(CKP_DIR, epoch))
-
-        if int(100. * batch_idx / len(train_loader)) == 60:
-            torch.save({'epoch': epoch + 1,
-                        'state_dict': model.state_dict(),
-                        'optimizer': optimizer.state_dict()},
-                       # 'criterion': criterion.state_dict()
-                       '{}/checkpoint_60%_{}.pth'.format(CKP_DIR, epoch))
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
                '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
-
-
 
     print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
