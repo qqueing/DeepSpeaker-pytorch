@@ -45,7 +45,9 @@ def make_Fbank(filename,
                use_delta=c.USE_DELTA,
                use_scale=c.USE_SCALE,
                nfilt=c.FILTER_BANK,
-               use_logscale=c.USE_LOGSCALE):
+               use_logscale=c.USE_LOGSCALE,
+               use_energy=c.USE_ENERGY,
+               normalize=c.NORMALIZE):
 
     if not os.path.exists(filename):
         raise ValueError('wav file does not exist.')
@@ -54,11 +56,22 @@ def make_Fbank(filename,
     # audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
     #audio = audio.flatten()
 
-    filter_banks, energies = fbank(audio, samplerate=sample_rate, nfilt=nfilt, winlen=0.025)
+    filter_banks, energies = fbank(audio,
+                                   samplerate=sample_rate,
+                                   nfilt=nfilt,
+                                   winlen=0.025,
+                                   winfunc=np.hamming)
+
+    if use_energy:
+        energies = energies.reshape(energies.shape[0], 1)
+        filter_banks = np.concatenate((energies, filter_banks), axis=1)
+        # frames_features[:, 0] = np.log(energies)
 
     if use_logscale:
-        filter_banks = 20 * np.log10(np.maximum(filter_banks, 1e-5))
+        # filter_banks = 20 * np.log10(np.maximum(filter_banks, 1e-5))
+        filter_banks = np.log(np.maximum(filter_banks, 1e-5))
 
+    # Todo: extract the normalize step?
     if use_delta:
         delta_1 = delta(filter_banks, N=1)
         delta_2 = delta(delta_1, N=1)
@@ -68,9 +81,11 @@ def make_Fbank(filename,
         delta_2 = normalize_frames(delta_2, Scale=use_scale)
 
         frames_features = np.hstack([filter_banks, delta_1, delta_2])
-    else:
+
+    if normalize:
         filter_banks = normalize_frames(filter_banks, Scale=use_scale)
-        frames_features = filter_banks
+
+    frames_features = filter_banks
 
     file_path = pathlib.Path(write_path)
     if not file_path.parent.exists():
@@ -147,6 +162,7 @@ def read_MFB(filename):
     try:
         audio = np.load(filename.replace('.wav', '.npy'))
     except Exception:
+
         raise ValueError("Load {} error!".format(filename))
 
     return audio
