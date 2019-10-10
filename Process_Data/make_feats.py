@@ -16,67 +16,103 @@ import pdb
 import threading
 from multiprocessing import Process, Queue
 import time
+import numpy as np
 
 from Process_Data.audio_processing import make_Fbank, conver_to_wav
-
+from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
+from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 NUM_JOB = 4
-missing_spks = ['id06996', 'id07001', 'id07002', 'id07008', 'id07017', 'id07031', 'id07032', 'id07043', 'id07044', 'id07057', 'id07062', 'id07063', 'id07065', 'id07072', 'id07080', 'id07084', 'id07085', 'id07117', 'id07118', 'id07133', 'id07135', 'id07148', 'id07153', 'id07165', 'id07179', 'id07181', 'id07182', 'id07183', 'id07186', 'id07187', 'id07200', 'id07205', 'id07206', 'id07220', 'id07232', 'id07243', 'id07256', 'id07273', 'id07275', 'id07278', 'id07293', 'id07299', 'id07305', 'id07308', 'id07334', 'id07341', 'id07342']
+spks = ['id00518']
+
+# dataset_dir = '/data/voxceleb/voxceleb1_wav'
+dataset_dir = '/home/cca01/work2019/Data/voxceleb2/'
+# voxceleb, voxceleb_dev = voxceleb2_list_reader(dataset_dir)
+# spks = list(set([datum['speaker_id'] for datum in voxceleb_dev]))
+
+# vox1, vox1_dev = wav_list_reader(dataset_dir)
+# vox1_test = [datum for datum in vox1 if datum['subset'] == 'test']
+# spks = list(set([datum['speaker_id'] for datum in vox1_test]))
+
+data_dir = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb2/fbank24'
+dataset_path = pathlib.Path(dataset_dir)
+# dev/aac/{}'
+# data_dir = pathlib.Path('/home/cca01/')
+
 # pdb.set_trace()
 num_make = 0
 
 def make_feats_spks(spk_id):
-
-    data_root = pathlib.Path('/home/cca01/work2019/Data/voxceleb2/dev/aac/{}'.format(spk_id))
-    data_dir = pathlib.Path('/home/cca01/work2019/Data/voxceleb2/dev/aac')
-
     # print('\nspeaker is %s' % str(spk_id))
+    spkid_path = pathlib.Path(dataset_dir + '/dev/aac/{}'.format(spk_id))
 
     # all the paths of wav files
     # dev/acc/spk_id/utt_group/wav_id.wav
-    all_abs_path = list(data_root.glob('*/*.wav'))
-    all_rel_path = [str(pathlib.Path.relative_to(path, data_dir)).rstrip('.wav') for path in all_abs_path]
+    all_wav = list(spkid_path.glob('*/*.wav'))
 
-    num_pro = 0
-    for datum in all_rel_path:
-        # datum likes 'id08648/Hk5G97l1fR0/00064'
+    num_pro = 0.
+    skip_wav = 0.
+    for datum in all_wav:
         # Data/Voxceleb1/
         # /data/voxceleb/voxceleb1_wav/
         # pdb.set_trace()
-        filename = str(data_dir) + '/' +datum + '.wav'
-        write_path = 'Data/Voxceleb2/dev/aac/' + datum + '.npy'
+        filename = str(datum)
+        write_path = data_dir + '/' + str(datum.relative_to(dataset_path)).replace('.wav', '.npy')
+
+        if os.path.exists(write_path):
+            try:
+                np.load(write_path)
+                # print('')
+            except Exception:
+                print("Error load exsit npy file")
+
+            num_pro += 1
+            skip_wav += 1
+            continue
 
         if os.path.exists(filename):
-            make_Fbank(filename=filename, write_path=write_path)
+            make_Fbank(filename=filename,
+                       write_path=write_path,
+                       nfilt=23,
+                       use_energy=True
+                       )
+            num_pro += 1
         # convert the audio format for m4a.
         # elif os.path.exists(filename.replace('.wav', '.m4a')):
-            # conver_to_wav(filename.replace('.wav', '.m4a'),
-            #               write_path=args.dataroot + '/voxceleb2/' + datum['filename'] + '.wav')
-            #
-            # make_Fbank(filename=filename,
-            #            write_path=write_path)
+        #     conver_to_wav(filename.replace('.wav', '.m4a'),
+        #                   write_path=data_dir + '/' + datum['filename'] + '.wav')
+        #
+        #     make_Fbank(filename=args.dataroot + '/' + datum['filename'] + '.wav',
+        #                write_path=write_path,
+        #                nfilt=c.TDNN_FBANK_FILTER,
+        #                use_energy=True)
+        #     num_pro += 1
+        else:
+            raise ValueError(filename + ' doesn\'t exist.')
 
-        # print('\rThread: {} \t processed {:2f}% {}/{}.'.format(threadid, num_pro / len(all_rel_path), num_pro, len(all_rel_path)), end='\r')
-        num_pro += 1
+        # print('\tPreparing for speaker {}.\tProcessed {:2f}% {}/{}.\tSkipped {} wav files.'.format(spk_id,
+        #                                                                                            100 * num_pro / len(all_wav),
+        #                                                                                            num_pro,
+        #                                                                                            len(all_wav),
+        #                                                                                            skip_wav), end='\r')
+
+# class MyThread(threading.Thread):
+#     def __init__(self, spk_ids, threadid):
+#         super(MyThread, self).__init__()  # 重构run函数必须要写
+#         self.spk_ids = spk_ids
+#         self.threadid = threadid
+#
+#     def run(self):
+#         global num_make
+#         for spk_id in self.spk_ids:
+#             make_feats_spks(spk_id)
+#             num_make += 1
+#             print('\t{:4d} of speakers making feats completed!'.format(num_make))
 
 
-class MyThread(threading.Thread):
-    def __init__(self, spk_ids, threadid):
-        super(MyThread, self).__init__()  # 重构run函数必须要写
-        self.spk_ids = spk_ids
-        self.threadid = threadid
-
-    def run(self):
-        global num_make
-        for spk_id in self.spk_ids:
-            make_feats_spks(spk_id)
-            num_make += 1
-            print('\t{:4d} of speakers making feats completed!'.format(num_make))
-
-
-class MyProcess(Process):
+class MakeFeatsProcess(Process):
     def __init__(self, spk_ids, proid, queue):
-        super(MyProcess, self).__init__()  # 重构run函数必须要写
+        super(MakeFeatsProcess, self).__init__()  # 重构run函数必须要写
         self.spk_ids = spk_ids
         self.proid = proid
         self.queue = queue
@@ -87,19 +123,21 @@ class MyProcess(Process):
             make_feats_spks(spk_id)
             #num_make += 1
             self.queue.put(spk_id)
-            print('\t{:4d} of speakers making feats completed!'.format(self.queue.qsize()))
-
+            print('\tProcess {:2d}: {:4d} of speakers making feats completed!'.format(self.proid, self.queue.qsize()), end='\n')
+        print('>>Process {} finished!'.format(self.proid))
 
 if __name__ == "__main__":
-    num_spk = len(missing_spks)
+    num_spk = len(spks)
     trunk = int(num_spk / NUM_JOB)
     start_time = time.time()
 
     # threadpool = []
     queue = Queue()
     processpool = []
+    print('make feats for {} speakers.'.format(num_spk))
     for i in range(0, NUM_JOB):
         j = (i+1)*trunk
+
         if i==(NUM_JOB-1):
             j = num_spk
 
@@ -107,7 +145,7 @@ if __name__ == "__main__":
         # t.start()
         # threadpool.append(t)
 
-        p = MyProcess(missing_spks[i*trunk:j], i, queue)
+        p = MakeFeatsProcess(spks[i*trunk:j], i, queue)
         p.start()
         processpool.append(p)
 
@@ -119,12 +157,12 @@ if __name__ == "__main__":
 
     print('For multi process, average making seconds for {} speakers is {}'.format(num_spk, (time.time() - start_time)/num_spk))
 
-    start_time = time.time()
-    for spk in missing_spks:
-        make_feats_spks(spk)
-
-    print('For one process, average making seconds for {} speakers is {}'.format(num_spk, (
-                time.time() - start_time) / num_spk))
+    # start_time = time.time()
+    # for spk in missing_spks:
+    #     make_feats_spks(spk)
+    #
+    # print('For one process, average making seconds for {} speakers is {}'.format(num_spk, (
+    #             time.time() - start_time) / num_spk))
 
 """
 For multi threads, average making seconds for 47 speakers is 4.579958657
