@@ -33,7 +33,7 @@ Trained **ResCNN10** with asoftmax loss for 45 epoch:
     Test Epoch: 46 [113088/37720 (100%)]: : 590it [08:01,  1.42s/it]
     For cos_distance Test set: ERR: 9.47507953%	Best ACC:0.50037116
 
-####20190922
+####20190922 vosceleb1
 Trained **ResCNN10** with **softmax** for 10 epoch, and **triplet loss** for 15 epoch:
     
     Train Epoch:  19 [  818688/  819200 (100%)]	Loss: 0.009060: : 1600it [1:00:17,  2.22s/it]
@@ -48,4 +48,26 @@ Trained **ResCNN10** with **softmax** for 10 epoch, and **triplet loss** for 15 
       Train set: ERR: 0.09517700	Best Accuracy:0.50000000 
     
     Test Epoch: 24 [206976/37720 (100%)]: : 295it [03:05,  1.75it/s]
-    0it [00:00, ?it/s]For cos_distance Test set: ERR: 0.18011665	Best ACC:0.50000000  
+    0it [00:00, ?it/s]For cos_distance Test set: ERR: 0.18011665	Best ACC:0.50000000 
+    
+####20190930 voxceleb1
+Trained **ResCNN34**  with **asoftmax** for 30 epoch:
+    
+    Train Epoch:   7 [   39474/  148642 (100%)]	Loss: 67.098373 	Minibatch Accuracy: 0.000000%: : 1162it [41:31,  1.74s/it]
+    0it [00:00, ?it/s]For ASoftmax Train set Accuracy:0.073331% 
+    
+    Test Epoch: 7 [113088/37720 (100%)]: : 590it [22:10,  1.32s/it]
+    0it [00:00, ?it/s]For cos_distance Test set: ERR: 7.75715801%	Best ACC:0.50000000 
+    
+    Train Epoch:   8 [   39474/  148642 (100%)]	Loss: 67.098366 	Minibatch Accuracy: 0.000000%: : 1162it [19:27,  1.23it/s]
+    0it [00:00, ?it/s]For ASoftmax Train set Accuracy:0.073331% 
+    
+    Test Epoch: 8 [113088/37720 (100%)]: : 590it [07:09,  1.62it/s]
+    0it [00:00, ?it/s]For cos_distance Test set: ERR: 8.18133616%	Best ACC:0.50058324 
+    
+####20191010 tdnn vox2
+
+    => loading checkpoint Data/checkpoint/tdnn/checkpoint_1.pth
+    checkpoint file epoch is : 2
+    Test Epoch: 2 [14136/37720 (100%)]: : 590it [47:45,  5.11it/s]
+    For cos_distance Test set: ERR: 27.75185578%	Best ACC:0.50000000 
