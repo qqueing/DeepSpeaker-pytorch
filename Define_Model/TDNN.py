@@ -68,6 +68,7 @@ class TDNN(nn.Module):
         """
         This function performs the weight multiplication given an arbitrary context. Cannot directly use convolution because in case of only particular frames of context, one needs to select only those frames and perform a convolution across all batch items and all output dimensions of the kernel.
         """
+        # pdb.set_trace()
         x = x.squeeze()
         input_size = x.size()
         assert len(input_size) == 3, 'Input tensor dimensionality is incorrect. Should be a 3D tensor'
@@ -129,13 +130,13 @@ class Time_Delay(nn.Module):
         self.fc1 = nn.Linear(node_num[5], node_num[6])
         self.fc2 = nn.Linear(node_num[6], node_num[7])
         self.fc3 = nn.Linear(node_num[7], output_dim)
-        self.batch_norm1 = nn.BatchNorm1d(256)
-        self.batch_norm2 = nn.BatchNorm1d(256)
-        self.batch_norm3 = nn.BatchNorm1d(256)
-        self.batch_norm4 = nn.BatchNorm1d(256)
-        self.batch_norm5 = nn.BatchNorm1d(512)
-        self.batch_norm6 = nn.BatchNorm1d(512)
-        self.batch_norm7 = nn.BatchNorm1d(256)
+        self.batch_norm1 = nn.BatchNorm1d(node_num[0])
+        self.batch_norm2 = nn.BatchNorm1d(node_num[1])
+        self.batch_norm3 = nn.BatchNorm1d(node_num[2])
+        self.batch_norm4 = nn.BatchNorm1d(node_num[3])
+        self.batch_norm5 = nn.BatchNorm1d(node_num[4])
+        self.batch_norm6 = nn.BatchNorm1d(node_num[6])
+        self.batch_norm7 = nn.BatchNorm1d(node_num[7])
         self.input_dim = input_dim
         self.output_dim = output_dim
 
