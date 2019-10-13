@@ -12,6 +12,7 @@
 from __future__ import print_function
 import argparse
 import pdb
+import time
 
 from tensorboardX import SummaryWriter
 
@@ -26,9 +27,9 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import ResSpeakerModel
+from Define_Model.model import ResCNNSpeaker
 from Process_Data.VoxcelebTestset import VoxcelebTestset
-from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
+# from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
@@ -37,7 +38,7 @@ from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import GenerateSpect
+from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
 # Version conflict
 
@@ -56,7 +57,7 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb2/fbank64',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
                     help='path to dataset')
 parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
                     help='path to voxceleb1 test dataset')
@@ -66,14 +67,13 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='/home/cca01/work2019/yangwenhao/mydataset/checkpoint/resnet10_asoft_vox2',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet10_asoftmax/ass',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='/home/cca01/work2019/yangwenhao/mydataset/checkpoint/resnet10_asoft_vox2/checkpoint_0.pth',
-                    type=str,
-                    metavar='PATH',
+                    default='/home/cca01/work2019/yangwenhao/mydataset/checkpoint/resnet10_asoftmax/ass/checkpoint_14.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=45, metavar='E',
@@ -114,9 +114,9 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
-parser.add_argument('--seed', type=int, default=0, metavar='S',
+parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
                     help='how many batches to wait before logging training status')
@@ -136,6 +136,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
+torch.manual_seed(args.seed)
 
 if not os.path.exists(args.log_dir):
     os.makedirs(args.log_dir)
@@ -150,7 +151,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir='Log/asoftmax_res10', filename_suffix='vox2')
+writer = SummaryWriter(logdir='Log/asoftmax_res10', filename_suffix='vox1_fb64_ass')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -158,8 +159,8 @@ if args.cos_sim:
 else:
     l2_dist = PairwiseDistance(2)
 
-# voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
-voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
+voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
+# voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
 
 # if args.makemfb:
 #     #pbar = tqdm(voxceleb)
@@ -181,11 +182,13 @@ voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
 
 if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
-        truncatedinputfromMFB(),
+        concateinputfromMFB(),
+        # truncatedinputfromMFB(),
         totensor()
     ])
     transform_T = transforms.Compose([
-        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
+        # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
+        concateinputfromMFB(input_per_file=args.test_input_per_file),
         totensor()
     ])
     file_loader = read_MFB
@@ -213,7 +216,7 @@ else:
 
 # pdb.set_trace()
 
-train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
 # del voxceleb
@@ -225,11 +228,12 @@ def main():
     test_display_triplet_distance = False
 
     # print the experiment configuration
-    print('\nparsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
+    print('\33[91m\nCurrent time is {}\n\33[0m'.format(str(time.asctime())))
+    print('Parsed options:\n{}\n'.format(vars(args)))
+    print('\nNumber of Speakers:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = ResCNNSpeaker(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -279,6 +283,12 @@ def train(train_loader, model, optimizer, epoch):
     total_datasize = 0.
     total_loss = 0.
 
+    for param_group in optimizer.param_groups:
+        print('\33[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
+        if epoch % 16 == 15:
+            print('Decreasing the learning rate!')
+            param_group['lr'] = param_group['lr'] * 0.1
+
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
     output_softmax = nn.Softmax(dim=1)
@@ -292,14 +302,15 @@ def train(train_loader, model, optimizer, epoch):
         feats = model(data)
         classfier = model.forward_classifier(feats)
 
-
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
         true_labels = label.cuda()
 
-        loss = model.AngularSoftmaxLoss(feats, true_labels.cuda())
+        # cross_entropy_loss = nn.CrossEntropyLoss()(classfier, true_labels)
         # loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
+
+        loss = model.AngularSoftmaxLoss(feats, true_labels)
 
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
         correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().data[0])
@@ -331,7 +342,7 @@ def train(train_loader, model, optimizer, epoch):
                 #'criterion': criterion.state_dict()
                '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
-    print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
+    print('\n\33[91mFor epoch {}: ASoftmax Train set Accuracy:{:.6f}%, and Average loss is {}. \n\33[0m'.format(epoch, 100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
     writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
 
@@ -374,9 +385,9 @@ def test(test_loader, model, epoch):
     #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor cos_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

@@ -344,9 +344,9 @@ def train(train_loader, model, optimizer, epoch):
 
             # log loss value for hard selected sample
             # logger.log_value('selected_triplet_loss', triplet_loss.data[0]).step()
-            logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
-            logger.log_value('selected_total_loss', loss.data[0]).step()
-            logger.log_value('minibatch_accuracy', minibatch_acc).step()
+            # logger.log_value('selected_cross_entropy_loss', cross_entropy_loss.data[0]).step()
+            # logger.log_value('selected_total_loss', loss.data[0]).step()
+            # logger.log_value('minibatch_accuracy', minibatch_acc).step()
 
             if batch_idx % args.log_interval == 0:
                 pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f}\tMinibatch Accuracy: {:.4f}%\tSelected Triplets: {:4d}'.format(
@@ -385,8 +385,8 @@ def train(train_loader, model, optimizer, epoch):
     print('\33[91mFor cos_distance verification:\tTrain set: ERR: {:.8f}\tBest Accuracy:{:.8f} \n\33[0m'.format(eer, np.mean(accuracy)))
 
     if not epoch > args.min_softmax_epoch:
-        print('\33[91mTrain set: Accuracy: {:.8f}\n\33[0m'.format(float(correct)/total_datasize))   
-        logger.log_value('Train Accuracy', float(correct)/total_datasize)
+        print('\33[91mTrain set: Accuracy: {:.8f}%.\n\33[0m'.format(100 * float(correct)/total_datasize))
+        # logger.log_value('Train Accuracy', float(correct)/total_datasize)
 
 def test(test_loader, model, epoch):
     # switch to evaluate mode

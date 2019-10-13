@@ -11,9 +11,10 @@
 """
 from __future__ import print_function
 
+import time
 import torch.nn as nn
-import sys
-import torch.nn.functional as F
+# import sys
+# import torch.nn.functional as F
 import torch
 import pathlib
 import os
@@ -219,7 +220,7 @@ def train(train_loader, model, optimizer, epoch):
                 # 'criterion': criterion.state_dict()
                 str(check_path))
 
-    print('\33[91mFor train epoch {}, average of batch loss: {:.8f}%\n\33[0m'.format(epoch, np.mean(running_loss)))
+    print('\33[91mFor train epoch {}, average of batch loss: {:.8f}%, accuracy is {}.\n\33[0m'.format(epoch, np.mean(running_loss), 100 * float(correct) / total))
 
 
 def test(test_loader, model, epoch):
@@ -294,7 +295,8 @@ def test(test_loader, model, epoch):
 
 def main():
     # print the experiment configuration
-    print('\nparsed options:\n{}\n'.format(vars(args)))
+    print('\n\33[91m Current time is {}.\n\33[0m'.format(str(time.asctime())))
+    print('\nparsed options:\n{}'.format(vars(args)))
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     context = [[-2, 2], [-2, 0, 2], [-3, 0, 3], [0], [0]]
@@ -305,12 +307,12 @@ def main():
     # train_set = trainset.TrainSet('../all_feature/')
     # todo:
     # train_set = []
-    train_loader = DataLoader(train_dir, batch_size=args.batch_size, num_workers=16, shuffle=True)
+    train_loader = DataLoader(train_dir, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False)
 
     model = Time_Delay(context, 24, len(train_dir.classes), node_num, full_context)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.99)
     # torch.set_num_threads(16)
 
     if args.cuda:

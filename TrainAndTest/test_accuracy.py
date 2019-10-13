@@ -23,7 +23,7 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model import ResSpeakerModel
+from Define_Model.model import ResSpeakerModel
 from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
@@ -33,7 +33,7 @@ from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model import PairwiseDistance
+from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 # Version conflict
 
