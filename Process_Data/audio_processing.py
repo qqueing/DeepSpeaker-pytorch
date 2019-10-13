@@ -11,6 +11,7 @@ from pydub import AudioSegment
 
 import os
 import pathlib
+import math
 import pdb
 
 
@@ -230,17 +231,21 @@ class concateinputfromMFB(object):
         network_inputs = []
         num_frames = len(frames_features)
 
-        import math
         # pdb.set_trace()
-        num_utt = math.ceil(float(num_frames) / c.NUM_FRAMES)
-        output = np.zeros((int(num_utt*c.NUM_FRAMES)-num_frames, frames_features.shape[1]))
+
+        num_utt = math.ceil(float(num_frames) / c.NUM_FRAMES_SPECT)
+        output = np.zeros((int(num_utt*c.NUM_FRAMES_SPECT)-num_frames, frames_features.shape[1]))
         output = np.concatenate((frames_features, output), axis=0)
 
-        for i in range(int(num_utt)):
-            frames_slice = output[i*c.NUM_FRAMES:(i+1)*c.NUM_FRAMES]
+        for i in range(self.input_per_file):
+            j = np.random.randint(low=0, high=num_utt)
+            frames_slice = output[j*c.NUM_FRAMES_SPECT:(j+1)*c.NUM_FRAMES_SPECT]
             network_inputs.append(frames_slice)
         # pdb.set_trace()
+
         network_inputs = np.array(network_inputs)
+        if network_inputs.shape[1]==0:
+            pdb.set_trace()
         #return_output = network_inputs.reshape((1, network_inputs.shape[0], network_inputs.shape[1], network_inputs.shape[2]))
 
         return network_inputs
@@ -392,7 +397,10 @@ class totensor(object):
             #img = torch.from_numpy(pic.transpose((0, 2, 1)))
             #return img.float()
             # pdb.set_trace()
-            img = torch.FloatTensor(pic.transpose((0, 2, 1)))
+            try:
+                img = torch.FloatTensor(pic.transpose((0, 2, 1)))
+            except Exception:
+                pdb.set_trace()
             #img = np.float32(pic.transpose((0, 2, 1)))
             return img
 
