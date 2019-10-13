@@ -66,7 +66,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
         if (nontarget_position < 0):
             nontarget_position = 0
         # The exceptions from non targets are samples where cosine score is > the target score
-        if (non_target[nontarget_position] < target[target_position]):
+        if (non_target[nontarget_position] <= target[target_position]):
             break
 
         target_position += 1
@@ -75,7 +75,7 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
     eer = 1 - target_position * 1.0 / target_size
 
     max_threshold = np.max(distances)
-    thresholds = np.arange(0, max_threshold, 0.01)
+    thresholds = np.arange(0, max_threshold, 0.001)
     tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
 
     return eer, best_accuracy
