@@ -11,6 +11,8 @@
 """
 #from __future__ import print_function
 import argparse
+import time
+
 from tensorboardX import SummaryWriter
 
 import torch
@@ -24,7 +26,8 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model import ResSpeakerModel
+# from Define_Model import ResSpeakerModel
+from Define_Model.model import ResCNNSpeaker
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from eval_metrics import evaluate_kaldi_eer
 
@@ -33,8 +36,9 @@ from logger import Logger
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model import PairwiseDistance
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from Define_Model.model import PairwiseDistance
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, \
+    mk_MFB, concateinputfromMFB
 # Version conflict
 
 import torch._utils
@@ -52,8 +56,10 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='Data/dataset',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
                     help='path to dataset')
+parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+                    help='path to voxceleb1 test dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
@@ -108,7 +114,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -128,6 +134,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
+torch.manual_seed(args.seed)
 
 if not os.path.exists(args.log_dir):
     os.makedirs(args.log_dir)
@@ -159,11 +166,13 @@ if args.makemfb:
 
 if args.mfb:
     transform = transforms.Compose([
-        truncatedinputfromMFB(),
+        concateinputfromMFB(),
+        # truncatedinputfromMFB(),
         totensor()
     ])
     transform_T = transforms.Compose([
-        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
+        concateinputfromMFB(input_per_file=args.test_input_per_file),
+        # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
         totensor()
     ])
     file_loader = read_MFB
@@ -178,7 +187,7 @@ else:
 
 
 train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
 del voxceleb
 del voxceleb_dev
@@ -186,14 +195,15 @@ del voxceleb_dev
 
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
-    test_display_triplet_distance = False
+    # test_display_triplet_distance = False
 
     # print the experiment configuration
-    print('\nparsed options:\n{}\n'.format(vars(args)))
+    print('\33[91m\nCurrent time is {}\n\33[0m'.format(str(time.asctime())))
+    print('Parsed options:\n{}\n'.format(vars(args)))
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = ResCNNSpeaker(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -256,7 +266,6 @@ def train(train_loader, model, optimizer, epoch):
         feats = model(data)
         classfier = model.forward_classifier(feats)
 
-
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
@@ -280,7 +289,7 @@ def train(train_loader, model, optimizer, epoch):
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \tMinibatch Accuracy: {:.6f}%'.format(
+            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tBatch Loss: {:.6f} \tMinibatch Accuracy: {:.6f}%'.format(
                 epoch,
                 batch_idx * len(data),
                 len(train_loader.dataset),
@@ -295,7 +304,7 @@ def train(train_loader, model, optimizer, epoch):
                '{}/resnet10_amsoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
 
-    print('\33[91mFor AM-Softmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
+    print('\33[91mFor AM-Softmax Train set Accuracy:{:.6f}%\t Average loss is {}. \n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
     writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
 
@@ -338,9 +347,9 @@ def test(test_loader, model, epoch):
     #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest Accuracy:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest Accuracy:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

@@ -9,6 +9,7 @@ Work accomplished so far:
 - [x] Project structure cleanup.
 - [ ] Trained simple ResNet10 with softmax+triplet loss for pre-training 10 batch and triplet loss for 18 epoch , resulted in accuracy ???
 
+## Architecture of Deep Speaker Network:
 |LayerName|NumofDup|OutputSize|
 |:------------:|:----------:|:------------:|
 | conv1        |1           |              | 

@@ -32,7 +32,7 @@ def evaluate_eer(distances, labels):
     #     labels, 1e-3)
     return err, best_accuracy
 
-def evaluate_kaldi_eer(distances, labels, cos=True):
+def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
     """
     The distance score should be larger when two samples are more similar.
     :param distances:
@@ -72,12 +72,17 @@ def evaluate_kaldi_eer(distances, labels, cos=True):
         target_position += 1
 
     # threshold = target[target_position]
+    eer_threshold = target[target_position]
     eer = 1 - target_position * 1.0 / target_size
 
-    max_threshold = np.max(distances)
-    thresholds = np.arange(0, max_threshold, 0.001)
+    # max_threshold = np.max(distances)
+    # thresholds = np.arange(0, max_threshold, 0.001)
+    thresholds = np.sort(np.unique(distances))
     tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
 
+    # return eer threshold.
+    if re_thre:
+        return eer, eer_threshold, best_accuracy
     return eer, best_accuracy
 
 def calculate_roc(thresholds, distances, labels):

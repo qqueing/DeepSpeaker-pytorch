@@ -27,7 +27,7 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import ResCNNSpeaker
+from Define_Model.model import ResCNNSpeaker, SuperficialResNet
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 # from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from eval_metrics import evaluate_kaldi_eer
@@ -233,7 +233,8 @@ def main():
     print('\nNumber of Speakers:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResCNNSpeaker(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
+    model = SuperficialResNet(layers=[1, 1, 1, 1], embedding_size=args.embedding_size, n_classes=len(train_dir.classes), m=args.m)
+    # model = ResCNNSpeaker(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()

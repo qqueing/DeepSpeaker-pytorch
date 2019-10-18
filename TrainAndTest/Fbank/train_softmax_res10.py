@@ -67,7 +67,7 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet10_asoftmax/ass',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet10_softmax',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
@@ -286,9 +286,9 @@ def train(train_loader, model, optimizer, epoch):
 
     for param_group in optimizer.param_groups:
         print('\33[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
-        if epoch % 16 == 15:
-            print('Decreasing the learning rate!')
-            param_group['lr'] = param_group['lr'] * 0.1
+        # if epoch % 16 == 15:
+        #     print('Decreasing the learning rate!')
+        #     param_group['lr'] = param_group['lr'] * 0.1
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
