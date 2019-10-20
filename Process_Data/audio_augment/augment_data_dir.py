@@ -20,15 +20,17 @@
 # It is designed to be somewhat simpler and more flexible for augmenting with
 # additive noise.
 from __future__ import print_function
+
+import pdb
 import sys, random, argparse, os, imp
 # Append system path
-sys.path.append("steps/data/")
-sys.path.insert(0, 'steps/')
+# sys.path.append("steps/data/")
+# sys.path.insert(0, 'steps/')
 
 # from reverberate_data_dir import parse_file_to_dict
 # from reverberate_data_dir import write_dict_to_file
 # import libs.common as common_lib
-data_lib = imp.load_source('dml', 'steps/data/data_dir_manipulation_lib.py')
+# data_lib = imp.load_source('dml', 'steps/data/data_dir_manipulation_lib.py')
 
 def get_args():
     parser = argparse.ArgumentParser(description="Augment the data directory with additive noises. "
@@ -65,12 +67,14 @@ def get_args():
     parser.add_argument("--modify-spk-id", action='store_true', default=False,
                         help='Utt prefix or suffix would be added to the spk id '
                             'also (used in ASR), in speaker id it is left unmodifed')
-    parser.add_argument("--bg-noise-dir", type=str, dest="bg_noise_dir",
+    parser.add_argument("--bg-noise-dir", type=str, dest="bg_noise_dir", default='/home/cca01/work2019/yangwenhao/mydataset/musan',
                         help="Background noise data directory")
     parser.add_argument("--fg-noise-dir", type=str, dest="fg_noise_dir",
                         help="Foreground noise data directory")
-    parser.add_argument("input_dir", help="Input data directory")
-    parser.add_argument("output_dir", help="Output data directory")
+    parser.add_argument("--input-dir", type=str, dest="input_dir", default='/home/cca01/work2019/yangwenhao/mydataset/musan',
+                        help="Input data directory")
+    parser.add_argument("--output-dir", type=str, dest="output_dir", default='/home/cca01/work2019/yangwenhao/mydataset/musan',
+                        help="Output data directory")
 
     print(' '.join(sys.argv))
     args = parser.parse_args()
@@ -109,6 +113,40 @@ def get_noise_list(noise_wav_scp_filename):
         noise_utts.append(toks[0])
         noise_wavs[toks[0]] = wav.rstrip()
     return noise_utts, noise_wavs
+
+def parse_file_to_dict(file, assert2fields = False, value_processor = None):
+    """ This function parses a file and pack the data into a dictionary
+        It is useful for parsing file like wav.scp, utt2spk, text...etc
+    """
+    if value_processor is None:
+        value_processor = lambda x: x[0]
+    dict = {}
+    #for line in open(file, 'r', encoding='utf-8'):
+    for line in open(file, 'r'):
+
+        parts = line.split()
+        if assert2fields:
+            assert(len(parts) == 2)
+
+        dict[parts[0]] = value_processor(parts[1:])
+    return dict
+
+def write_dict_to_file(dict, file_name):
+    """ This function creates a file and write the content of a dictionary into it
+    """
+    # file = open(file_name, 'w', encoding='utf-8')
+    file = open(file_name, 'w')
+    keys = sorted(dict.keys())
+    for key in keys:
+        value = dict[key]
+        if type(value) in [list, tuple] :
+            if type(value) is tuple:
+                value = list(value)
+            value = sorted(value)
+            value = ' '.join(str(value))
+        file.write('{0} {1}\n'.format(key, value))
+    file.close()
+
 
 def augment_wav(utt, wav, dur, fg_snr_opts, bg_snr_opts, fg_noise_utts, \
     bg_noise_utts, noise_wavs, noise2dur, interval, num_opts):
@@ -235,7 +273,13 @@ def prepare_noise(root_dir, sampling_rate):
                                     num_good_files, num_bad_files))
     return utt2spk_str, utt2wav_str
 
+
+def get_utt2dur(root_dir):
+    return 0
+
 def main():
+
+    # pdb.set_trace()
     args = get_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
@@ -243,6 +287,8 @@ def main():
     fg_snrs = [int(i) for i in args.fg_snr_str.split(":")]
     bg_snrs = [int(i) for i in args.bg_snr_str.split(":")]
     num_bg_noises = [int(i) for i in args.num_bg_noises.split(":")]
+    if not os.path.exists(input_dir + "/reco2dur"):
+        get_utt2dur()
     reco2dur = parse_file_to_dict(input_dir + "/reco2dur",
         value_processor = lambda x: float(x[0]))
     wav_scp_file = open(input_dir + "/wav.scp", 'r').readlines()
@@ -330,10 +376,10 @@ def main():
         create_augmented_utt2uniq(input_dir, output_dir,
                         args.utt_modifier_type, args.utt_modifier)
 
-    data_lib.RunKaldiCommand("utils/utt2spk_to_spk2utt.pl <{output_dir}/utt2spk >{output_dir}/spk2utt"
-                    .format(output_dir = output_dir))
-
-    data_lib.RunKaldiCommand("utils/fix_data_dir.sh {output_dir}".format(output_dir = output_dir))
+    # data_lib.RunKaldiCommand("utils/utt2spk_to_spk2utt.pl <{output_dir}/utt2spk >{output_dir}/spk2utt"
+    #                 .format(output_dir = output_dir))
+    #
+    # data_lib.RunKaldiCommand("utils/fix_data_dir.sh {output_dir}".format(output_dir = output_dir))
 
 if __name__ == "__main__":
     main()
