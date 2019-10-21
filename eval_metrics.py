@@ -43,15 +43,18 @@ def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
     # split the target and non-target distance array
     target = []
     non_target = []
+    new_distances = []
 
     for (distance, label) in zip(distances, labels):
         if cos:
             distance = 1. - distance
+        new_distances.append(distance)
         if label:
             target.append(distance)
         else:
             non_target.append(distance)
 
+    new_distances = np.array(new_distances)
     target = np.sort(target)
     non_target = np.sort(non_target)
 
@@ -66,10 +69,15 @@ def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
         if (nontarget_position < 0):
             nontarget_position = 0
         # The exceptions from non targets are samples where cosine score is > the target score
-        if (non_target[nontarget_position] <= target[target_position]):
+        # if (non_target[nontarget_position] <= target[target_position]):
+        #     break
+        if (target[target_position] < non_target[nontarget_position]):
+            # print('target[{}]={} is < non_target[{}]={}.'.format(target_position, target[target_position], nontarget_position, non_target[nontarget_position]))
+            target_position += 1
+            continue
+        else:
             break
-
-        target_position += 1
+        # target_position += 1
 
     # threshold = target[target_position]
     eer_threshold = target[target_position]
@@ -77,8 +85,8 @@ def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
 
     # max_threshold = np.max(distances)
     # thresholds = np.arange(0, max_threshold, 0.001)
-    thresholds = np.sort(np.unique(distances))
-    tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
+    thresholds = np.sort(np.unique(target))
+    tpr, fpr, best_accuracy = calculate_roc(thresholds, new_distances, labels)
 
     # return eer threshold.
     if re_thre:
