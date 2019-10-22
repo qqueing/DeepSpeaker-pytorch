@@ -28,7 +28,7 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import ResSpeakerModel
+from Define_Model.model import ResSpeakerModel, ResCNNSpeaker
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from eval_metrics import evaluate_kaldi_eer
@@ -60,7 +60,7 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 
 # options for vox1
-parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+parser.add_argument('--dataroot', type=str, default='Data/dataset/voxceleb1/fbank64',
                     help='path to dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
@@ -72,7 +72,7 @@ parser.add_argument('--check-path', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet34_asoftmax/7.7%/checkpoint_8.pth',
+                    default='Data/checkpoint/resnet34_asoftmax/checkpoint_0.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -138,9 +138,9 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
-parser.add_argument('--seed', type=int, default=0, metavar='S',
+parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=50, metavar='LI',
                     help='how many batches to wait before logging training status')
@@ -176,7 +176,7 @@ logger = Logger(LOG_DIR)
 # writer = SummaryWriter('Log/asoft_res34_vox1')
 
 # options for vox2
-writer = SummaryWriter('Log/asoft_res34_vox2')
+writer = SummaryWriter('Log/asoft_res34_vox1', filename_suffix=str(time.asctime()))
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -239,7 +239,7 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
+    model = ResCNNSpeaker(embedding_size=args.embedding_size, resnet_size=34, num_classes=len(train_dir.classes))
 
     if args.cuda:
         model.cuda()
@@ -289,12 +289,17 @@ def train(train_loader, model, optimizer, epoch):
     total_datasize = 0.
     total_loss = 0.
 
+    output_softmax = nn.Softmax(dim=1)
+
     pbar = tqdm(enumerate(train_loader))
+    for param_group in optimizer.param_groups:
+        print('\33\n[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
+
     # learning rate multiple 0.1 per 15 epochs
-    if epoch % 9 == 0:
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = param_group['lr'] * 0.1
-            print('Decrease learning rate to 0.1*lr.')
+    # if epoch % 9 == 0:
+    #     for param_group in optimizer.param_groups:
+    #         param_group['lr'] = param_group['lr'] * 0.1
+    #         print('Decrease learning rate to 0.1*lr.')
     # pdb.set_trace()
 
     for batch_idx, (data, label) in pbar:
@@ -307,7 +312,7 @@ def train(train_loader, model, optimizer, epoch):
         feats = model(data)
         classfier = model.forward_classifier(feats)
 
-        output_softmax = nn.Softmax()
+
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
@@ -352,7 +357,7 @@ def train(train_loader, model, optimizer, epoch):
                 #'criterion': criterion.state_dict()
                str(check_path))
 
-    print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}%, and average loss {:.6f}.\n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
+    print('\33[91mFor ASoftmax Res34 Train set Accuracy:{:.6f}%, and average loss {:.6f}.\n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
     writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
 
@@ -389,15 +394,18 @@ def test(test_loader, model, epoch):
     distances = np.array([subdist for dist in distances for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test_Result/eer', eer, epoch)
+    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
     writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
-    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print(
+            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd est accuracy could be {:.2f}%.\n\33[0m'.format(
+                100. * eer, eer_threshold, 100. * accuracy))
     else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 

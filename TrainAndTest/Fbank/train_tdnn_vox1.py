@@ -56,7 +56,7 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
                     help='path to pairs file')
 parser.add_argument('--check-path', type=str, default='Data/checkpoint',
                     help='path to dataset')
-parser.add_argument('--resume', default='Data/checkpoint/tdnn_vox1/checkpoint_2.pth',
+parser.add_argument('--resume', default='Data/checkpoint/tdnn_vox1/checkpoint_24.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -188,10 +188,12 @@ def train(train_loader, model, optimizer, epoch):
     output_softmax = nn.Softmax(dim=1)
 
     # learning rate multiple 0.1 per 15 epochs
-    if epoch % 25 == 24:
-        print('Decrease learning rate!')
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = param_group['lr'] * 0.1
+    for param_group in optimizer.param_groups:
+        # if param_group['lr']==0.01:
+        param_group['lr']=0.1
+        # pdb.set_trace()
+        print('\33[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
+
 
     pbar = tqdm(enumerate(train_loader))
     # pdb.set_trace()

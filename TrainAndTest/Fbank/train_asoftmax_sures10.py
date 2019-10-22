@@ -11,6 +11,7 @@
 """
 from __future__ import print_function
 import argparse
+import pathlib
 import pdb
 import time
 
@@ -24,6 +25,7 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
+import gc
 
 import numpy as np
 from tqdm import tqdm
@@ -67,11 +69,11 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet10_asoftmax',
+parser.add_argument('--check-path', default='Data/checkpoint/sures10_asoft',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10_asoftmax/checkpoint_0.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/sures10_asoft/checkpoint_2.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -85,16 +87,16 @@ parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=512, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
 
-parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
+parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
 
 parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
@@ -118,7 +120,7 @@ parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=100, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
@@ -143,7 +145,7 @@ if not os.path.exists(args.log_dir):
 
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
+CKP_DIR = args.check_path
 LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
     .format(args.optimizer, args.n_triplets, args.lr, args.wd,
             args.margin,args.embedding_size)
@@ -151,7 +153,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir='Log/asoftmax_res10', filename_suffix='vox1_fb64_ass')
+writer = SummaryWriter(logdir='Log/asoftmax_sures10', filename_suffix='vox1_fb64_ass')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -219,9 +221,10 @@ else:
 train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
-# del voxceleb
-# del voxceleb_dev
+del voxceleb
+del voxceleb_dev
 
+gc.collect()
 
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
@@ -233,7 +236,7 @@ def main():
     print('\nNumber of Speakers:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = SuperficialResNet(layers=[1, 1, 1, 1], embedding_size=args.embedding_size, n_classes=len(train_dir.classes), m=args.m)
+    model = SuperficialResNet(layers=[1, 1, 1, 1], embedding_size=args.embedding_size, n_classes=len(train_dir.classes), m=args.margin)
     # model = ResCNNSpeaker(embedding_size=args.embedding_size, resnet_size=10, num_classes=len(train_dir.classes))
 
     if args.cuda:
@@ -336,12 +339,15 @@ def train(train_loader, model, optimizer, epoch):
                 loss.data[0],
                 100. * minibatch_acc))
 
+    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
+    if not check_path.parent.exists():
+        os.makedirs(str(check_path.parent))
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
-               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               str(check_path))
 
     print('\n\33[91mFor epoch {}: ASoftmax Train set Accuracy:{:.6f}%, and Average loss is {}. \n\33[0m'.format(epoch, 100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
@@ -379,16 +385,21 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
+    # if epoch==4:
+    #     np.save('Data/4_distance.npy', distances)
+    #     np.save('Data/4_label.npy', labels)
+
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test_Result/eer', eer, epoch)
+    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
     writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
     #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd est accuracy could be {:.2f}%.\n\33[0m'.format(100. * eer, eer_threshold, 100.* accuracy))
     else:
-        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
