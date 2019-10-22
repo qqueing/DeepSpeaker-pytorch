@@ -10,10 +10,12 @@ Result:
 * Test set EER is 24%.
 
 
-## 20191013
+## 20191013 started.
 ### Softmax TDNN vox1 
 Training configure: learning rate is learning rate is 0.1 with adagrad optimizer. Input is 300 frame for each utterance.
 
 
-### Softmax ResCNN vox1
+### Softmax ResCNN vox1: 20191015 completed!
 Training configure: learning rate is learning rate is 0.1 with adagrad optimizer. Input is 300 frame for each utterance.
+
+The accuracy is up to 99%. However the eer on test set of vex1 decreased to 14%, then the model seemed to overfit.

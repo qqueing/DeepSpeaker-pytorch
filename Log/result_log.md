@@ -71,3 +71,30 @@ Trained **ResCNN34**  with **asoftmax** for 30 epoch:
     checkpoint file epoch is : 2
     Test Epoch: 2 [14136/37720 (100%)]: : 590it [47:45,  5.11it/s]
     For cos_distance Test set: ERR: 27.75185578%	Best ACC:0.50000000 
+    
+####20191020 vox1 superficialResCNN
+
+    start epoch is : 1, Current learning rate is 0.1. 
+    
+    Train Epoch:   1 [   39474/  148642 (100%)]	Loss: 5.610270  Minibatch Accuracy: 17.647059%: : 1162it [44:04,  3.53s/it]s/it]
+    
+    For epoch 1: ASoftmax Train set Accuracy:3.151195%, and Average loss is 6.5809806255. 
+    
+    Test Epoch: 1 [113088/37720 (100%)]: : 590it [23:33,  3.21s/it]
+    For cos_distance, Test set ERR: 26.75503712%	Best ACC:0.50000000 
+    
+####20191022 tdnn vox1 test
+    
+    Test Epoch: 26 [103488/37720 (100%)]: : 295it [1:04:06, 14.53s/it]
+    For cos_distance, Test set ERR is 19.46447508 when threshold is 0.40243518.	And test accuracy could be 80.55%.
+
+    => loading checkpoint Data/checkpoint/tdnn_vox1/checkpoint_45.pth
+    Test Epoch: 46 [103488/37720 (100%)]: : 295it [36:46,  7.07s/it]
+    For cos_distance, Test set ERR is 19.04029692 when threshold is 0.39846855.	And test accuracy could be 81.02%.
+    
+####20191022 res10 softmax test
+The model was trained in 20191013.
+
+    => loading checkpoint Data/checkpoint/resnet10_softmax/checkpoint_8.pth
+    Test Epoch: 9 [103488/37720 (100%)]: : 295it [03:05,  1.85s/it]
+    For cos_distance, Test set ERR is 23.42523860 when threshold is 0.71897262.	And test accuracy could be 76.63%.
