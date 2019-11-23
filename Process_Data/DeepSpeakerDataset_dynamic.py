@@ -30,7 +30,7 @@ def create_indices(_features):
     return inds
 
 
-def generate_triplets_call(indices,n_classes):
+def generate_triplets_call(indices, n_classes):
     """
     :param indices: {spks: wavs,...]
     :param n_classes: len(spks)
@@ -39,8 +39,6 @@ def generate_triplets_call(indices,n_classes):
 
     # Indices = array of labels and each label is an array of indices
     #indices = create_indices(features)
-
-
 
     c1 = np.random.randint(0, n_classes)
     c2 = np.random.randint(0, n_classes)
@@ -64,6 +62,9 @@ def generate_triplets_call(indices,n_classes):
     return ([indices[c1][n1], indices[c1][n2], indices[c2][n3],c1,c2])
 
 class DeepSpeakerDataset(data.Dataset):
+    """
+    This dataset class is for triplet training.
+    """
 
     def __init__(self, voxceleb, dir, n_triplets,loader, transform=None, *arg, **kw):
 
@@ -72,8 +73,15 @@ class DeepSpeakerDataset(data.Dataset):
         if len(voxceleb) == 0:
             raise(RuntimeError(('This is not data in the dataset')))
 
+        for vox_item in voxceleb:
+
+            for ky in vox_item:
+                if isinstance(vox_item[ky], np.bytes_):
+                    vox_item[ky] = vox_item[ky].decode('utf-8')
+
         classes, class_to_idx = find_classes(voxceleb)
         features = []
+
         for vox_item in voxceleb:
             item = (dir + "/" + vox_item['filename']+'.wav', class_to_idx[vox_item['speaker_id']])
             features.append(item)
@@ -105,7 +113,6 @@ class DeepSpeakerDataset(data.Dataset):
             """Convert image into numpy array and apply transformation
                Doing this so that it is consistent with all other datasets
             """
-
             feature = self.loader(feature_path)
             return self.transform(feature)
 
@@ -113,7 +120,7 @@ class DeepSpeakerDataset(data.Dataset):
         a, p, n, c1, c2 = generate_triplets_call(self.indices, len(self.classes))
         # transform features if required
         feature_a, feature_p, feature_n = transform(a), transform(p), transform(n)
-        return feature_a, feature_p, feature_n,c1,c2
+        return feature_a, feature_p, feature_n, c1, c2
 
     def __len__(self):
         return self.n_triplets
@@ -180,18 +187,29 @@ class ClassificationDataset(data.Dataset):
         print('Looking for audio [npy] features files in {}.'.format(dir))
         if len(voxceleb) == 0:
             raise(RuntimeError(('This is not data in the dataset')))
+        for vox_item in voxceleb:
+
+            for ky in vox_item:
+                if isinstance(vox_item[ky], np.bytes_):
+                    vox_item[ky] = vox_item[ky].decode('utf-8')
 
         classes, class_to_idx = find_classes(voxceleb)
         features = []
         # pdb.set_trace()
         null_spks = []
         for vox_item in voxceleb:
+
+            # for ky in vox_item:
+            #     if isinstance(vox_item[ky], np.bytes_):
+            #         vox_item[ky] = vox_item[ky].decode('utf-8')
+
             vox_path = dir + "/" + vox_item['filename']+'.npy'
             if not os.path.exists(vox_path):
+                pdb.set_trace()
                 vox_path_item = pathlib.Path(vox_path)
                 null_spks.append(vox_path_item.parent.parent.name)
 
-            item = (dir + "/" + vox_item['filename']+'.wav', class_to_idx[vox_item['speaker_id']])
+            item = (dir + "/" + str(vox_item['filename'])+'.wav', class_to_idx[vox_item['speaker_id']])
             features.append(item)
 
         null_spks = list(set(null_spks))
@@ -236,3 +254,76 @@ class ClassificationDataset(data.Dataset):
     def __len__(self):
         return len(self.features)
 
+class ValidationDataset(data.Dataset):
+    '''
+    Validation set should be inited by class to index list.
+    '''
+    def __init__(self, voxceleb, dir, loader, class_to_idx, transform=None, *arg, **kw):
+        print('Looking for audio [npy] features files in {}.'.format(dir))
+        if len(voxceleb) == 0:
+            raise(RuntimeError(('This is not data in the dataset')))
+        if len(class_to_idx) == 0:
+            raise (RuntimeError(('This is no speakers in the dataset')))
+        for vox_item in voxceleb:
+            for ky in vox_item:
+                if isinstance(vox_item[ky], np.bytes_):
+                    vox_item[ky] = vox_item[ky].decode('utf-8')
+
+        self.class_to_idx = class_to_idx
+        features = []
+        spks = []
+        null_spks = []
+
+        for vox_item in voxceleb:
+
+            vox_path = dir + "/" + vox_item['filename']+'.npy'
+            if not os.path.exists(vox_path):
+                pdb.set_trace()
+                vox_path_item = pathlib.Path(vox_path)
+                null_spks.append(vox_path_item.parent.parent.name)
+
+            item = (dir + "/" + str(vox_item['filename'])+'.wav', self.class_to_idx[vox_item['speaker_id']])
+            spks.append(vox_item['speaker_id'])
+
+            features.append(item)
+
+        null_spks = list(set(null_spks))
+        spks = list(set(spks))
+        print('There are {} speakers in validation set.'.format(len(spks)))
+
+        null_spks.sort()
+        if len(null_spks) != 0:
+            print('{} of speaker feats are missing!'.format(len(null_spks)))
+            print(null_spks)
+            exit(1)
+
+        self.root = dir
+        self.features = features
+        self.classes = spks
+        self.transform = transform
+        self.loader = loader
+        #print('Generating {} triplets'.format(self.n_triplets))
+
+    def __getitem__(self, index):
+        '''
+        Args:
+            index: Index of the triplet or the matches - not of a single feature
+        Returns:
+        '''
+        def transform(feature_path):
+            """Convert image into numpy array and apply transformation
+               Doing this so that it is consistent with all other datasets
+            """
+            feature = self.loader(feature_path)
+            return self.transform(feature)
+
+        # Get the index of feature
+        feature = self.features[index][0]
+        label = self.features[index][1]
+
+        # transform features if required
+        feature = transform(feature)
+        return feature, label
+
+    def __len__(self):
+        return len(self.features)

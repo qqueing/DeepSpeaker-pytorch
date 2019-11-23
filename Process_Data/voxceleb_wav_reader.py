@@ -1,4 +1,5 @@
 import os
+import random
 from glob import glob
 import pathlib
 import numpy as np
@@ -112,14 +113,18 @@ def read_extract_audio(directory):
     #print(voxceleb.head(10))
     return audio_set
 
-def wav_list_reader(data_path):
+def wav_list_reader(data_path, split=False):
     """
         Check if resume dataset variables from local list(.npy).
+        Return train and valid set, which are subset of voxceleb dev.
     :param data_path: the dataset root
     :return: the data list
     """
     voxceleb_list = "Data/voxceleb.npy"
     voxceleb_dev_list = "Data/voxceleb_dev.npy"
+
+    voxceleb_train_list = "Data/voxceleb_train.npy"
+    voxceleb_valid_list = "Data/voxceleb_valid.npy"
 
     if os.path.isfile(voxceleb_list):
         voxceleb = np.load(voxceleb_list, allow_pickle=True)
@@ -134,6 +139,37 @@ def wav_list_reader(data_path):
     else:
         voxceleb_dev = [datum for datum in voxceleb if datum['subset'] == 'dev']
         np.save(voxceleb_dev_list, voxceleb_dev)
+
+    # all_index = np.linspace(0, len(voxceleb_dev), len(voxceleb_dev), endpoint=False, dtype=int)
+
+    # train_part = 0.
+    # random.shuffle(all_index)
+    # train_index = voxceleb_dev[:int(train_part*len(voxceleb_dev))]
+    # valid_index = voxceleb_dev[int(train_part*len(voxceleb_dev)):]
+    if split:
+        if os.path.isfile(voxceleb_valid_list) and os.path.isfile(voxceleb_train_list):
+            train_set = np.load(voxceleb_train_list, allow_pickle=True)
+            valid_set = np.load(voxceleb_valid_list, allow_pickle=True)
+            if not len(train_set)+len(valid_set)==len(voxceleb_dev):
+                raise ValueError('Missing utterance')
+        spks = set([datum['speaker_id'] for datum in voxceleb_dev])
+        train_set = []
+        valid_set = []
+        for spk in spks:
+            num_utt=5
+            for utt in voxceleb_dev:
+                if utt['speaker_id']==spk:
+                    if num_utt>0:
+                        valid_set.append(utt)
+                        num_utt-=1
+                    else:
+                        train_set.append(utt)
+
+        np.save(voxceleb_train_list, train_set)
+        np.save(voxceleb_valid_list, valid_set)
+
+        return voxceleb, train_set, valid_set
+
 
     return voxceleb, voxceleb_dev
 

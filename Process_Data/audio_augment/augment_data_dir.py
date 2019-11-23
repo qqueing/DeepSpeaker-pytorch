@@ -21,6 +21,7 @@
 # additive noise.
 from __future__ import print_function
 
+import pathlib
 import pdb
 import sys, random, argparse, os, imp
 # Append system path
@@ -31,6 +32,8 @@ import sys, random, argparse, os, imp
 # from reverberate_data_dir import write_dict_to_file
 # import libs.common as common_lib
 # data_lib = imp.load_source('dml', 'steps/data/data_dir_manipulation_lib.py')
+from subprocess import call
+
 
 def get_args():
     parser = argparse.ArgumentParser(description="Augment the data directory with additive noises. "
@@ -67,13 +70,16 @@ def get_args():
     parser.add_argument("--modify-spk-id", action='store_true', default=False,
                         help='Utt prefix or suffix would be added to the spk id '
                             'also (used in ASR), in speaker id it is left unmodifed')
-    parser.add_argument("--bg-noise-dir", type=str, dest="bg_noise_dir", default='/home/cca01/work2019/yangwenhao/mydataset/musan',
+    parser.add_argument("--bg-noise-dir", type=str, dest="bg_noise_dir",
+                        default='/home/cca01/work2019/yangwenhao/mydataset/musan/noise',
                         help="Background noise data directory")
     parser.add_argument("--fg-noise-dir", type=str, dest="fg_noise_dir",
                         help="Foreground noise data directory")
-    parser.add_argument("--input-dir", type=str, dest="input_dir", default='/home/cca01/work2019/yangwenhao/mydataset/musan',
+    parser.add_argument("--input-dir", type=str, dest="input_dir",
+                        default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/voxceleb1_train',
                         help="Input data directory")
-    parser.add_argument("--output-dir", type=str, dest="output_dir", default='/home/cca01/work2019/yangwenhao/mydataset/musan',
+    parser.add_argument("--output-dir", type=str, dest="output_dir",
+                        default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1_noise',
                         help="Output data directory")
 
     print(' '.join(sys.argv))
@@ -189,8 +195,30 @@ def augment_wav(utt, wav, dur, fg_snr_opts, bg_snr_opts, fg_noise_utts, \
 
     # If the wav is just a file
     if wav.strip()[-1] != "|":
+        # output to a file
+
+        wav_path = pathlib.Path(wav)
+        data_root = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb1_noise'
+        data_root = os.path.join(data_root, str(wav_path.relative_to(wav_path.parents[5])))
+
+        if not os.path.exists(os.path.dirname(data_root)):
+            os.makedirs(os.path.dirname(data_root))
+
         new_wav = "wav-reverberate --shift-output=true " + noises_str + " " \
-            + start_times_str + " " + snrs_str + " " + wav + " - |"
+            + start_times_str + " " + snrs_str + " " + wav + " " + data_root
+        FNULL = open(os.devnull, 'w')
+
+        try:
+            retcode = call(new_wav, stdout=FNULL, shell=True)
+            if retcode < 0:
+                print("Child was terminated by signal", retcode)
+            else:
+                print("Child returned", retcode)
+
+        except OSError as e:
+            pdb.set_trace()
+            print("Execution failed:", e)
+
     # Else if the wav is in a pipe
     else:
         new_wav = wav + " wav-reverberate --shift-output=true " + noises_str + " " \

@@ -250,6 +250,41 @@ class concateinputfromMFB(object):
 
         return network_inputs
 
+class randomLengthFeat(object):
+    """
+    prepare feats.
+    """
+    def __init__(self, min_chunk_size=300, max_chunk_size=800):
+
+        super(randomLengthFeat, self).__init__()
+        self.min_chunk_size = min_chunk_size
+        self.max_chunk_size = max_chunk_size
+        self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
+
+    def __call__(self, frames_features):
+
+        network_inputs = []
+        frames_features = frames_features.transpose()
+        num_frames = len(frames_features)
+        # pdb.set_trace()
+
+        if num_frames <= self.num_chunk:
+            output = np.zeros((self.num_chunk - num_frames, frames_features.shape[1]))
+            re_output = np.concatenate((frames_features, output), axis=0)
+        else:
+            start_frame = np.random.randint(low=0, high=num_frames - self.num_chunk)
+
+            re_output = frames_features[start_frame:(start_frame + self.num_chunk)]
+
+        network_inputs.append(re_output)
+        # pdb.set_trace()
+
+        network_inputs = np.array(network_inputs)
+        if network_inputs.shape[1]==0:
+            pdb.set_trace()
+
+        return network_inputs
+
 class truncatedinputfromSpectrogram(object):
     """truncated input from Spectrogram
     """
