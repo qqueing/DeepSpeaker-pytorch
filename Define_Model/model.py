@@ -145,7 +145,7 @@ class myResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3])
 
         
-        self.avgpool = nn.AdaptiveAvgPool2d((2,None))
+        self.avgpool = nn.AdaptiveAvgPool2d((4, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -203,6 +203,7 @@ class DeepSpeakerModel(nn.Module):
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
 
         #self.model.classifier = nn.Linear(self.embedding_size, num_classes)
+        self.norm = nn.BatchNorm1d(512)
         self.model.classifier = torch.nn.Parameter(torch.randn(self.embedding_size, num_classes))
         nn.init.xavier_normal(self.model.classifier, gain=1)
 
@@ -258,14 +259,15 @@ class DeepSpeakerModel(nn.Module):
         x = self.model.relu(x)
         x = self.model.layer4(x)
 
-        # print(x.s)
+        # print(x.shape)
         x = self.model.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.model.fc(x)
-        self.features = self.l2_norm(x)
+        self.features = self.norm(x)
+
         # Multiply by alpha = 10 as suggested in https://arxiv.org/pdf/1703.09507.pdf
-        alpha=10
-        self.features = self.features*alpha
+        # alpha = 10
+        # self.features = self.features * alpha
 
         #x = x.resize(int(x.size(0) / 17),17 , 512)
         #self.features =torch.mean(x,dim=1)
@@ -550,6 +552,7 @@ class ResSpeakerModel(nn.Module):
 class ResCNNSpeaker(nn.Module):
     """
     Define the ResNet model with A-softmax and AM-softmax loss.
+    Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
     """
     def __init__(self, resnet_size, embedding_size, num_classes, feature_dim=64):
         super(ResCNNSpeaker, self).__init__()
@@ -564,24 +567,29 @@ class ResCNNSpeaker(nn.Module):
         self.num_classes = num_classes
 
         self.model = myResNet(BasicBlock, resnet_type[resnet_size])
+        # TAP Encoding Layer
+        self.model.encodinglayer = nn.AdaptiveAvgPool2d((None, 1))
+
         if feature_dim == 64:
             self.model.fc = nn.Linear(512 * 4, self.embedding_size)
         elif feature_dim == 40:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
         elif feature_dim == 257:
-            self.model.fc = nn.Linear(256 * 5, self.embedding_size)
-
+            self.model.encodinglayer = nn.AdaptiveAvgPool2d((4, 1))
+            self.model.fc = nn.Linear(2048, self.embedding_size)
         self.model.classifier = nn.Linear(self.embedding_size, self.num_classes)
-
-        # TAP Encoding Layer
-        self.model.encodinglayer = nn.AdaptiveAvgPool2d((None, 1))
+        # self.norm = nn.BatchNorm1d(embedding_size)
 
         # TODO: SAP, LDE Encoding Layer after the embedding layers
         # SAP Encoding Layer
 
+        # Drop out layer for reduce overfitting
+        self.dropout1 = nn.Dropout2d(p=0.2)
+        self.dropout2 = nn.Dropout2d(p=0.5)
 
         self.model.W = torch.nn.Parameter(torch.randn(self.embedding_size, num_classes))
         nn.init.xavier_normal(self.model.W, gain=1)
+        # nn.init.uniform_(self.model.W, a=-1., b=1.)
 
         # self.model.classifier = nn.Softmax(self.embedding_size, num_classes)
         # self.model.classifier = AngleLinear(self.embedding_size, num_classes)
@@ -629,7 +637,7 @@ class ResCNNSpeaker(nn.Module):
 
     def forward(self, x):
         # pdb.set_trace()
-
+        #print(x.shape)
         x = self.model.conv1(x)
         x = self.model.bn1(x)
         x = self.model.relu(x)
@@ -649,12 +657,20 @@ class ResCNNSpeaker(nn.Module):
         x = self.model.bn4(x)
         x = self.model.relu(x)
         x = self.model.layer4(x)
-
         # print(x.s)
+        # try:
         x = self.model.encodinglayer(x)
+        x = self.dropout1(x)
+
         x = x.view(x.size(0), -1)
         x = self.model.fc(x)
+        x = self.dropout2(x)
         res = self.l2_norm(x)
+        # except:
+        #   pdb.set_trace()
+
+
+        # res = self.norm(x)
 
         # Multiply by alpha = 10 as suggested in https://arxiv.org/pdf/1703.09507.pdf
         # alpha=10
@@ -672,7 +688,7 @@ class ResCNNSpeaker(nn.Module):
         features = self.model.encodinglayer(x)
         return features
 
-    def AngularSoftmaxLoss(self, x, label):
+    def AngularSoftmaxLoss(self, x, label, ratio=0.1, purea=False):
 
         self.it += 1
         assert x.size()[0] == label.size()[0]
@@ -715,14 +731,18 @@ class ResCNNSpeaker(nn.Module):
         index = Variable(index)
 
         # set lamb, change the rate of softmax and A-softmax
-        self.lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.it))
+        self.lamb = max(self.LambdaMin, self.LambdaMax / (1 + ratio * self.it))
 
         # get a-softmax and softmax mat
         output = cos_x * 1
         # output[index] -= cos_x[index]
         # output[index] += phi_x[index]
-        output[index] -= (cos_x[index] * 1.0 / (1+self.lamb))
-        output[index] += (phi_x[index] * 1.0 / (1+self.lamb))
+        if not purea:
+            output[index] -= (cos_x[index] * 1.0 / (1+self.lamb))
+            output[index] += (phi_x[index] * 1.0 / (1+self.lamb))
+        else:
+            output[index] -= cos_x[index]
+            output[index] += phi_x[index]
 
         #
         # get loss, which is equal to Cross Entropy.
@@ -768,13 +788,29 @@ class ResCNNSpeaker(nn.Module):
         return loss
 
 class SuperficialResNet(nn.Module):  # 定义resnet
-    def __init__(self, layers, block=BasicBlock, embedding_size=None, n_classes=1000,
+    def __init__(self, layers, embedding_size, block=BasicBlock, n_classes=1000,
                  m=3):  # block类型，embedding大小，分类数，maigin大小
         super(SuperficialResNet, self).__init__()
-        if embedding_size is None:
-            embedding_size = n_classes
 
+        self.embedding_size = embedding_size
         self.it = 0
+
+        # Parameters for a-softmax
+        self.gamma = 0
+        self.it = 0
+        self.LambdaMin = 5.0
+        self.LambdaMax = 1500.0
+        self.lamb = 1500.0
+        self.m = m
+        self.cos_function = [
+            lambda x: x ** 0,
+            lambda x: x ** 1,
+            lambda x: 2 * x ** 2 - 1,
+            lambda x: 4 * x ** 3 - 3 * x,
+            lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
+            lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x,
+        ]
+
 
         self.relu = ReLU(inplace=True)
 
@@ -806,6 +842,10 @@ class SuperficialResNet(nn.Module):  # 定义resnet
             nn.BatchNorm1d(embedding_size)
         )
 
+        self.W = torch.nn.Parameter(torch.randn(self.embedding_size, n_classes))
+        # self.W.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)
+        nn.init.xavier_normal(self.W, gain=1)
+
         # self.angle_linear = AngleLinear(in_features=embedding_size, out_features=n_classes, m=m)
 
         for m in self.modules():  # 对于各层参数的初始化
@@ -826,7 +866,7 @@ class SuperficialResNet(nn.Module):  # 定义resnet
             layers.append(block(self.in_planes, planes))
         return nn.Sequential(*layers)
 
-    def forward(self, x, target=None):
+    def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -854,13 +894,20 @@ class SuperficialResNet(nn.Module):  # 定义resnet
         # logit = self.angle_linear(x)
         return x  # 返回倒数第二层
 
+    def forward_classifier(self, x):
+        # x = self.forward(x)
+        # x = self.encodinglayer(x)
+        res = x.mm(self.W)
+        # res = self.model.classifier(features)
+        return res
+
     def AngularSoftmaxLoss(self, x, label):
 
         self.it += 1
         assert x.size()[0] == label.size()[0]
         # assert features.size()[1] == self.in_feats
 
-        w = self.model.W.renorm(2, 1, 1e-5).mul(1e5)  # [batch, out_planes]
+        w = self.W.renorm(2, 1, 1e-5).mul(1e5)  # [batch, out_planes]
         x_modulus = x.pow(2).sum(1).pow(0.5)  # [batch]
         w_modulus = w.pow(2).sum(0).pow(0.5)  # [out_planes]
 
@@ -910,7 +957,7 @@ class SuperficialResNet(nn.Module):  # 定义resnet
         # get loss, which is equal to Cross Entropy.
         logpt = F.log_softmax(output, dim=1)  # [batch,classes_num]
         logpt = logpt.gather(1, target)  # [batch]
-        pt = logpt.data.exp()
+        pt = Variable(logpt.data.exp())
         # torch.mm()
         try:
             loss = -1 * logpt * (1 - pt) ** self.gamma
