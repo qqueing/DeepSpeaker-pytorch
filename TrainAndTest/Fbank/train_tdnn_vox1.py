@@ -76,7 +76,7 @@ parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=45, metavar='E',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--make-feats', action='store_true', default=False,
                     help='need to make spectrograms file')
@@ -287,30 +287,19 @@ def test(test_loader, model, epoch):
     distances = np.array([subdist for dist in distances for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
-
+    # err, accuracy= evaluate_eer(distances,labels)
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test_Result/eer', eer, epoch)
+    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
     writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
-    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print(
+            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd test accuracy could be {:.2f}%.\n\33[0m'.format(
+                100. * eer, eer_threshold, 100. * accuracy))
     else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
-    #logger.log_value('Test Accuracy', np.mean(accuracy))
-
-
-    # with torch.no_grad():
-    #     for data in test_loader:
-    #         feature, label = data
-    #         feature = feature.cuda()
-    #         label = label.cuda()
-    #         outputs = model(feature)
-    #         _, predicted = torch.max(outputs, 1)
-    #         total += label.size(0)
-    #         correct += (predicted == label).sum()
-
-    # print('For epoch %d test set中的准确率为: %d %%' % (epoch, 100 * correct / total))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
 
 
 def main():

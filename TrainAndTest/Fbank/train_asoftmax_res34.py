@@ -72,7 +72,7 @@ parser.add_argument('--check-path', default='Data/checkpoint',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet34_asoftmax/checkpoint_0.pth',
+                    default='Data/checkpoint/resnet34_asoftmax/checkpoint_11.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -402,7 +402,7 @@ def test(test_loader, model, epoch):
 
     if args.cos_sim:
         print(
-            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd est accuracy could be {:.2f}%.\n\33[0m'.format(
+            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd test accuracy could be {:.2f}%.\n\33[0m'.format(
                 100. * eer, eer_threshold, 100. * accuracy))
     else:
         print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))

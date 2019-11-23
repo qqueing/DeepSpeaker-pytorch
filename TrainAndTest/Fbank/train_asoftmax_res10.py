@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 # encoding: utf-8
 
 """
@@ -11,6 +11,7 @@
 """
 from __future__ import print_function
 import argparse
+import pathlib
 import pdb
 import time
 
@@ -71,7 +72,7 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet10_asoftmax',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10_asoftmax/checkpoint_0.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/10res_soft/1013_10/checkpoint_15.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -96,25 +97,23 @@ parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-
 parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
-
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=0.0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
@@ -151,7 +150,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-al
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir='Log/asoftmax_res10', filename_suffix='vox1_fb64_ass')
+writer = SummaryWriter(logdir='Log/asoftmax_res10', filename_suffix='from_sf_purea')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -284,7 +283,9 @@ def train(train_loader, model, optimizer, epoch):
     total_loss = 0.
 
     for param_group in optimizer.param_groups:
+        param_group['lr'] = 0.01
         print('\33[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
+
     #     if epoch % 16 == 15:
     #         print('Decreasing the learning rate!')
     #         param_group['lr'] = param_group['lr'] * 0.1
@@ -310,7 +311,7 @@ def train(train_loader, model, optimizer, epoch):
         # cross_entropy_loss = nn.CrossEntropyLoss()(classfier, true_labels)
         # loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
 
-        loss = model.AngularSoftmaxLoss(feats, true_labels)
+        loss = model.AngularSoftmaxLoss(feats, true_labels, ratio=10, purea=True)
 
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
         correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().data[0])
@@ -335,12 +336,16 @@ def train(train_loader, model, optimizer, epoch):
                 loss.data[0],
                 100. * minibatch_acc))
 
+    check_path = pathlib.Path('{}/fs_pure_a/checkpoint_{}.pth'.format(args.ckp_dir, epoch))
+    if not check_path.parent.exists():
+        os.makedirs(str(check_path.parent))
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
-               '{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               #'{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+                str(check_path))
 
     print('\n\33[91mFor epoch {}: ASoftmax Train set Accuracy:{:.6f}%, and Average loss is {}. \n\33[0m'.format(epoch, 100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
@@ -379,17 +384,19 @@ def test(test_loader, model, epoch):
     distances = np.array([subdist for dist in distances for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
+    # err, accuracy= evaluate_eer(distances,labels)
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test_Result/eer', eer, epoch)
+    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
     writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
-    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print(
+            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}. And test accuracy could be {:.2f}%.\n\33[0m'.format(
+                100. * eer, eer_threshold, 100. * accuracy))
     else:
-        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
-    #logger.log_value('Test Accuracy', np.mean(accuracy))
-
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
 
 def create_optimizer(model, new_lr):
     # setup optimizer

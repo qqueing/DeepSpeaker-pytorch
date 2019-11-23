@@ -199,7 +199,7 @@ def main():
 
     # instantiate model and initialize weights
     model = ResSpeakerModel(embedding_size=args.embedding_size,
-                            esnet_size=args.resnet_size,
+                            resnet_size=args.resnet_size,
                             num_classes=len(train_dir.classes))
 
     if args.cuda:
