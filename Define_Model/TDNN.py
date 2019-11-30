@@ -152,14 +152,15 @@ class Time_Delay(nn.Module):
         a3 = F.relu(self.batch_norm3(self.tdnn3(a2)))
         a4 = F.relu(self.batch_norm4(self.tdnn4(a3)))
         a5 = F.relu(self.batch_norm5(self.tdnn5(a4)))
+
         a6 = self.statistic_pooling(a5)
         x_vectors = F.relu(self.batch_norm6(self.fc1(a6)))
 
         return x_vectors
 
     def forward(self, x):
-        a7 = self.pre_forward(x)
-        a8 = F.relu(self.batch_norm7(self.fc2(a7)))
+        # a7 = self.pre_forward(x)
+        a8 = F.relu(self.batch_norm7(self.fc2(x)))
         output = self.fc3(a8)
         return output
 

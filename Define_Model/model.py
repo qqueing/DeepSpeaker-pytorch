@@ -332,7 +332,6 @@ class DeepSpeakerModel(nn.Module):
 
         return loss
 
-
 class ResSpeakerModel(nn.Module):
     """
     Define the ResNet model with A-softmax and AM-softmax loss.
@@ -554,7 +553,7 @@ class ResCNNSpeaker(nn.Module):
     Define the ResNet model with A-softmax and AM-softmax loss.
     Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
     """
-    def __init__(self, resnet_size, embedding_size, num_classes, feature_dim=64):
+    def __init__(self, resnet_size, embedding_size, num_classes, feature_dim=64, dropout=False):
         super(ResCNNSpeaker, self).__init__()
         resnet_type = {10:[1, 1, 1, 1],
                        18:[2, 2, 2, 2],
@@ -565,6 +564,7 @@ class ResCNNSpeaker(nn.Module):
 
         self.resnet_size = resnet_size
         self.num_classes = num_classes
+        self.dropout = dropout
 
         self.model = myResNet(BasicBlock, resnet_type[resnet_size])
         # TAP Encoding Layer
@@ -577,6 +577,7 @@ class ResCNNSpeaker(nn.Module):
         elif feature_dim == 257:
             self.model.encodinglayer = nn.AdaptiveAvgPool2d((4, 1))
             self.model.fc = nn.Linear(2048, self.embedding_size)
+
         self.model.classifier = nn.Linear(self.embedding_size, self.num_classes)
         # self.norm = nn.BatchNorm1d(embedding_size)
 
@@ -635,7 +636,7 @@ class ResCNNSpeaker(nn.Module):
 
         return output
 
-    def forward(self, x):
+    def pre_forward(self, x):
         # pdb.set_trace()
         #print(x.shape)
         x = self.model.conv1(x)
@@ -660,16 +661,18 @@ class ResCNNSpeaker(nn.Module):
         # print(x.s)
         # try:
         x = self.model.encodinglayer(x)
-        x = self.dropout1(x)
+        if self.dropout:
+            x = self.dropout1(x)
 
         x = x.view(x.size(0), -1)
         x = self.model.fc(x)
-        x = self.dropout2(x)
+
+        if self.dropout:
+            x = self.dropout2(x)
+
         res = self.l2_norm(x)
         # except:
         #   pdb.set_trace()
-
-
         # res = self.norm(x)
 
         # Multiply by alpha = 10 as suggested in https://arxiv.org/pdf/1703.09507.pdf
@@ -677,7 +680,7 @@ class ResCNNSpeaker(nn.Module):
         # self.features = self.features * alpha
         return res
 
-    def forward_classifier(self, x):
+    def forward(self, x):
         # x = self.forward(x)
         # x = self.encodinglayer(x)
         res = x.mm(self.model.W)
@@ -787,10 +790,10 @@ class ResCNNSpeaker(nn.Module):
 
         return loss
 
-class SuperficialResNet(nn.Module):  # 定义resnet
-    def __init__(self, layers, embedding_size, block=BasicBlock, n_classes=1000,
+class SuperficialResCNN(nn.Module):  # 定义resnet
+    def __init__(self, embedding_size, layers=[1, 1, 1, 0], block=BasicBlock, n_classes=1000,
                  m=3):  # block类型，embedding大小，分类数，maigin大小
-        super(SuperficialResNet, self).__init__()
+        super(SuperficialResCNN, self).__init__()
 
         self.embedding_size = embedding_size
         self.it = 0
@@ -844,7 +847,7 @@ class SuperficialResNet(nn.Module):  # 定义resnet
 
         self.W = torch.nn.Parameter(torch.randn(self.embedding_size, n_classes))
         # self.W.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)
-        nn.init.xavier_normal(self.W, gain=1)
+        # nn.init.xavier_normal(self.W, gain=1)
 
         # self.angle_linear = AngleLinear(in_features=embedding_size, out_features=n_classes, m=m)
 
@@ -866,7 +869,7 @@ class SuperficialResNet(nn.Module):  # 定义resnet
             layers.append(block(self.in_planes, planes))
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def pre_forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -890,18 +893,19 @@ class SuperficialResNet(nn.Module):  # 定义resnet
         x = self.avg_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        # x = x * self.alpha
 
         # logit = self.angle_linear(x)
         return x  # 返回倒数第二层
 
-    def forward_classifier(self, x):
+    def forward(self, x):
         # x = self.forward(x)
         # x = self.encodinglayer(x)
         res = x.mm(self.W)
         # res = self.model.classifier(features)
         return res
 
-    def AngularSoftmaxLoss(self, x, label):
+    def AngularSoftmaxLoss(self, x, label, purea=False):
 
         self.it += 1
         assert x.size()[0] == label.size()[0]
@@ -944,14 +948,18 @@ class SuperficialResNet(nn.Module):  # 定义resnet
         index = Variable(index)
 
         # set lamb, change the rate of softmax and A-softmax
-        self.lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.it))
+        lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.it))
 
         # get a-softmax and softmax mat
         output = cos_x * 1
         # output[index] -= cos_x[index]
         # output[index] += phi_x[index]
-        output[index] -= (cos_x[index] * 1.0 / (1 + self.lamb))
-        output[index] += (phi_x[index] * 1.0 / (1 + self.lamb))
+        if not purea:
+            output[index] -= (cos_x[index] * 1.0 / (1 + lamb))
+            output[index] += (phi_x[index] * 1.0 / (1 + lamb))
+        else:
+            output[index] -= cos_x[index]
+            output[index] += phi_x[index]
 
         #
         # get loss, which is equal to Cross Entropy.
@@ -968,3 +976,4 @@ class SuperficialResNet(nn.Module):  # 定义resnet
         # loss = self.ce(output, label)
 
         return loss
+

@@ -9,6 +9,8 @@
 @Time: 2019/10/10 下午5:09
 @Overview: Deep Speaker using Resnet with CNN, which is not ordinary Resnet.
 This file define resnet in 'Deep Residual Learning for Image Recognition'
+
+For all model, the pre_forward function is for extract vectors and forward for classification.
 """
 import math
 import pdb
@@ -50,7 +52,7 @@ class SimpleResNet(nn.Module):
 
         self.base_width = width_per_group
 
-        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=7, stride=1, padding=3,
+        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=3, stride=1, padding=1,
                                bias=False)
         self.bn1 = norm_layer(num_filter[0])
         self.relu = nn.ReLU(inplace=True)
@@ -68,6 +70,8 @@ class SimpleResNet(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
         self.fc1 = nn.Linear(128 * block.expansion, num_filter[3])
+        self.norm = nn.BatchNorm1d(num_filter[3])
+        self.alpha = 12
 
         self.fc2 = nn.Linear(num_filter[3], num_classes)
 
@@ -88,33 +92,6 @@ class SimpleResNet(nn.Module):
                     nn.init.constant(m.bn3.weight, 0)
                 elif isinstance(m, BasicBlock):
                     nn.init.constant(m.bn2.weight, 0)
-
-    # def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
-    #     norm_layer = self._norm_layer
-    #     downsample = None
-    #     previous_dilation = self.dilation
-    #     if dilate:
-    #         self.dilation *= stride
-    #         stride = 1
-    #     if stride != 1 or self.inplanes != planes * block.expansion:
-    #         downsample = nn.Sequential(
-    #             conv1x1(self.inplanes, planes * block.expansion, stride),
-    #             norm_layer(planes * block.expansion),
-    #         )
-    #
-    #     layers = []
-    #
-    #     layers.append(block(inplanes=self.inplanes,
-    #                         planes=planes,
-    #                         stride=stride,
-    #                         downsample=downsample))
-    #
-    #     self.inplanes = planes * block.expansion
-    #     for _ in range(1, blocks):
-    #         layers.append(block(inplanes=self.inplanes,
-    #                             planes=planes))
-    #
-    #     return nn.Sequential(*layers)
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -156,6 +133,27 @@ class SimpleResNet(nn.Module):
         x = self.fc1(x)
         # x = torch.flatten(x, 1)
         # print(x.shape)
+        return x
+
+    def pre_forward_norm(self, x):
+        # pdb.set_trace()
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        # print(x.shape)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+
+        x = self.norm(x)
+        x = x * self.alpha
 
         return x
 
@@ -170,25 +168,33 @@ class SimpleResNet(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block=BasicBlock, layers=[1, 1, 1, 1], num_classes=1000, expansion=2, zero_init_residual=False):
+    def __init__(self, block=BasicBlock, layers=[1, 1, 1, 1],
+                 channels=[64, 128, 256, 512], num_classes=1000,
+                 expansion=2, embedding=512, zero_init_residual=False):
         super(ResNet, self).__init__()
         self.expansion = expansion
-        self.inplanes = 64
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3,
+        self.channels = channels
+        self.inplanes = self.channels[0]
+        self.conv1 = nn.Conv2d(1, self.channels[0], kernel_size=7, stride=2, padding=3,
                                bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(self.channels[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.channels = channels
 
-        self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+        self.layer1 = self._make_layer(block, self.channels[0], layers[0])
+        self.layer2 = self._make_layer(block, self.channels[1], layers[1], stride=2)
+        self.layer3 = self._make_layer(block, self.channels[2], layers[2], stride=2)
+        self.layer4 = self._make_layer(block, self.channels[3], layers[3], stride=2)
+
         self.avgpool = nn.AdaptiveAvgPool2d((expansion, 1))
 
-        self.fc1 = nn.Linear(512 * expansion, 512)
-        self.fc2 = nn.Linear(512, num_classes)
+        if self.channels[3] == 0:
+            self.fc1 = nn.Linear(self.channels[2] * expansion, embedding)
+        else:
+            self.fc1 = nn.Linear(self.channels[3] * expansion, embedding)
 
+        self.fc2 = nn.Linear(embedding, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
