@@ -41,6 +41,15 @@ from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from Process_Data import constants as c
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 from eval_metrics import evaluate_kaldi_eer
+try:
+    torch._utils._rebuild_tensor_v2
+except AttributeError:
+    def _rebuild_tensor_v2(storage, storage_offset, size, stride, requires_grad, backward_hooks):
+        tensor = torch._utils._rebuild_tensor(storage, storage_offset, size, stride)
+        tensor.requires_grad = requires_grad
+        tensor._backward_hooks = backward_hooks
+        return tensor
+    torch._utils._rebuild_tensor_v2 = _rebuild_tensor_v2
 
 warnings.filterwarnings("ignore")
 
@@ -54,9 +63,9 @@ parser.add_argument('--dataset', type=str, default='/home/cca01/work2019/Data/vo
                     help='path to dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
-parser.add_argument('--check-path', type=str, default='Data/checkpoint',
+parser.add_argument('--check-path', type=str, default='Data/checkpoint/tdnn_vox1/ada',
                     help='path to dataset')
-parser.add_argument('--resume', default='Data/checkpoint/tdnn_vox1/checkpoint_24.pth',
+parser.add_argument('--resume', default='Data/checkpoint/tdnn_vox1/ada/checkpoint_24.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -90,10 +99,10 @@ parser.add_argument('--wd', default=0.0, type=float,
 parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 
-parser.add_argument('--log-interval', type=int, default=50, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=10, metavar='LI',
                     help='how many batches to wait before logging training status')
 
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -109,9 +118,10 @@ torch.manual_seed(args.seed)
 # net = Time_Delay(context, 24, 300, node_num, full_context)
 # net = net.to(device)
 
-writer = SummaryWriter(logdir='Log/tdnn', filename_suffix='fb64_vox1')
+writer = SummaryWriter(logdir='Log/tdnn/ada', filename_suffix='fb64_vox1')
+voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 
-voxceleb, voxceleb_dev = wav_list_reader(args.dataset)
+# voxceleb, voxceleb_dev = wav_list_reader(args.dataset)
 
 #vox2
 # voxceleb, voxceleb_dev = voxceleb2_list_reader(args.dataset)
@@ -169,13 +179,13 @@ if args.cos_sim:
 else:
     l2_dist = nn.PairwiseDistance(p=2)
 
-
-train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
+test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+valid_dir = ClassificationDataset(voxceleb=valid_set, dir=args.dataroot, loader=file_loader, transform=transform)
 
 del voxceleb
-del voxceleb_dev
-
+del train_set
+del valid_set
 
 def train(train_loader, model, optimizer, epoch):
     # switch to evaluate mode
@@ -190,10 +200,9 @@ def train(train_loader, model, optimizer, epoch):
     # learning rate multiple 0.1 per 15 epochs
     for param_group in optimizer.param_groups:
         # if param_group['lr']==0.01:
-        param_group['lr']=0.1
+        # param_group['lr']=0.1
         # pdb.set_trace()
-        print('\33[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
-
+        print('\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     # pdb.set_trace()
@@ -203,8 +212,8 @@ def train(train_loader, model, optimizer, epoch):
         data, label = Variable(data), Variable(label)
         data = data.cuda()
         label = label.cuda()
-
-        output = model(data)
+        xvectors = model.pre_forward(data)
+        output = model(xvectors)
 
         loss = ce_loss(output, label)
 
@@ -212,23 +221,23 @@ def train(train_loader, model, optimizer, epoch):
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.data[0]
+        running_loss += loss.item()
         predicted_one_labels = torch.max(output_softmax(output), dim=1)[1]
-        batch_correct = float((predicted_one_labels.cuda() == label.cuda()).sum().data[0])
+        batch_correct = float((predicted_one_labels.cuda() == label.cuda()).sum().item())
         # _, predicted = torch.max(output, 1)
         total += label.size(0)
         correct += batch_correct
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \tBatch Accuracy: {:.6f}%'.format(
+            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.4f}\tBatch Accuracy: {:.4f}%'.format(
                 epoch,
                 batch_idx * len(data),
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
-                loss.data[0],
+                loss.item(),
                 100. * float(batch_correct)/label.size(0)))
 
-    check_path = pathlib.Path('{}/tdnn_vox1/checkpoint_{}.pth'.format(args.check_path, epoch))
+    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
     if not check_path.parent.exists():
         os.makedirs(str(check_path.parent))
 
@@ -238,17 +247,54 @@ def train(train_loader, model, optimizer, epoch):
                 # 'criterion': criterion.state_dict()
                 str(check_path))
     try:
-        print('\33[1;34m For train epoch {}, global accuracy is {}%, and average of batch loss: {:.8f}.\33[0m \n'.format(epoch, 100. * float(correct)/total, running_loss/len(train_loader)))
-        writer.add_scalar('Train_Accuracy_Per_Epoch', 100. * float(correct)/total, epoch)
-        writer.add_scalar('Train_Loss_Per_Epoch', running_loss / len(train_loader), epoch)
+        print('\33[1;34m For train epoch {}, global accuracy is {}%, and average of batch loss: {:.4f}.\33[0m \n'.format(epoch, 100. * float(correct)/total, running_loss/len(train_loader)))
+        writer.add_scalar('Train/Accuracy', 100. * float(correct)/total, epoch)
+        writer.add_scalar('Train/Loss', running_loss / len(train_loader), epoch)
     except Exception:
         print('\033[1;34m Something wrong with logging!\033\n[0m')
 
 
-def test(test_loader, model, epoch):
+def test(test_loader, valid_loader, model, epoch):
     #net = model.to('cuda:1')
     model.eval()
 
+    valid_pbar = tqdm(enumerate(valid_loader))
+    softmax = nn.Softmax(dim=1)
+
+    correct = 0.
+    total_datasize = 0.
+
+    for batch_idx, (data, label) in valid_pbar:
+        data = Variable(data.cuda())
+
+        # compute output
+        out = model.pre_forward(data)
+        cls = model(out)
+
+        predicted_labels = cls
+        true_labels = Variable(label.cuda())
+
+        # pdb.set_trace()
+        predicted_one_labels = softmax(predicted_labels)
+        predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
+
+        batch_correct = (predicted_one_labels.cuda() == true_labels.cuda()).sum().item()
+        minibatch_acc = float(batch_correct / len(predicted_one_labels))
+        correct += batch_correct
+        total_datasize += len(predicted_one_labels)
+
+        if batch_idx % args.log_interval == 0:
+            valid_pbar.set_description(
+                'Valid Epoch for Classification: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
+                    epoch,
+                    batch_idx * len(data),
+                    len(valid_loader.dataset),
+                    100. * batch_idx / len(valid_loader),
+                    100. * minibatch_acc
+                ))
+
+    valid_accuracy = 100. * correct / total_datasize
+    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
     #test_set = testset.TestSet('../all_feature/')
     # todo:
     #test_set = []
@@ -289,24 +335,23 @@ def test(test_loader, model, epoch):
     # err, accuracy= evaluate_eer(distances,labels)
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test_Result/eer', eer, epoch)
-    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
-    writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
+    writer.add_scalar('Test/EER', eer, epoch)
+    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
     # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
         print(
-            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd test accuracy could be {:.2f}%.\n\33[0m'.format(
-                100. * eer, eer_threshold, 100. * accuracy))
+            '\33[91mFor cos_distance, Test set ERR is {:.4f}, threshold is {}. Valid accuracy could be {:.2f}%.\n\33[0m'.format(
+                100. * eer, eer_threshold, valid_accuracy))
     else:
-        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f}\n\33[0m'.format(100. * eer, valid_accuracy))
 
 
 def main():
     # print the experiment configuration
-    print('\33[91m \nCurrent time is {}\n\33[0m'.format(str(time.asctime())))
-    print('Parsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Speakers:\n{}\n'.format(len(train_dir.classes)))
+    print('\33[91m \nCurrent time is {}\33[0m'.format(str(time.asctime())))
+    # print('Parsed options:\n{}\n'.format(vars(args)))
+    print('Number of Speakers:\n{}\n'.format(len(train_dir.classes)))
 
     context = [[-2, 2], [-2, 0, 2], [-3, 0, 3], [0], [0]]
     # the same configure as x-vector
@@ -318,6 +363,7 @@ def main():
     # todo:
     # train_set = []
     train_loader = DataLoader(train_dir, batch_size=args.batch_size, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False)
     test_loader = DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False)
 
     model = Time_Delay(context, 64, len(train_dir.classes), node_num, full_context)
@@ -355,7 +401,7 @@ def main():
         # pdb.set_trace()
         train(train_loader, model, optimizer, epoch)
         # if epoch % 4 == 3:
-        #     test(test_loader, model, epoch)
+        test(test_loader, valid_loader, model, epoch)
 
 def create_optimizer(model, new_lr):
     # setup optimizer

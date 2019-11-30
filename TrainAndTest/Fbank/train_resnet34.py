@@ -24,6 +24,7 @@ import torch.backends.cudnn as cudnn
 import os
 
 import numpy as np
+from torch.optim.lr_scheduler import StepLR
 from tqdm import tqdm
 from Define_Model.ResNet import ResNet
 from Process_Data.VoxcelebTestset import VoxcelebTestset
@@ -36,7 +37,7 @@ from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, Valid
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB
+from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB, varLengthFeat, PadCollate
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
 # Version conflict
 
@@ -67,18 +68,17 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint/resnet10/nodecay_exp',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet34/soft',
                     help='folder to output model checkpoints')
-
 parser.add_argument('--resume',
-                    default='Data/checkpoint/resnet10/nodecay_exp/checkpoint_6.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/ResNet34/soft/checkpoint_6.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=30, metavar='E',
+parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--min-softmax-epoch', type=int, default=15, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
 # Training options
@@ -86,7 +86,7 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -97,23 +97,23 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
 parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
 
-parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
+parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--wd', default=0.0, type=float,
+parser.add_argument('--wd', default=1e-3, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='sgd', type=str,
+parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
@@ -150,7 +150,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-lr{}-wd{}-m{}-embeddings{}'\
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir='Log/resnet10/nodecay_exp', filename_suffix='sgd_nodecay')
+writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='ada_0.05_512')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -184,7 +184,8 @@ voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
         # truncatedinputfromMFB(),
-        concateinputfromMFB(),
+        # concateinputfromMFB(),
+        varLengthFeat(),
         totensor()
     ])
     transform_T = transforms.Compose([
@@ -231,11 +232,14 @@ def main():
 
     # print the experiment configuration
     print('\33[91m\nCurrent time is {}.\33[0m'.format(str(time.asctime())))
-    # print('Parsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Speakers: {}\n'.format(len(train_dir.classes)))
+    print('Parsed options: {}\n'.format(vars(args)))
+    print('Number of Speakers: {}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResNet(num_classes=len(train_dir.classes), expansion=2)
+    model = ResNet(layers=[3, 4, 6, 3],
+                   channels=[64, 128, 256, 512],
+                   num_classes=len(train_dir.classes),
+                   expansion=2)
 
     if args.cuda:
         model.cuda()
@@ -262,19 +266,24 @@ def main():
             print('=> no checkpoint found at {}'.format(args.resume))
 
     start = args.start_epoch
-    print('start epoch is : ' + str(start) + '\n')
+    print('Start epoch is : ' + str(start) + '\n')
     # start = 0
     end = start + args.epochs
-
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True,
+                                               collate_fn=PadCollate(dim=2),
+                                               **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False,
+                                               collate_fn=PadCollate(dim=2),
+                                               **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    scheduler = StepLR(optimizer, step_size=15, gamma=0.1)
 
     for epoch in range(start, end):
         # pdb.set_trace()
         train(train_loader, model, optimizer, epoch)
-        # if epoch % 3 == 2:
         test(test_loader, valid_loader, model, epoch)
+
+        scheduler.step()
         # exit(1)
 
     writer.close()
@@ -349,53 +358,6 @@ def train(train_loader, model, optimizer, epoch):
     writer.add_scalar('Train/Accuracy', correct/total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss/len(train_loader), epoch)
 
-def test(test_loader, model, epoch):
-    # switch to evaluate mode
-    model.eval()
-    labels, distances = [], []
-
-    pbar = tqdm(enumerate(test_loader))
-    for batch_idx, (data_a, data_p, label) in pbar:
-        current_sample = data_a.size(0)
-        data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
-        data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
-        if args.cuda:
-            data_a, data_p = data_a.cuda(), data_p.cuda()
-        data_a, data_p, label = Variable(data_a, volatile=True), \
-                                Variable(data_p, volatile=True), Variable(label)
-
-        # compute output
-        out_a, out_p = model(data_a), model(data_p)
-
-        dists = l2_dist.forward(out_a, out_p)
-        dists = dists.data.cpu().numpy()
-        dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
-        distances.append(dists)
-        labels.append(label.data.cpu().numpy())
-
-        if batch_idx % args.log_interval == 0:
-            pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a), len(test_loader.dataset),
-                100. * batch_idx / len(test_loader)))
-
-    labels = np.array([sublabel for label in labels for sublabel in label])
-    distances = np.array([subdist for dist in distances for subdist in dist])
-
-    # err, accuracy= evaluate_eer(distances,labels)
-    # err, accuracy= evaluate_eer(distances,labels)
-    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test_Result/eer', eer, epoch)
-    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
-    writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
-    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
-
-    if args.cos_sim:
-        print(
-            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd test accuracy could be {:.2f}%.\n\33[0m'.format(
-                100. * eer, eer_threshold, 100. * accuracy))
-    else:
-        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
-    # logger.log_value('Test Accuracy', np.mean(accuracy))
 
 def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
@@ -408,13 +370,10 @@ def test(test_loader, valid_loader, model, epoch):
     total_datasize = 0.
 
     for batch_idx, (data, label) in valid_pbar:
-        model.eval()
-
         data = Variable(data.cuda())
 
         # compute output
         out = model.pre_forward(data)
-
         cls = model(out)
 
         predicted_labels = cls

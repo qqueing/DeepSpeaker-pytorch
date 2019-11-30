@@ -27,6 +27,7 @@ import torch.backends.cudnn as cudnn
 import os
 
 import numpy as np
+from torch.optim.lr_scheduler import StepLR
 from tqdm import tqdm
 
 from Define_Model.ResNet import SimpleResNet
@@ -37,12 +38,12 @@ from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
 
-from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
+from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB
+    mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat
 import warnings
 warnings.filterwarnings("ignore")
 # Version conflict
@@ -72,27 +73,27 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--check-path', default='Data/checkpoint',
+parser.add_argument('--check-path', default='Data/checkpoint/sires34_soft/adawd',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/sires34_soft/checkpoint_80.pth',
+                    default='Data/checkpoint/sires34_soft/adawd/checkpoint_16.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=15, metavar='E',
+parser.add_argument('--epochs', type=int, default=150, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=50, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -100,19 +101,17 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
-
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-
 parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
-parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
+parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
@@ -121,7 +120,7 @@ parser.add_argument('--optimizer', default='sgd', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
@@ -159,7 +158,7 @@ logger = Logger(LOG_DIR)
 # writer = SummaryWriter('Log/asoft_res34_vox1')
 
 # options for vox2
-writer = SummaryWriter('Log/sires34_soft_vox1', filename_suffix=str(time.asctime()))
+writer = SummaryWriter('Log/sires34_soft/adawd', filename_suffix=str(time.asctime()))
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -168,7 +167,9 @@ else:
     l2_dist = PairwiseDistance(2)
 
 # options for vox1
-voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+# voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
+
 
 # options for vox2
 # voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
@@ -182,12 +183,14 @@ voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
 if args.mfb:
     transform = transforms.Compose([
         # truncatedinputfromMFB(),
-        concateinputfromMFB(),
+        # concateinputfromMFB(),
+        varLengthFeat(),
         totensor()
     ])
     transform_T = transforms.Compose([
         # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
         concateinputfromMFB(input_per_file=args.test_input_per_file),
+        # varLengthFeat(),
         totensor()
     ])
     file_loader = read_MFB
@@ -201,11 +204,13 @@ else:
     file_loader = read_audio
 
 
-train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+valid_dir = ValidationDataset(voxceleb=valid_set, dir=args.dataroot, loader=file_loader, class_to_idx=train_dir.class_to_idx ,transform=transform)
 
 del voxceleb
-del voxceleb_dev
+del train_set
+del valid_set
 
 # train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
 # test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
@@ -217,9 +222,9 @@ del voxceleb_dev
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
     # print the experiment configuration
-    print('\nCurrent time is {}\n\33[0m'.format(str(time.asctime())))
-    print('Parsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
+    print('\n\33[91mCurrent time is {}\33[0m'.format(str(time.asctime())))
+    # print('Parsed options:\n{}\n'.format(vars(args)))
+    print('Number of Classes: {}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
     model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.classes))
@@ -242,24 +247,27 @@ def main():
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
+            # optimizer.load_state_dict(checkpoint['optimizer'])
             # criterion.load_state_dict(checkpoint['criterion'])
 
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
     start = args.start_epoch
-    print('start epoch is : ' + str(start))
+    print('Start epoch is : ' + str(start))
     # start = 0
     end = start + args.epochs
-
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    scheduler = StepLR(optimizer, step_size=15, gamma=0.1)
+    # pdb.set_trace()
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, collate_fn=PadCollate(dim=2), shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, collate_fn=PadCollate(dim=2), shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     for epoch in range(start, end):
         # pdb.set_trace()
         train(train_loader, model, optimizer, epoch)
-        test(test_loader, model, epoch)
+        test(test_loader, valid_loader, model, epoch)
+        scheduler.step()
         # break
 
     writer.close()
@@ -277,8 +285,8 @@ def train(train_loader, model, optimizer, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     for param_group in optimizer.param_groups:
-        param_group['lr'] = args.lr
-        print('\33\n[1;34m Current learning rate is {}.\33[0m \n'.format(param_group['lr']))
+        # param_group['lr'] = args.lr
+        print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     # learning rate multiple 0.1 per 15 epochs
     # if epoch % 9 == 0:
@@ -298,10 +306,8 @@ def train(train_loader, model, optimizer, epoch):
         feats = model.pre_forward(data)
         classfier = model(feats)
 
-
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-
         #true_labels = label.cuda()
 
         loss = criterion(classfier, label)
@@ -317,17 +323,16 @@ def train(train_loader, model, optimizer, epoch):
         total_datasize += len(predicted_one_labels)
         total_loss += loss.item()
         # Visualize loss and acc
-        writer.add_scalar('Train_Loss/epoch_%d' % epoch, loss.item(), batch_idx)
-        writer.add_scalar('Train_Accuracy/epoch_%d' % epoch, minibatch_acc, batch_idx)
         #pdb.set_trace()
 
         # compute gradient and update weights
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        # break
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tLoss: {:.6f} \tMinibatch Accuracy: {:.6f}%'.format(
+            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(
                 epoch,
                 batch_idx * len(data),
                 len(train_loader.dataset),
@@ -335,7 +340,7 @@ def train(train_loader, model, optimizer, epoch):
                 loss.item(),
                 100. * minibatch_acc))
     # options for vox1
-    check_path = pathlib.Path('{}/sires34_soft/checkpoint_{}.pth'.format(args.check_path, epoch))
+    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
 
     # options for vox2
     # check_path = pathlib.Path('{}/resnet34_asoft_vox2/checkpoint_{}.pth'.format(args.check_path, epoch))
@@ -348,15 +353,53 @@ def train(train_loader, model, optimizer, epoch):
                 #'criterion': criterion.state_dict()
                str(check_path))
 
-    print('\n\33[91mFor Softmax Simple Res34 Train set Accuracy:{:.6f}%, and average loss {:.6f}.\n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
-    writer.add_scalar('Train_Accuracy_Per_Epoch', correct/total_datasize, epoch)
-    writer.add_scalar('Train_Loss_Per_Epoch', total_loss/len(train_loader), epoch)
+    print('\n\33[91mFor Softmax Simple-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
+    writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
+    writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
-def test(test_loader, model, epoch):
+def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
-    labels, distances = [], []
 
+    valid_pbar = tqdm(enumerate(valid_loader))
+    softmax = nn.Softmax(dim=1)
+
+    correct = 0.
+    total_datasize = 0.
+    for batch_idx, (data, label) in valid_pbar:
+        data = Variable(data.cuda())
+
+        # compute output
+        # pdb.set_trace()
+        out = model.pre_forward(data)
+        cls = model(out)
+
+        predicted_labels = cls
+        true_labels = Variable(label.cuda())
+
+        # pdb.set_trace()
+        predicted_one_labels = softmax(predicted_labels)
+        predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
+
+        batch_correct = (predicted_one_labels.cuda() == true_labels.cuda()).sum().item()
+        minibatch_acc = float(batch_correct / len(predicted_one_labels))
+        correct += batch_correct
+        total_datasize += len(predicted_one_labels)
+
+        if batch_idx % args.log_interval == 0:
+            valid_pbar.set_description(
+                'Valid Epoch for Classification: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
+                    epoch,
+                    batch_idx * len(data),
+                    len(valid_loader.dataset),
+                    100. * batch_idx / len(valid_loader),
+                    100. * minibatch_acc
+                ))
+
+    valid_accuracy = 100. * correct / total_datasize
+    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
+
+    labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
         current_sample = data_a.size(0)
@@ -386,18 +429,61 @@ def test(test_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test_Result/eer', eer, epoch)
-    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
-    writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
+    writer.add_scalar('Test/EER', eer, epoch)
+    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
+    # writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
     # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print(
-            '\n\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd test accuracy could be {:.2f}%.\n\33[0m'.format(
-                100. * eer, eer_threshold, 100. * accuracy))
+        print('\n\33[91mFor cos_distance, Test set ERR is {:.8f}% when threshold is {}. Valid set classificaton accuracy is {:.2f}%.\33[0m'.format(100. * eer, eer_threshold, valid_accuracy))
     else:
-        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f}.\33[0m'.format(100. * eer, accuracy))
     #logger.log_value('Test Accuracy', np.mean(accuracy))
+
+def valid(valid_loader, model, epoch):
+    # switch to evaluate mode
+    model.eval()
+
+    valid_pbar = tqdm(enumerate(valid_loader))
+    softmax = nn.Softmax(dim=1)
+
+    correct = 0.
+    total_datasize = 0.
+
+    for batch_idx, (data, label) in valid_pbar:
+        data = Variable(data.cuda())
+
+        # compute output
+        # pdb.set_trace()
+        out = model.pre_forward(data)
+        cls = model(out)
+
+        predicted_labels = cls
+        true_labels = Variable(label.cuda())
+
+        # pdb.set_trace()
+        predicted_one_labels = softmax(predicted_labels)
+        predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
+
+        batch_correct = (predicted_one_labels.cuda() == true_labels.cuda()).sum().item()
+        minibatch_acc = float(batch_correct / len(predicted_one_labels))
+        correct += batch_correct
+        total_datasize += len(predicted_one_labels)
+
+        if batch_idx % args.log_interval == 0:
+            valid_pbar.set_description(
+                'Valid Epoch for Classification: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
+                    epoch,
+                    batch_idx * len(data),
+                    len(valid_loader.dataset),
+                    100. * batch_idx / len(valid_loader),
+                    100. * minibatch_acc
+                ))
+
+    valid_accuracy = 100. * correct/total_datasize
+    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
+
+    print('\33[91mValid set classificaton accuracy is {:.2f}%.\33[0m'.format(valid_accuracy))
 
 
 def create_optimizer(model, new_lr):

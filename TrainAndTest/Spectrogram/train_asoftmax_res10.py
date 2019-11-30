@@ -11,7 +11,10 @@
 """
 from __future__ import print_function
 import argparse
+import pathlib
 import pdb
+import time
+
 from tensorboardX import SummaryWriter
 
 import torch
@@ -25,7 +28,8 @@ import os
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model import ResSpeakerModel
+from Define_Model.model import ResSpeakerModel
+from Define_Model.model import SuperficialResNet
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from eval_metrics import evaluate_kaldi_eer
 
@@ -34,8 +38,8 @@ from logger import Logger
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model import PairwiseDistance
-from Process_Data.audio_processing import GenerateSpect
+from Define_Model.model import PairwiseDistance
+from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
 from Process_Data.audio_processing import truncatedinputfromSpectrogram
 # Version conflict
@@ -56,7 +60,7 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 # Todo: change the roor path
-parser.add_argument('--dataroot', type=str, default='Data/dataset/spectrogram/voxceleb1_wav',
+parser.add_argument('--dataroot', type=str, default='Data/dataset/voxceleb1/spectrogram/voxceleb1_wav',
                     help='path to dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
@@ -69,13 +73,13 @@ parser.add_argument('--ckp-dir', default='Data/checkpoint/spectrogram',
 
 # Todo: create and change the dir for checkpoint files
 parser.add_argument('--resume',
-                    default='Data/checkpoint/spectrogram/resnet10_asoftmax/checkpoint_45.pth',
+                    default='Data/checkpoint/spectrogram/soft_res10/checkpoint_45.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=45, metavar='E',
+parser.add_argument('--epochs', type=int, default=35, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
@@ -86,7 +90,7 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 # The following is the parameters for triplet loss training.
@@ -101,6 +105,8 @@ parser.add_argument('--test-input-per-file', type=int, default=8, metavar='IPFT'
 # parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
 #                     help='minimum epoch for initial parameter using softmax (default: 2')
 
+parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
+                    help='the margin value for the triplet loss function (default: 1.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
@@ -115,7 +121,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
@@ -150,7 +156,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-lr{}-wd{}-embeddings{}-msceleb-alpha10'\
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter('Log/spectrogram/asoftmax_res10', comment='asoft')
+writer = SummaryWriter('Log/spectrogram/asoft_res10', filename_suffix=str(time.asctime()))
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -179,22 +185,27 @@ if args.makespec:
 
 if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
-        truncatedinputfromMFB(),
+        concateinputfromMFB(),
+        # truncatedinputfromMFB(),
         totensor()
     ])
     transform_T = transforms.Compose([
-        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
+        # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
+        concateinputfromMFB(input_per_file=args.test_input_per_file),
         totensor()
     ])
     file_loader = read_MFB
+
 elif args.acoustic_feature=='spectrogram':
     # Start from spectrogram
     transform = transforms.Compose([
-        truncatedinputfromSpectrogram(),
+        concateinputfromMFB(),
+        #truncatedinputfromSpectrogram(),
         totensor()
     ])
     transform_T = transforms.Compose([
-        truncatedinputfromSpectrogram(input_per_file=args.test_input_per_file),
+        concateinputfromMFB(input_per_file=args.test_input_per_file),
+        #truncatedinputfromSpectrogram(input_per_file=args.test_input_per_file),
         totensor()
     ])
     file_loader = read_MFB
@@ -231,10 +242,14 @@ def main():
     print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = ResSpeakerModel(embedding_size=args.embedding_size,
-                            resnet_size=10,
-                            num_classes=len(train_dir.classes),
-                            feature_dim=257)
+    # model = ResSpeakerModel(embedding_size=args.embedding_size,
+    #                         resnet_size=10,
+    #                         num_classes=len(train_dir.classes),
+    #                         feature_dim=257)
+    model = SuperficialResNet(layers=[1, 1, 1, 1],
+                              embedding_size=args.embedding_size,
+                              n_classes=len(train_dir.classes),
+                              m=args.margin)
 
     if args.cuda:
         model.cuda()
@@ -263,8 +278,15 @@ def main():
     # start = 0
     end = start + args.epochs
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    def my_collate(batch):
+        data = [item[0] for item in batch]
+        target = [item[1] for item in batch]
+        target = torch.LongTensor(target)
+        pdb.set_trace()
+        return [data, target]
+
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, collate_fn=my_collate, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, collate_fn=my_collate, **kwargs)
 
     for epoch in range(start, end):
         # pdb.set_trace()
@@ -284,32 +306,33 @@ def train(train_loader, model, optimizer, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
-    output_softmax = nn.Softmax()
+    output_softmax = nn.Softmax(dim=1)
+    ce = nn.CrossEntropyLoss()
 
     for batch_idx, (data, label) in pbar:
         if args.cuda:
             data = data.cuda()
         data, label = Variable(data), Variable(label)
 
-        pdb.set_trace()
+        #pdb.set_trace()
         feats = model(data)
         classfier = model.forward_classifier(feats)
-
 
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
         true_labels = label.cuda()
 
-        loss = model.AngularSoftmaxLoss(feats, true_labels.cuda())
+        # loss = model.AngularSoftmaxLoss(feats, true_labels.cuda())
+        loss = ce(classfier, true_labels)
         # loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
 
-        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().data[0]) / len(predicted_one_labels)
-        correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().data[0])
+        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(predicted_one_labels)
+        correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().item())
         total_datasize += len(predicted_one_labels)
-        total_loss += loss.data[0]
+        total_loss += loss.item()
         # Visualize loss and acc
-        writer.add_scalar('Train_Loss/epoch_%d' % epoch, loss.data[0], batch_idx)
+        writer.add_scalar('Train_Loss/epoch_%d' % epoch, loss.item(), batch_idx)
         writer.add_scalar('Train_Accuracy/epoch_%d' % epoch, minibatch_acc, batch_idx)
         #pdb.set_trace()
 
@@ -324,14 +347,24 @@ def train(train_loader, model, optimizer, epoch):
                 batch_idx * len(data),
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
-                loss.data[0],
+                loss.item(),
                 100. * minibatch_acc))
 
-    torch.save({'epoch': epoch+1,
+    check_path = pathlib.Path('{}/soft_res10/checkpoint_{}.pth'.format(args.ckp_dir, epoch))
+    if not check_path.parent.exists():
+        os.makedirs(str(check_path.parent))
+
+    torch.save({'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
-                #'criterion': criterion.state_dict()
-               '{}/resnet10_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+               # 'criterion': criterion.state_dict()
+               str(check_path))
+
+    # torch.save({'epoch': epoch+1,
+    #             'state_dict': model.state_dict(),
+    #             'optimizer': optimizer.state_dict()},
+    #             #'criterion': criterion.state_dict()
+    #            '{}/resnet10_asoftmax/checkpoint_{}.pth'.format(CKP_DIR, epoch))
 
 
     print('\33[91mFor ASoftmax Train set Accuracy:{:.6f}% \n\33[0m'.format(100 * float(correct) / total_datasize))
@@ -371,16 +404,19 @@ def test(test_loader, model, epoch):
     distances = np.array([subdist for dist in distances for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test_Result/eer', eer, epoch)
+    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
     writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
-    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+    # tpr, fpr, accuracy, val, far = evaluate(distances, labels)
 
     if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
+        print(
+            '\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {}\tAnd test accuracy could be {:.2f}%.\n\33[0m'.format(
+                100. * eer, eer_threshold, 100. * accuracy))
     else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
-    #logger.log_value('Test Accuracy', np.mean(accuracy))
+        print('\33[91mFor l2_distance, Test set ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, accuracy))
+    # logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
 def create_optimizer(model, new_lr):
