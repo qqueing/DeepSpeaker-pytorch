@@ -250,40 +250,105 @@ class concateinputfromMFB(object):
 
         return network_inputs
 
-class randomLengthFeat(object):
+class varLengthFeat(object):
     """
-    prepare feats.
+    prepare feats with true length.
     """
     def __init__(self, min_chunk_size=300, max_chunk_size=800):
 
-        super(randomLengthFeat, self).__init__()
+        super(varLengthFeat, self).__init__()
         self.min_chunk_size = min_chunk_size
         self.max_chunk_size = max_chunk_size
         self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
     def __call__(self, frames_features):
-
+        # pdb.set_trace()
         network_inputs = []
-        frames_features = frames_features.transpose()
-        num_frames = len(frames_features)
-        # pdb.set_trace()
-
-        if num_frames <= self.num_chunk:
-            output = np.zeros((self.num_chunk - num_frames, frames_features.shape[1]))
-            re_output = np.concatenate((frames_features, output), axis=0)
-        else:
-            start_frame = np.random.randint(low=0, high=num_frames - self.num_chunk)
-
-            re_output = frames_features[start_frame:(start_frame + self.num_chunk)]
-
-        network_inputs.append(re_output)
-        # pdb.set_trace()
-
+        output = np.array(frames_features)
+        # frames_features = frames_features.transpose()
+        # num_frames = len(frames_features)
+        # # pdb.set_trace()
+        #
+        # if num_frames <= self.num_chunk:
+        #     output = np.zeros((self.num_chunk - num_frames, frames_features.shape[1]))
+        #     re_output = np.concatenate((frames_features, output), axis=0)
+        # else:
+        #     # start_frame = np.random.randint(low=0, high=num_frames - self.num_chunk)
+        #     # re_output = frames_features[start_frame:(start_frame + self.num_chunk)]
+        #     re_output = frames_features
+        #
+        # network_inputs.append(re_output)
+        # # pdb.set_trace()
+        # network_inputs = np.array(network_inputs)
+        # if network_inputs.shape[1]==0:
+        #     pdb.set_trace()
+        network_inputs.append(output)
         network_inputs = np.array(network_inputs)
         if network_inputs.shape[1]==0:
             pdb.set_trace()
 
         return network_inputs
+
+def pad_tensor(vec, pad, dim):
+    """
+    args:
+        vec - tensor to pad
+        pad - the size to pad to
+        dim - dimension to pad
+    return:
+        a new tensor padded to 'pad' in dimension 'dim'
+    """
+    pad_size = list(vec.shape)
+
+    if pad_size[dim] <= pad:
+        pad_size[dim] = pad - vec.size(dim)
+        return torch.cat([vec, torch.zeros(*pad_size)], dim=dim)
+    else:
+        start = np.random.randint(low=0, high=pad_size[dim] - pad)
+        return torch.Tensor.narrow(vec, dim=dim, start=start, length=pad)
+
+class PadCollate:
+    """
+    a variant of callate_fn that pads according to the longest sequence in
+    a batch of sequences
+    """
+
+    def __init__(self, dim=0):
+        """
+        args:
+            dim - the dimension to be padded (dimension of time in sequences)
+        """
+        self.dim = dim
+        self.min_chunk_size = 300
+        self.max_chunk_size = 800
+        self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
+
+    def pad_collate(self, batch):
+        """
+        args:
+            batch - list of (tensor, label)
+        reutrn:
+            xs - a tensor of all examples in 'batch' after padding
+            ys - a LongTensor of all labels in batch
+        """
+        # pdb.set_trace()
+        # find longest sequence
+
+        # max_len = max(map(lambda x: x[0].shape[self.dim], batch))
+        frame_len = self.num_chunk
+        # pad according to max_len
+        map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
+        pad_batch = list(map_batch)
+        # stack all
+
+        xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+        ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
+
+        return xs, ys
+
+    def __call__(self, batch):
+        return self.pad_collate(batch)
+
 
 class truncatedinputfromSpectrogram(object):
     """truncated input from Spectrogram
