@@ -21,19 +21,19 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
+import pdb
 
 import numpy as np
 from tqdm import tqdm
-from Define_Model.model import DeepSpeakerModel
-from eval_metrics import evaluate
+from Define_Model import ResSpeakerModel
 from logger import Logger
 
 from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerEnrollDataset
-from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb_wav_reader import if_load_npy
 
-from Define_Model.model import PairwiseDistance
+from Define_Model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB,read_MFB,read_audio,mk_MFB
+from Process_Data.audio_processing import to4tensor, concateinputfromMFB
 
 import torch._utils
 try:
@@ -50,9 +50,9 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition Feature Extraction')
 
 # Dataset and model file path
-parser.add_argument('--dataroot', type=str, default='Data/enroll',
+parser.add_argument('--dataroot', type=str, default='Data/dataset/enroll',
                     help='path to extracting dataset')
-parser.add_argument('--enroll', action='store_true', default=False,
+parser.add_argument('--enroll', action='store_true', default=True,
                     help='enroll step or test step')
 parser.add_argument('--extract-path', type=str, default='Data/xvector/enroll',
                     help='path to pairs file')
@@ -152,8 +152,10 @@ if args.makemfb:
 
 if args.mfb:
     transform = transforms.Compose([
-        truncatedinputfromMFB(),
-        totensor()
+        concateinputfromMFB(),
+        to4tensor()
+        # truncatedinputfromMFB(),
+        # totensor()
     ])
     transform_T = transforms.Compose([
         truncatedinputfromMFB(input_per_file=args.test_input_per_file),
@@ -187,6 +189,7 @@ except IndexError:
     print("wav in enroll set is less than 3?")
 
 del audio_set
+# pdb.set_trace()
 
 def main():
     test_display_triplet_distance = False
@@ -196,7 +199,7 @@ def main():
     print('\nNumber of Wav file:\n{}\n'.format(len(enroll_dir.indices)))
 
     # instantiate model and initialize weights
-    model = DeepSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=1211)
+    model = ResSpeakerModel(embedding_size=args.embedding_size, resnet_size=10, num_classes=1211)
 
     if args.cuda:
         model.cuda()
@@ -220,7 +223,14 @@ def main():
 
     # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     epoch = args.start_epoch
-    enroll_loader = torch.utils.data.DataLoader(enroll_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    def my_collate(batch):
+        data = [item[0] for item in batch]
+        target = [item[1] for item in batch]
+        target = torch.LongTensor(target)
+        return [data, target]
+
+    enroll_loader = torch.utils.data.DataLoader(enroll_dir, batch_size=args.test_batch_size, collate_fn=my_collate, shuffle=False, **kwargs)
     #for epoch in range(start, end):
 
     enroll(enroll_loader, model, epoch)
@@ -228,12 +238,14 @@ def main():
 
 def enroll(enroll_loader, model, epoch):
     # switch to evaluate mode
+    # pdb.set_trace()
     model.eval()
-
     labels, features = [], []
 
     pbar = tqdm(enumerate(enroll_loader))
     for batch_idx, (data_a, label) in pbar:
+
+        pdb.set_trace()
         current_sample = data_a.size(0)
         data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
         if args.cuda:
