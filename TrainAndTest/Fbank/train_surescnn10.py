@@ -36,7 +36,7 @@ from logger import Logger
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model.model import PairwiseDistance, SuperficialResCNN
+from Define_Model.model import PairwiseDistance, SuperficialResCNN, AngleLoss
 from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB, PadCollate, varLengthFeat
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
 # Version conflict
@@ -67,15 +67,15 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/soft',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/asoft_sgd',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/soft/checkpoint_1.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/asoft/checkpoint_1.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=20, metavar='E',
+parser.add_argument('--epochs', type=int, default=38, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -83,9 +83,9 @@ parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPO
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -100,18 +100,28 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
+# args for a-softmax
+parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
+                    help='random seed (default: 0)')
+parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
+                    help='random seed (default: 0)')
+
 parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
                     help='learning rate (default: 0.125)')
-parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
+parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--wd', default=1e-3, type=float,
+parser.add_argument('--wd', default=0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
+parser.add_argument('--dampening', default=0, type=float, metavar='LRD',
+                    help='learning rate decay ratio (default: 1e-4')
+
+
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
@@ -244,6 +254,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
+    scheduler = StepLR(optimizer, step_size=18, gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
 
@@ -259,6 +270,7 @@ def main():
 
             model.load_state_dict(filtered)
             optimizer.load_state_dict(checkpoint['optimizer'])
+            scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
 
         else:
@@ -276,18 +288,21 @@ def main():
                                                collate_fn=PadCollate(dim=2),
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    scheduler = StepLR(optimizer, step_size=15, gamma=0.1)
+
+    ce = AngleLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+    if args.cuda:
+        ce = ce.cuda()
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        train(train_loader, model, optimizer, epoch)
+        train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         scheduler.step()
         # exit(1)
 
     writer.close()
 
-def train(train_loader, model, optimizer, epoch):
+def train(train_loader, model, ce, optimizer, scheduler, epoch):
     # switch to evaluate mode
     model.train()
     # labels, distances = [], []
@@ -296,13 +311,12 @@ def train(train_loader, model, optimizer, epoch):
     total_loss = 0.
 
     for param_group in optimizer.param_groups:
-        # if epoch % 15 == 0:
-        #     param_group['lr'] = param_group['lr'] * 0.1
         print('\33[1;34m Optimizer \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
-    ce = nn.CrossEntropyLoss()
+
+    # ce = nn.CrossEntropyLoss()
     output_softmax = nn.Softmax(dim=1)
 
     for batch_idx, (data, label) in pbar:
@@ -312,17 +326,16 @@ def train(train_loader, model, optimizer, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model.pre_forward(data)
-        classfier = model(feats)
-
-        predicted_labels = output_softmax(classfier)
-        predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
+        classfier, _ = model(data)
         true_labels = label.cuda()
 
-        cross_entropy_loss = ce(classfier, true_labels)
-        loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
+        loss = ce(classfier, true_labels)
+        # + triplet_loss * args.loss_ratio
         # loss = model.AngularSoftmaxLoss(feats, true_labels)
 
+        cos_theta, phi_theta = classfier
+        predicted_labels = output_softmax(cos_theta)
+        predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(predicted_one_labels)
         correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().item())
         total_datasize += len(predicted_one_labels)
@@ -348,14 +361,14 @@ def train(train_loader, model, optimizer, epoch):
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()},
+                'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()},
                 #'criterion': criterion.state_dict()
                str(check_path))
 
     print('\33[91mFor epoch {}: Train set Accuracy:{:.6f}%, and Average loss is {}.\n\33[0m'.format(epoch, 100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct/total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss/len(train_loader), epoch)
-
 
 def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
@@ -371,10 +384,9 @@ def test(test_loader, valid_loader, model, epoch):
         data = Variable(data.cuda())
 
         # compute output
-        out = model.pre_forward(data)
-        cls = model(out)
-
-        predicted_labels = cls
+        out, _ = model(data)
+        cos_theta, phi_theta = out
+        predicted_labels = cos_theta
         true_labels = Variable(label.cuda())
 
         # pdb.set_trace()
@@ -411,9 +423,13 @@ def test(test_loader, valid_loader, model, epoch):
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a, out_p = model.pre_forward(data_a), model.pre_forward(data_p)
+        _, out_a_ = model(data_a)
+        _, out_p_ = model(data_p)
+        out_a = out_a_
+        out_p = out_p_
 
-        dists = l2_dist.forward(out_a,out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+
+        dists = l2_dist.forward(out_a, out_p)#torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         dists = dists.data.cpu().numpy()
         dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
         distances.append(dists)
@@ -443,7 +459,7 @@ def create_optimizer(model, new_lr):
     # setup optimizer
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.99, dampening=0.9,
+                              momentum=0.9, dampening=args.dampening,
                               weight_decay=args.wd)
     elif args.optimizer == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=new_lr,

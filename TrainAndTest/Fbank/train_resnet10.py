@@ -58,25 +58,24 @@ warnings.filterwarnings("ignore")
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
                     help='path to dataset')
-parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-
-parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/soft',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/Fbank64_Norm',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ResNet10/soft/checkpoint_6.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/ResNet10/Fbank64_Norm/checkpoint_20.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=20, metavar='E',
+parser.add_argument('--epochs', type=int, default=35, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -96,7 +95,6 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
-
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
@@ -113,7 +111,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='1', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
@@ -150,7 +148,7 @@ LOG_DIR = args.log_dir + '/run-test_{}-lr{}-wd{}-m{}-embeddings{}'\
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='ada_0.05_512')
+writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='fbank64_norm')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -231,13 +229,14 @@ def main():
     test_display_triplet_distance = False
 
     # print the experiment configuration
-    print('\nCurrent time is \33[91m{}\33[0m.'.format(str(time.asctime())))
-    print('Parsed options: {}'.format(vars(args)))
+    print('\33[91m\nCurrent time is {}.\33[0m'.format(str(time.asctime())))
+    print('Parsed options: {}\n'.format(vars(args)))
     print('Number of Speakers: {}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
     model = ResNet(layers=[1, 1, 1, 1],
                    channels=[64, 128, 256, 512],
+                   embedding=args.embedding_size,
                    num_classes=len(train_dir.classes),
                    expansion=2)
 
@@ -245,6 +244,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
+    scheduler = StepLR(optimizer, step_size=18, gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
 
@@ -260,6 +260,10 @@ def main():
 
             model.load_state_dict(filtered)
             optimizer.load_state_dict(checkpoint['optimizer'])
+            try:
+                scheduler.load_state_dict(checkpoint['scheduler'])
+            except:
+                print('No scheduler!')
             # criterion.load_state_dict(checkpoint['criterion'])
 
         else:
@@ -276,19 +280,17 @@ def main():
                                                collate_fn=PadCollate(dim=2),
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    scheduler = StepLR(optimizer, step_size=15, gamma=0.1)
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        train(train_loader, model, optimizer, epoch)
+        train(train_loader, model, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-
         scheduler.step()
         # exit(1)
 
     writer.close()
 
-def train(train_loader, model, optimizer, epoch):
+def train(train_loader, model, optimizer, scheduler, epoch):
     # switch to evaluate mode
     model.train()
     # labels, distances = [], []
@@ -310,14 +312,13 @@ def train(train_loader, model, optimizer, epoch):
         if args.cuda:
             data = data.cuda()
         data, label = Variable(data), Variable(label)
-
+        #print(data.shape)
         # pdb.set_trace()
         feats = model.pre_forward(data)
         classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-
         true_labels = label.cuda()
 
         cross_entropy_loss = ce(classfier, true_labels)
@@ -334,7 +335,7 @@ def train(train_loader, model, optimizer, epoch):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
+        
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Train Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Loss: {:.6f} Batch Accuracy: {:.6f}%'.format(
                 epoch,
@@ -350,7 +351,8 @@ def train(train_loader, model, optimizer, epoch):
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()},
+                'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()},
                 #'criterion': criterion.state_dict()
                str(check_path))
 

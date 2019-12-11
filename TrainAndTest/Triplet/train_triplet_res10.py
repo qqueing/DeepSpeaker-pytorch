@@ -11,6 +11,7 @@ Implement Training ResNet 10 for Speaker Verification!
 import argparse
 import pathlib
 import pdb
+import time
 
 import torch
 import torch.nn as nn
@@ -34,7 +35,7 @@ from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB
+    mk_MFB, concateinputfromMFB, varLengthFeat, PadCollate, TripletPadCollate
 
 # Version conflict
 
@@ -65,17 +66,16 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 
 parser.add_argument('--log-dir', default='Data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-
-parser.add_argument('--ckp-dir', default='Data/checkpoint/triplet/res10_soft',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/Triplet/ResCNN10',
                     help='folder to output model checkpoints')
-
 parser.add_argument('--resume',
-                    default='Data/checkpoint/triplet/res10_soft/checkpoint_1.pth',
+                    default='Data/checkpoint/Triplet/ResCNN10/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=25, metavar='E',
+parser.add_argument('--epochs', type=int, default=15, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=False,
@@ -84,26 +84,26 @@ parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--resnet-size', type=int, default=10, metavar='BS',
                     help='resnet size for training (default: 34)')
-parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=80, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=128, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=204800, metavar='N',
+parser.add_argument('--n-triplets', type=int, default=960000, metavar='N',
                     help='how many triplets will generate from the dataset')
 
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--min-softmax-epoch', type=int, default=6, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
-parser.add_argument('--loss-ratio', type=float, default=0.0, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -136,8 +136,6 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
-writer = SummaryWriter(logdir='Log/triplet/res10_soft', filename_suffix='vox1_fb64')
-
 if not os.path.exists(args.log_dir):
     os.makedirs(args.log_dir)
 
@@ -150,16 +148,14 @@ LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-a
 
 # create logger
 logger = Logger(LOG_DIR)
-writer = SummaryWriter('Log/triplet_res10')
-
-
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='ada_0.05')
+kwargs = {'num_workers': 4, 'pin_memory': True} if args.cuda else {}
 
 l2_dist = nn.PairwiseDistance()
 # l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 # Read file list from dataset path
-print("================================Reading Dataset File List==================================")
+print("==========================================Reading Dataset File List==================================")
 voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 # voxceleb2, voxceleb_dev2 = voxceleb2_list_reader(args.dataroot)
 
@@ -174,7 +170,8 @@ if args.makemfb:
 # Create file loader for dataset
 if args.mfb:
     transform = transforms.Compose([
-        concateinputfromMFB(),
+        varLengthFeat(),
+        # concateinputfromMFB(),
         # truncatedinputfromMFB(),
         totensor()
     ])
@@ -192,12 +189,12 @@ else:
                         #tonormal()
                     ])
     file_loader = read_audio
-print("Creating file loader for dataset completed!")
+print("==============================Creating file loader for dataset completed!=============================")
 
 # Reduce the dev set
 #voxceleb_dev = voxceleb_dev_10k
 
-train_dir = DeepSpeakerDataset(voxceleb=train_set, dir=args.dataroot, n_triplets=args.n_triplets, loader = file_loader,transform=transform)
+train_dir = DeepSpeakerDataset(voxceleb=train_set, dir=args.dataroot, n_triplets=args.n_triplets, loader = file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 valid_dir = ClassificationDataset(voxceleb=valid_set, dir=args.dataroot, loader=file_loader, transform=transform)
 
@@ -209,13 +206,13 @@ del valid_set
 # Test if there is data in test dir
 # qwer = test_dir.__getitem__(3)
 
-
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
 
     # print the experiment configuration
-    #print('\nparsed options:\n{}\n'.format(vars(args)))
-    #print('\nNumber of Speakers in train set:\n{}\n'.format(len(train_dir.classes)))
+    print('\33[91m\nCurrent time is {}.\33[0m'.format(str(time.asctime())))
+    print('Parsed options: {}'.format(vars(args)))
+    print('Number of Speakers: {}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
     model = DeepSpeakerModel(resnet_size=10,
@@ -226,14 +223,12 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
-
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
-
             # Filter that remove uncessary component in checkpoint file
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
@@ -246,14 +241,20 @@ def main():
     print('start epoch is : ' + str(start))
     #start = 0
     end = start + args.epochs
+    writer.add_scalar('Train/Accuracy', 0.16498268, 1)
+    writer.add_scalar('Train/Loss', 0.0, 1)
+    writer.add_scalar('Test/Valid_Accuracy', 0.1181, 1)
+    writer.add_scalar('Test/EER', 0.2474549311, 1)
+    writer.add_scalar('Test/Threshold', 1.05243980884552, 1)
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
+
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, collate_fn=TripletPadCollate(dim=2), **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, collate_fn=PadCollate(dim=2), **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     for epoch in range(start, end):
         train(train_loader, model, optimizer, epoch)
-        test(test_loader, valid_loader, model, epoch)
+        test(test_loader, valid_loader, model, epoch-1)
         #break;
 
     writer.close()
@@ -269,20 +270,20 @@ def train(train_loader, model, optimizer, epoch):
     total_loss = 0.
     pbar = tqdm(enumerate(train_loader))
 
-    triplet_loss = nn.TripletMarginLoss(margin=args.margin,
-                                        p=2.0,
-                                        eps=1e-06)
+    triplet = nn.TripletMarginLoss(margin=args.margin, p=2.0, eps=1e-06)
     cross_entropy = nn.CrossEntropyLoss()
     softmax = nn.Softmax(dim=1)
 
-    for batch_idx, (data_a, data_p, data_n, label_p,label_n) in pbar:
+    for batch_idx, (data_a, data_p, data_n, label_p, label_n) in pbar:
         #print("on training{}".format(epoch))
         data_a, data_p, data_n = data_a.cuda(), data_p.cuda(), data_n.cuda()
         data_a, data_p, data_n = Variable(data_a), Variable(data_p), \
                                  Variable(data_n)
 
         # compute output
-        out_a, out_p, out_n = model(data_a), model(data_p), model(data_n)
+        out_a = model(data_a)
+        out_p = model(data_p)
+        out_n = model(data_n)
 
         if epoch > args.min_softmax_epoch:
             # Choose the hard negatives
@@ -306,7 +307,7 @@ def train(train_loader, model, optimizer, epoch):
             #
             # loss = triplet_loss(out_selected_a, out_selected_p, out_selected_n)
 
-            loss = triplet_loss(out_a * 10, out_p * 10, out_n * 10)
+            loss = triplet(out_a, out_p, out_n)
             total_loss += loss.item()
             # pdb.set_trace()
             # compute gradient and update weights
@@ -343,15 +344,45 @@ def train(train_loader, model, optimizer, epoch):
                         len(data_a)))
 
         else:
+            d_p = l2_dist.forward(out_a, out_p)
+            d_n = l2_dist.forward(out_a, out_n)
+            all = (d_n - d_p < args.margin).cpu().data.numpy().flatten()
 
-            cls_a = model.forward_classifier(out_a)
-            cls_p = model.forward_classifier(out_p)
-            cls_n = model.forward_classifier(out_n)
+            # log loss value for mini batch.
+            total_coorect = np.where(all == 0)
+            logger.log_value('Minibatch Train Accuracy', len(total_coorect[0]))
+
+            total_dist = (d_n - d_p).cpu().data.numpy().flatten()
+            logger.log_value('Minibatch Train distance', np.mean(total_dist))
+
+            hard_triplets = np.where(all == 1)
+            if len(hard_triplets[0]) == 0:
+                continue
+            out_selected_a = Variable(torch.from_numpy(out_a.cpu().data.numpy()[hard_triplets]).cuda())
+            out_selected_p = Variable(torch.from_numpy(out_p.cpu().data.numpy()[hard_triplets]).cuda())
+            out_selected_n = Variable(torch.from_numpy(out_n.cpu().data.numpy()[hard_triplets]).cuda())
+
+
+            selected_label_p = torch.from_numpy(label_p.cpu().numpy()[hard_triplets])
+            selected_label_n = torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
+
+            triplet_loss = triplet(out_selected_a, out_selected_p, out_selected_n)
+
+            cls_a = model.forward_classifier(out_selected_a)
+            cls_p = model.forward_classifier(out_selected_p)
+            cls_n = model.forward_classifier(out_selected_n)
 
             predicted_labels = torch.cat([cls_a, cls_p, cls_n])
-            true_labels = torch.cat([Variable(label_p.cuda()), Variable(label_p.cuda()), Variable(label_n.cuda())])
+            true_labels = torch.cat([Variable(selected_label_p.cuda()), Variable(selected_label_p.cuda()),
+                                     Variable(selected_label_n.cuda())])
 
             cross_entropy_loss = cross_entropy(predicted_labels.cuda(), true_labels.cuda())
+
+            loss = cross_entropy_loss + triplet_loss * args.loss_ratio
+            # compute gradient and update weights
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
             #pdb.set_trace()
             predicted_one_labels = softmax(predicted_labels)
@@ -361,17 +392,10 @@ def train(train_loader, model, optimizer, epoch):
             minibatch_acc = float(batch_correct/len(predicted_one_labels))
             correct += batch_correct
             total_datasize += len(predicted_one_labels)
-            
-            loss = cross_entropy_loss # + triplet_loss * args.loss_ratio
-
-            # compute gradient and update weights
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
             total_loss += loss.item()
+
             if batch_idx % args.log_interval == 0:
-                pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tBatch Loss: {:.6f}\tBatch Accuracy: {:.4f}%'.format(
+                pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)]\tBatch Loss: {:.4f}\tBatch Accuracy: {:.4f}%'.format(
                         epoch,
                         batch_idx * len(data_a),
                         len(train_loader.dataset),
@@ -385,17 +409,18 @@ def train(train_loader, model, optimizer, epoch):
         os.makedirs(str(check_path.parent))
 
     # do checkpointing
-    torch.save({'epoch': epoch + 1, 'state_dict': model.state_dict(),
+    torch.save({'epoch': epoch + 1,
+                'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                  str(check_path))
 
     predict_accuracy = correct / total_datasize
 
     # writer.add_scalar('Train/Train_EER', eer, epoch)
-    writer.add_scalar('Train/Train_Accuracy', predict_accuracy, epoch)
-    writer.add_scalar('Train/Train_Loss', total_loss/len(train_loader), epoch)
+    writer.add_scalar('Train/Accuracy', predict_accuracy, epoch)
+    writer.add_scalar('Train/Loss', total_loss/len(train_loader), epoch)
 
-    print('\33[91mFor l2_distance verification:\tTrain set Accuracy: {:.8f}\n\33[0m'.format(predict_accuracy))
+    print('\33[91mTrain set Accuracy: {:.8f} Average loss is {}\33[0m\n'.format(predict_accuracy, total_loss/len(train_loader)))
 
 
 def test(test_loader, valid_loader, model, epoch):
@@ -412,7 +437,6 @@ def test(test_loader, valid_loader, model, epoch):
         model.eval()
 
         data = Variable(data.cuda())
-
         # compute output
         out = model(data)
         cls = model.forward_classifier(out)

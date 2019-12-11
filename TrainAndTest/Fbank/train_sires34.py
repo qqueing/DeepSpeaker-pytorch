@@ -13,6 +13,7 @@
 import argparse
 import pathlib
 import pdb
+import random
 import time
 
 from tensorboardX import SummaryWriter
@@ -73,27 +74,27 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/sgd',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34/soft/checkpoint_16.pth',
+                    default='Data/checkpoint/SiResNet34/soft/sgd/checkpoint_16.pth',
                     type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=40, metavar='E',
+parser.add_argument('--epochs', type=int, default=49, metavar='E',
                     help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=40, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -108,22 +109,25 @@ parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPO
 
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
-parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
-parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
+parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--wd', default=1e-3, type=float,
+parser.add_argument('--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
+parser.add_argument('--dampening', default=0, type=float,
+                    metavar='W', help='weight decay (default: 0.0)')
+
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='0', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=50, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--mfb', action='store_true', default=True,
@@ -157,7 +161,7 @@ logger = Logger(LOG_DIR)
 # writer = SummaryWriter('Log/asoft_res34_vox1')
 
 # options for vox2
-writer = SummaryWriter(args.check_path, filename_suffix='soft')
+writer = SummaryWriter(args.check_path, filename_suffix='sgd_0.1')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
@@ -205,6 +209,12 @@ else:
 
 train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+
+indices = list(range(len(test_dir)))
+random.shuffle(indices)
+indices = indices[:4800]
+test_part = torch.utils.data.Subset(test_dir, indices)
+
 valid_dir = ValidationDataset(voxceleb=valid_set, dir=args.dataroot, loader=file_loader, class_to_idx=train_dir.class_to_idx ,transform=transform)
 
 del voxceleb
@@ -221,8 +231,8 @@ del valid_set
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
     # print the experiment configuration
-    print('\n\33[91mCurrent time is {}\33[0m'.format(str(time.asctime())))
-    # print('Parsed options:\n{}\n'.format(vars(args)))
+    print('\33[91mCurrent time is {}\33[0m'.format(str(time.asctime())))
+    print('Parsed options: {}'.format(vars(args)))
     print('Number of Classes: {}\n'.format(len(train_dir.classes)))
 
     # instantiate
@@ -233,6 +243,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
+    scheduler = StepLR(optimizer, step_size=16, gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
 
@@ -247,7 +258,8 @@ def main():
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
+            optimizer.load_state_dict(checkpoint['optimizer'])
+            scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
 
         else:
@@ -257,22 +269,22 @@ def main():
     print('Start epoch is : ' + str(start))
     # start = 0
     end = start + args.epochs
-    scheduler = StepLR(optimizer, step_size=20, gamma=0.1)
+    
     # pdb.set_trace()
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, collate_fn=PadCollate(dim=2), shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, collate_fn=PadCollate(dim=2), shuffle=False, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        train(train_loader, model, optimizer, epoch)
+        train(train_loader, model, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         scheduler.step()
         # break
 
     writer.close()
 
-def train(train_loader, model, optimizer, epoch):
+def train(train_loader, model, optimizer, scheduler, epoch):
     # switch to evaluate mode
     model.train()
     # labels, distances = [], []
@@ -303,7 +315,7 @@ def train(train_loader, model, optimizer, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model.pre_forward(data)
+        feats = model.pre_forward_norm(data)
         classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)
@@ -349,7 +361,8 @@ def train(train_loader, model, optimizer, epoch):
 
     torch.save({'epoch': epoch+1,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()},
+                'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()},
                 #'criterion': criterion.state_dict()
                str(check_path))
 
@@ -371,7 +384,7 @@ def test(test_loader, valid_loader, model, epoch):
 
         # compute output
         # pdb.set_trace()
-        out = model.pre_forward(data)
+        out = model.pre_forward_norm(data)
         cls = model(out)
 
         predicted_labels = cls
@@ -410,8 +423,8 @@ def test(test_loader, valid_loader, model, epoch):
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a = model.pre_forward(data_a)
-        out_p = model.pre_forward(data_p)
+        out_a = model.pre_forward_norm(data_a)
+        out_p = model.pre_forward_norm(data_p)
 
         dists = l2_dist.forward(out_a, out_p)
         dists = dists.data.cpu().numpy()
@@ -445,7 +458,7 @@ def create_optimizer(model, new_lr):
     # setup optimizer
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.9, dampening=0.9,
+                              momentum=0.9, dampening=args.dampening,
                               weight_decay=args.wd)
     elif args.optimizer == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=new_lr,
