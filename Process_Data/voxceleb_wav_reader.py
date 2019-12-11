@@ -73,17 +73,25 @@ def read_voxceleb_structure(directory):
     return voxceleb
 
 def read_my_voxceleb_structure(directory):
+    """
+
+    :param directory:
+    :return: [{'subset': b'dev', 'speaker_id': b'id10133', 'filename': b'vox1_dev_wav/wav/id10133/wqLbqjw42L0/00001', 'uri': 0}...
+             ]
+    """
     voxceleb = []
 
     data_root = pathlib.Path(directory)
     data_root.cwd()
     print('>>Data root is %s' % str(data_root))
     all_wav_path = list(data_root.glob('*/*/*/*/*.npy'))
+
     # print(str(pathlib.Path.relative_to(all_wav_path[0], all_wav_path[0].parents[4])).rstrip('.wav'))
     all_wav_path = [str(pathlib.Path.relative_to(path, path.parents[4])).rstrip('.npy') for path in all_wav_path]
     subset = ['dev' if pathlib.Path(path).parent.parent.parent.parent.name=='vox1_dev_wav' else 'test' for path in all_wav_path]
     speaker = [pathlib.Path(path).parent.parent.name for path in all_wav_path]
     all_wav = np.transpose([all_wav_path, subset, speaker])
+
     for file in all_wav:
         voxceleb.append({'filename': file[0], 'speaker_id': file[2], 'uri': 0, 'subset': file[1]})
         # print(str(file[0]))
@@ -172,6 +180,24 @@ def wav_list_reader(data_path, split=False):
 
 
     return voxceleb, voxceleb_dev
+
+
+
+def dic_dataset(train_set):
+
+    dataset = {}
+    spks = set([datum['speaker_id'].decode('utf-8') for datum in train_set])
+
+    for spk in spks:
+        dataset[spk] = []
+
+    for utt in train_set:
+        utt_name = utt['filename'].decode('utf-8')
+        utt_spk = utt['speaker_id'].decode('utf-8')
+        if utt_name not in dataset[utt_spk]:
+            dataset[utt_spk].append(utt_name)
+
+    return dataset
 
 
 # read_my_voxceleb_structure('/data/voxceleb')

@@ -21,8 +21,9 @@ from multiprocessing import Queue, Process
 
 import numpy as np
 from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
+from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-dataroot = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb2/fbank24'
+dataroot = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm'
 
 num_pro = 0.
 skip_wav = 0.
@@ -33,7 +34,7 @@ def check_from_queue(queue, que_queue, cpid):
     while not queue.empty():
          vox2 = queue.get()
 
-         write_path = dataroot + '/' + vox2['filename'] + '.npy'
+         write_path = dataroot + '/' + vox2['filename'].decode('utf-8') + '.npy'
          # pdb.set_trace()
          try:
              item = np.load(write_path)
@@ -47,9 +48,10 @@ def check_from_queue(queue, que_queue, cpid):
 if __name__ == '__main__':
     queue = Queue()
     que_queue = Queue()
-    voxceleb2, voxceleb2_dev = voxceleb2_list_reader(dataroot)
+    # voxceleb2, voxceleb2_dev = voxceleb2_list_reader(dataroot)
+    vox1, vox1_dev = wav_list_reader(dataroot)
 
-    for datum in voxceleb2_dev:
+    for datum in vox1:
         queue.put(datum)
 
     #check_from_queue(queue, que_queue, 1)
@@ -75,4 +77,6 @@ if __name__ == '__main__':
         while not que_queue.empty():
             ti = que_queue.get()
             print(ti)
+
+    exit(1)
 

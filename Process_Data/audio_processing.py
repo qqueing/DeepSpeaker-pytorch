@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# encoding: utf-8
 import numpy as np
 from python_speech_features import fbank, delta
 
@@ -7,6 +9,7 @@ import librosa
 
 from scipy import signal
 from scipy.io import wavfile
+import soundfile as sf
 from pydub import AudioSegment
 
 import os
@@ -140,6 +143,81 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
 
     # return spectrogram
 
+
+def Make_Spect(wav_path, windowsize, stride, window=np.hamming):
+    """
+    read wav as float type.
+    :param wav_path:
+    :param windowsize:
+    :param stride:
+    :param window: default to np.hamming
+    :return: return spectrogram with shape of (len(wav/stride), windowsize * samplerate /2 +1).
+    """
+
+    samples, samplerate = sf.read(wav_path)
+    S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
+                     hop_length=int((windowsize-stride) * samplerate),
+                     window=window(int(windowsize * samplerate)))  # 进行短时傅里叶变换，参数意义在一开始有定义
+
+    feature, _ = librosa.magphase(S)
+    feature = np.log1p(feature)  # log1p操作
+    feature = feature.transpose()
+
+    return normalize_frames(feature)
+
+
+
+def Make_Fbank(filename,
+               # sample_rate=c.SAMPLE_RATE,
+               use_delta=c.USE_DELTA,
+               use_scale=c.USE_SCALE,
+               nfilt=c.FILTER_BANK,
+               use_logscale=c.USE_LOGSCALE,
+               use_energy=c.USE_ENERGY,
+               normalize=c.NORMALIZE):
+
+    if not os.path.exists(filename):
+        raise ValueError('wav file does not exist.')
+
+    # sample_rate, audio = wavfile.read(filename)
+    # audio, sample_rate = sf.read(filename)
+    audio, sample_rate = librosa.load(filename, sr=c.SAMPLE_RATE)
+    #audio = audio.flatten()
+
+    filter_banks, energies = fbank(audio,
+                                   samplerate=sample_rate,
+                                   nfilt=nfilt,
+                                   winlen=0.025,
+                                   winfunc=np.hamming)
+
+    if use_energy:
+        energies = energies.reshape(energies.shape[0], 1)
+        filter_banks = np.concatenate((energies, filter_banks), axis=1)
+        # frames_features[:, 0] = np.log(energies)
+
+    if use_logscale:
+        # filter_banks = 20 * np.log10(np.maximum(filter_banks, 1e-5))
+        filter_banks = np.log(np.maximum(filter_banks, 1e-5))
+
+    if use_delta:
+        delta_1 = delta(filter_banks, N=1)
+        delta_2 = delta(delta_1, N=1)
+
+        filter_banks = normalize_frames(filter_banks, Scale=use_scale)
+        delta_1 = normalize_frames(delta_1, Scale=use_scale)
+        delta_2 = normalize_frames(delta_2, Scale=use_scale)
+
+        frames_features = np.hstack([filter_banks, delta_1, delta_2])
+
+    if normalize:
+        filter_banks = normalize_frames(filter_banks, Scale=use_scale)
+
+    frames_features = filter_banks
+
+    # np.save(filename.replace('.wav', '.npy'), frames_features)
+    return frames_features
+
+
 def conver_to_wav(filename, write_path, format='m4a'):
     """
     Convert other formats into wav.
@@ -265,23 +343,7 @@ class varLengthFeat(object):
         # pdb.set_trace()
         network_inputs = []
         output = np.array(frames_features)
-        # frames_features = frames_features.transpose()
-        # num_frames = len(frames_features)
-        # # pdb.set_trace()
-        #
-        # if num_frames <= self.num_chunk:
-        #     output = np.zeros((self.num_chunk - num_frames, frames_features.shape[1]))
-        #     re_output = np.concatenate((frames_features, output), axis=0)
-        # else:
-        #     # start_frame = np.random.randint(low=0, high=num_frames - self.num_chunk)
-        #     # re_output = frames_features[start_frame:(start_frame + self.num_chunk)]
-        #     re_output = frames_features
-        #
-        # network_inputs.append(re_output)
-        # # pdb.set_trace()
-        # network_inputs = np.array(network_inputs)
-        # if network_inputs.shape[1]==0:
-        #     pdb.set_trace()
+
         network_inputs.append(output)
         network_inputs = np.array(network_inputs)
         if network_inputs.shape[1]==0:
@@ -348,6 +410,101 @@ class PadCollate:
 
     def __call__(self, batch):
         return self.pad_collate(batch)
+
+class TripletPadCollate:
+    """
+    a variant of callate_fn that pads according to the longest sequence in
+    a batch of sequences
+    """
+
+    def __init__(self, dim=0):
+        """
+        args:
+            dim - the dimension to be padded (dimension of time in sequences)
+        """
+        self.dim = dim
+        self.min_chunk_size = 300
+        self.max_chunk_size = 800
+        self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
+
+    def pad_collate(self, batch):
+        """
+        args:
+            batch - list of (tensor, label)
+        reutrn:
+            xs - a tensor of all examples in 'batch' after padding
+            ys - a LongTensor of all labels in batch
+        """
+        # pdb.set_trace()
+        # find longest sequence
+
+        # max_len = max(map(lambda x: x[0].shape[self.dim], batch))
+        frame_len = self.num_chunk
+        # pad according to max_len
+        map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim),
+                                     pad_tensor(x_y[1], pad=frame_len, dim=self.dim),
+                                     pad_tensor(x_y[2], pad=frame_len, dim=self.dim),
+                                     x_y[3],
+                                     x_y[4]), batch)
+        pad_batch = list(map_batch)
+        # stack all
+
+        xs_a = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+        xs_p = torch.stack(list(map(lambda x: x[1], pad_batch)), dim=0)
+        xs_n = torch.stack(list(map(lambda x: x[2], pad_batch)), dim=0)
+
+        ys_a = torch.LongTensor(list(map(lambda x: x[3], pad_batch)))
+        ys_n = torch.LongTensor(list(map(lambda x: x[4], pad_batch)))
+
+
+        return xs_a, xs_p, xs_n, ys_a, ys_n
+
+    def __call__(self, batch):
+        return self.pad_collate(batch)
+
+
+class ExtractCollate:
+    """
+    a variant of callate_fn that pads according to the longest sequence in
+    a batch of sequences
+    """
+
+    def __init__(self, dim=0):
+        """
+        args:
+            dim - the dimension to be padded (dimension of time in sequences)
+        """
+        self.dim = dim
+        self.min_chunk_size = 300
+        self.max_chunk_size = 800
+        self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
+
+    def extract_collate(self, batch):
+        """
+        args:
+            batch - list of (tensor, label)
+        reutrn:
+            xs - a tensor of all examples in 'batch' after padding
+            ys - a LongTensor of all labels in batch
+        """
+        # pdb.set_trace()
+        # find longest sequence
+
+        # max_len = max(map(lambda x: x[0].shape[self.dim], batch))
+        frame_len = self.num_chunk
+        # pad according to max_len
+        map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
+        pad_batch = list(map_batch)
+        # stack all
+
+        xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+        ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
+        uid = [x[2] for x in batch]
+
+        return xs, ys, uid
+
+    def __call__(self, batch):
+        return self.extract_collate(batch)
 
 
 class truncatedinputfromSpectrogram(object):

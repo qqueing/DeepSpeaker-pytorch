@@ -1,12 +1,16 @@
+#!/usr/bin/env python
+# encoding: utf-8
 from __future__ import print_function
 
 import os
 import pathlib
+import random
 
 import numpy as np
 import pdb
 
 import torch.utils.data as data
+from torch.utils.data import Dataset
 
 
 def find_classes(voxceleb):
@@ -28,7 +32,6 @@ def create_indices(_features):
             inds[label] = []
         inds[label].append(feature_path)
     return inds
-
 
 def generate_triplets_call(indices, n_classes):
     """
@@ -183,7 +186,7 @@ class DeepSpeakerEnrollDataset(data.Dataset):
         return len(self.features)
 
 class ClassificationDataset(data.Dataset):
-    def __init__(self, voxceleb, dir, loader, transform=None, *arg, **kw):
+    def __init__(self, voxceleb, dir, loader, transform=None, return_uid=False, *arg, **kw):
         print('Looking for audio [npy] features files in {}.'.format(dir))
         if len(voxceleb) == 0:
             raise(RuntimeError(('This is not data in the dataset')))
@@ -227,6 +230,7 @@ class ClassificationDataset(data.Dataset):
         self.loader = loader
         #print('Generating {} triplets'.format(self.n_triplets))
         self.indices = create_indices(features)
+        self.return_uid = return_uid
 
     def __getitem__(self, index):
         '''
@@ -249,6 +253,10 @@ class ClassificationDataset(data.Dataset):
 
         # transform features if required
         feature = transform(feature)
+        if self.return_uid:
+            # pdb.set_trace()
+            return feature, label, self.features[index][0]
+
         return feature, label
 
     def __len__(self):
@@ -327,3 +335,48 @@ class ValidationDataset(data.Dataset):
 
     def __len__(self):
         return len(self.features)
+
+
+class SpeakerTrainDataset(Dataset): #定义pytorch的训练数据及类
+    def __init__(self, dataset, dir, loader, transform, samples_per_speaker=8):#每个epoch每个人的语音采样数
+        self.dataset = dataset
+        self.dir = dir
+        current_sid = -1
+
+        # pdb.set_trace()
+        self.classes = [i for i in dataset]
+        self.classes.sort()
+        self.class_to_idx = {self.classes[i]:i for i in range(len(self.classes))}
+        self.index_to_classes = {i:self.classes[i] for i in range(len(self.classes))}
+
+        self.n_classes = len(self.dataset)
+        self.samples_per_speaker = samples_per_speaker
+
+        self.transform = transform
+        self.loader = loader
+
+    def __len__(self):
+        return self.samples_per_speaker * self.n_classes#返回一个epoch的采样数
+
+    def __getitem__(self, sid):#定义采样方式，sid为说话人id
+        sid %= self.n_classes
+        spk = self.index_to_classes[sid]
+        utts = self.dataset[spk]
+
+        uid = random.randrange(0, len(utts))
+
+        def transform(feature_path):
+            """Convert image into numpy array and apply transformation
+               Doing this so that it is consistent with all other datasets
+            """
+            feature = self.loader(self.dir + '/' + feature_path + '.npy')
+            return self.transform(feature)
+
+        # Get the index of feature
+        feature = utts[uid]
+        label = sid
+
+        # transform features if required
+        feature = transform(feature)
+
+        return feature, label

@@ -18,23 +18,27 @@ from multiprocessing import Process, Queue
 import time
 import numpy as np
 
-from Process_Data.audio_processing import make_Fbank, conver_to_wav
+from Process_Data.audio_processing import make_Fbank, conver_to_wav, Make_Spect, Make_Fbank
 from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-NUM_JOB = 4
+NUM_JOB = 10
 spks = ['id00518']
+utts = []
 
-# dataset_dir = '/data/voxceleb/voxceleb1_wav'
-dataset_dir = '/home/cca01/work2019/Data/voxceleb2/'
+dataset_dir = '/data/voxceleb/voxceleb1_wav'
+# dataset_dir = '/home/cca01/work2019/Data/voxceleb1/'
 # voxceleb, voxceleb_dev = voxceleb2_list_reader(dataset_dir)
 # spks = list(set([datum['speaker_id'] for datum in voxceleb_dev]))
+# pdb.set_trace()
+vox1, vox1_dev = wav_list_reader(dataset_dir)
 
-# vox1, vox1_dev = wav_list_reader(dataset_dir)
+utts = [i['filename'] for i in vox1]
+
 # vox1_test = [datum for datum in vox1 if datum['subset'] == 'test']
-# spks = list(set([datum['speaker_id'] for datum in vox1_test]))
+# spks = list(set([datum['speaker_id'] for datum in vox1]))
 
-data_dir = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb2/fbank24'
+data_dir = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/spect_161'
 dataset_path = pathlib.Path(dataset_dir)
 # dev/aac/{}'
 # data_dir = pathlib.Path('/home/cca01/')
@@ -96,6 +100,33 @@ def make_feats_spks(spk_id):
         #                                                                                            len(all_wav),
         #                                                                                            skip_wav), end='\r')
 
+
+def make_with_path(path):
+
+    wav_path = dataset_dir + '/{}.wav'.format(path.decode('utf-8'))
+    write_path = data_dir + '/{}.npy'.format(path.decode('utf-8'))
+
+    if os.path.exists(write_path):
+        try:
+            np.load(write_path)
+            return
+        except Exception:
+            print("Error load exsit npy file")
+
+    if os.path.exists(wav_path):
+        np_spec = Make_Spect(wav_path=wav_path, windowsize=0.02, stride=0.01)
+        #np_fbank = Make_Fbank(filename=wav_path)
+
+        file_path = pathlib.Path(write_path)
+        if not file_path.parent.exists():
+            os.makedirs(str(file_path.parent))
+
+        np.save(write_path, np_spec)
+
+    else:
+        raise ValueError(str(wav_path) + ' doesn\'t exist.')
+
+
 # class MyThread(threading.Thread):
 #     def __init__(self, spk_ids, threadid):
 #         super(MyThread, self).__init__()  # 重构run函数必须要写
@@ -111,41 +142,44 @@ def make_feats_spks(spk_id):
 
 
 class MakeFeatsProcess(Process):
-    def __init__(self, spk_ids, proid, queue):
+    def __init__(self, item, proid, queue):
         super(MakeFeatsProcess, self).__init__()  # 重构run函数必须要写
-        self.spk_ids = spk_ids
+        self.item = item
         self.proid = proid
         self.queue = queue
 
     def run(self):
         # global num_make
-        for spk_id in self.spk_ids:
-            make_feats_spks(spk_id)
-            #num_make += 1
-            self.queue.put(spk_id)
-            print('\tProcess {:2d}: {:4d} of speakers making feats completed!'.format(self.proid, self.queue.qsize()), end='\n')
+        for i in self.item:
+            make_with_path(i)
+            self.queue.put(i)
+
+            print('\tProcess {:2d}: {:4d} of items making feats completed!'.format(self.proid, self.queue.qsize()), end='\n')
         print('>>Process {} finished!'.format(self.proid))
 
 if __name__ == "__main__":
-    num_spk = len(spks)
-    trunk = int(num_spk / NUM_JOB)
+    # num_spk = len(spks)
+    num_utt = len(utts)
+
+    chunk = int(num_utt / NUM_JOB)
     start_time = time.time()
 
     # threadpool = []
     queue = Queue()
     processpool = []
-    print('make feats for {} speakers.'.format(num_spk))
+
+    print('make feats for {} utterances.'.format(num_utt))
     for i in range(0, NUM_JOB):
-        j = (i+1)*trunk
+        j = (i+1)*chunk
 
         if i==(NUM_JOB-1):
-            j = num_spk
+            j = num_utt
 
         # t = MyThread(missing_spks[i*trunk:j], i)
         # t.start()
         # threadpool.append(t)
 
-        p = MakeFeatsProcess(spks[i*trunk:j], i, queue)
+        p = MakeFeatsProcess(utts[i*chunk:j], i, queue)
         p.start()
         processpool.append(p)
 
@@ -155,7 +189,7 @@ if __name__ == "__main__":
     for p in processpool:
         p.join()
 
-    print('For multi process, average making seconds for {} speakers is {}'.format(num_spk, (time.time() - start_time)/num_spk))
+    print('For multi process, average making seconds for {} speakers is {}'.format(num_utt, (time.time() - start_time)/num_utt))
 
     # start_time = time.time()
     # for spk in missing_spks:
