@@ -17,8 +17,9 @@ from torch.autograd import Function
 from torch.nn import CosineSimilarity
 from torch.autograd import Variable
 import torch.nn.functional as F
-
 import pdb
+
+from Define_Model.SoftmaxLoss import AngleLinear
 
 
 class PairwiseDistance(Function):
@@ -33,7 +34,6 @@ class PairwiseDistance(Function):
         # The distance will be (Sum(|x1-x2|**p)+eps)**1/p
         out = torch.pow(diff, self.norm).sum(dim=1)
         return torch.pow(out + eps, 1. / self.norm)
-
 
 class TripletMarginLoss(Function):
     """Triplet loss function.
@@ -203,26 +203,8 @@ class DeepSpeakerModel(nn.Module):
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
 
         #self.model.classifier = nn.Linear(self.embedding_size, num_classes)
-        self.norm = nn.BatchNorm1d(512)
-        self.model.classifier = torch.nn.Parameter(torch.randn(self.embedding_size, num_classes))
-        nn.init.xavier_normal(self.model.classifier, gain=1)
-
-        self.gamma = 0
-        self.it = 0
-        self.LambdaMin = 5.0
-        self.LambdaMax = 1500.0
-        self.lamb = 1500.0
-        self.m = 4
-        self.ce = nn.CrossEntropyLoss()
-        self.cos_function = [
-            lambda x: x ** 0,
-            lambda x: x ** 1,
-            lambda x: 2 * x ** 2 - 1,
-            lambda x: 4 * x ** 3 - 3 * x,
-            lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
-            lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x,
-        ]
-
+        #self.norm = nn.BatchNorm1d(512)
+        self.model.classifier = nn.Linear(self.embedding_size, num_classes)
 
     def l2_norm(self,input):
         input_size = input.size()
@@ -263,74 +245,21 @@ class DeepSpeakerModel(nn.Module):
         x = self.model.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.model.fc(x)
-        self.features = self.norm(x)
+        x = self.l2_norm(x)
 
         # Multiply by alpha = 10 as suggested in https://arxiv.org/pdf/1703.09507.pdf
-        # alpha = 10
-        # self.features = self.features * alpha
+        alpha = 10
+        features = x * alpha
 
-        #x = x.resize(int(x.size(0) / 17),17 , 512)
-        #self.features =torch.mean(x,dim=1)
-        #x = self.model.classifier(self.features)
-        return self.features
+        # x = x.resize(int(x.size(0) / 17),17 , 512)
+        # self.features =torch.mean(x,dim=1)
+        # x = self.model.classifier(features)
+
+        return x
 
     def forward_classifier(self, x):
-        # features = self.forward(x)
-        res = x.mm(self.model.classifier)
+        res = self.model.classifier(x)
         return res
-
-    def AngularSoftmaxLoss(self, x, label):
-        # x = self.forward(x)
-
-        assert x.size()[0] == label.size()[0]
-        # assert features.size()[1] == self.in_feats
-
-        w = self.model.classifier.renorm(2, 1, 1e-5).mul(1e5)  # [batch, out_planes]
-        x_modulus = x.pow(2).sum(1).pow(0.5)  # [batch]
-        w_modulus = w.pow(2).sum(0).pow(0.5)  # [out_planes]
-
-        # get w@x=||w||*||x||*cos(theta)
-        # w = w.cuda()
-        inner_wx = x.mm(w)  # [batch,out_planes]
-        cos_theta = (inner_wx / x_modulus.view(-1, 1)) / w_modulus.view(1, -1)
-        cos_theta = cos_theta.clamp(-1, 1)
-
-        # get cos(m*theta)
-        cos_m_theta = self.cos_function[self.m](cos_theta)
-        theta = Variable(cos_theta.data.acos())
-
-        # get k, theta is in [ k*pi/m , (k+1)*pi/m ]
-        k = (self.m * theta / math.pi).floor()
-        minus_one = k * 0 - 1
-
-        # get phi_theta = -1^k*cos(m*theta)-2*k
-        phi_theta = (minus_one ** k) * cos_m_theta - 2 * k
-
-        # get cos_x and phi_x
-        # cos_x = cos(theta)*||x||
-        # phi_x = phi(theta)*||x||
-        cos_x = cos_theta * x_modulus.view(-1, 1)
-        phi_x = phi_theta * x_modulus.view(-1, 1)
-
-        target = label.view(-1, 1)
-
-        # get one_hot mat
-        index = cos_x.data * 0.0  # size=(B,Classnum)
-        index.scatter_(1, target.data.view(-1, 1), 1)
-        index = index.byte()
-        index = Variable(index)
-
-        # set lamb, change the rate of softmax and A-softmax
-        self.lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.it))
-
-        # get a-softmax and softmax mat
-        output = cos_x * 1
-        output[index] -= (cos_x[index] * 1.0 / (+self.lamb))
-        output[index] += (phi_x[index] * 1.0 / (self.lamb))
-
-        loss = self.ce(output, label)
-
-        return loss
 
 class ResSpeakerModel(nn.Module):
     """
@@ -571,6 +500,7 @@ class ResCNNSpeaker(nn.Module):
         self.model.encodinglayer = nn.AdaptiveAvgPool2d((None, 1))
 
         if feature_dim == 64:
+            self.model.encodinglayer = nn.AdaptiveAvgPool2d((4, 1))
             self.model.fc = nn.Linear(512 * 4, self.embedding_size)
         elif feature_dim == 40:
             self.model.fc = nn.Linear(256 * 5, self.embedding_size)
@@ -796,25 +726,6 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
         super(SuperficialResCNN, self).__init__()
 
         self.embedding_size = embedding_size
-        self.it = 0
-
-        # Parameters for a-softmax
-        self.gamma = 0
-        self.it = 0
-        self.LambdaMin = 5.0
-        self.LambdaMax = 1500.0
-        self.lamb = 1500.0
-        self.m = m
-        self.cos_function = [
-            lambda x: x ** 0,
-            lambda x: x ** 1,
-            lambda x: 2 * x ** 2 - 1,
-            lambda x: 4 * x ** 3 - 3 * x,
-            lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
-            lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x,
-        ]
-
-
         self.relu = ReLU(inplace=True)
 
         self.in_planes = 64
@@ -845,11 +756,11 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
             nn.BatchNorm1d(embedding_size)
         )
 
-        self.W = torch.nn.Parameter(torch.randn(self.embedding_size, n_classes))
+        # self.W = torch.nn.Parameter(torch.randn(self.embedding_size, n_classes))
         # self.W.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)
         # nn.init.xavier_normal(self.W, gain=1)
 
-        # self.angle_linear = AngleLinear(in_features=embedding_size, out_features=n_classes, m=m)
+        self.angle_linear = AngleLinear(in_features=embedding_size, out_features=n_classes, m=m)
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.Conv2d):  # 以2/n的开方为标准差，做均值为0的正态分布
@@ -869,7 +780,7 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
             layers.append(block(self.in_planes, planes))
         return nn.Sequential(*layers)
 
-    def pre_forward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -895,85 +806,8 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
         x = self.fc(x)
         # x = x * self.alpha
 
-        # logit = self.angle_linear(x)
-        return x  # 返回倒数第二层
+        logit = self.angle_linear(x)
+        return logit, x  # 返回倒数第二层
 
-    def forward(self, x):
-        # x = self.forward(x)
-        # x = self.encodinglayer(x)
-        res = x.mm(self.W)
-        # res = self.model.classifier(features)
-        return res
 
-    def AngularSoftmaxLoss(self, x, label, purea=False):
-
-        self.it += 1
-        assert x.size()[0] == label.size()[0]
-        # assert features.size()[1] == self.in_feats
-
-        w = self.W.renorm(2, 1, 1e-5).mul(1e5)  # [batch, out_planes]
-        x_modulus = x.pow(2).sum(1).pow(0.5)  # [batch]
-        w_modulus = w.pow(2).sum(0).pow(0.5)  # [out_planes]
-
-        # get w@x=||w||*||x||*cos(theta)
-        # w = w.cuda()
-        inner_wx = x.mm(w)  # [batch,out_planes]
-        cos_theta = (inner_wx / x_modulus.view(-1, 1)) / w_modulus.view(1, -1)
-        cos_theta = cos_theta.clamp(-1, 1)
-
-        # get cos(m*theta)
-        # TODO: cos_m_theta isn't correct.
-        cos_m_theta = self.cos_function[self.m](cos_theta)
-        theta = Variable(cos_theta.data.acos())
-
-        # get k, theta is in [ k*pi/m , (k+1)*pi/m ]
-        k = (self.m * theta / math.pi).floor()
-        minus_one = k * 0 - 1
-
-        # get phi_theta = -1^k*cos(m*theta)-2*k
-        phi_theta = (minus_one ** k) * cos_m_theta - 2 * k
-
-        # get cos_x and phi_x
-        # cos_x = cos(theta)*||x||
-        # phi_x = phi(theta)*||x||
-        cos_x = cos_theta * x_modulus.view(-1, 1)
-        phi_x = phi_theta * x_modulus.view(-1, 1)
-
-        target = label.view(-1, 1)
-
-        # get one_hot mat
-        index = cos_x.data * 0.0  # size=(B,Classnum)
-        index.scatter_(1, target.data.view(-1, 1), 1)
-        index = index.byte()
-        index = Variable(index)
-
-        # set lamb, change the rate of softmax and A-softmax
-        lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.it))
-
-        # get a-softmax and softmax mat
-        output = cos_x * 1
-        # output[index] -= cos_x[index]
-        # output[index] += phi_x[index]
-        if not purea:
-            output[index] -= (cos_x[index] * 1.0 / (1 + lamb))
-            output[index] += (phi_x[index] * 1.0 / (1 + lamb))
-        else:
-            output[index] -= cos_x[index]
-            output[index] += phi_x[index]
-
-        #
-        # get loss, which is equal to Cross Entropy.
-        logpt = F.log_softmax(output, dim=1)  # [batch,classes_num]
-        logpt = logpt.gather(1, target)  # [batch]
-        pt = Variable(logpt.data.exp())
-        # torch.mm()
-        try:
-            loss = -1 * logpt * (1 - pt) ** self.gamma
-        except Exception:
-            pdb.set_trace()
-
-        loss = loss.mean()
-        # loss = self.ce(output, label)
-
-        return loss
 
