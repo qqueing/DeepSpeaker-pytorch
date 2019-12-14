@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import pathlib
 import random
+import torch
 
 import numpy as np
 import pdb
@@ -362,21 +363,26 @@ class SpeakerTrainDataset(Dataset): #定义pytorch的训练数据及类
         sid %= self.n_classes
         spk = self.index_to_classes[sid]
         utts = self.dataset[spk]
+        n_samples = 0
+        y = np.array([[]]).reshape(0, 161)
 
-        uid = random.randrange(0, len(utts))
+        N_SAMPLES = 600
+        while n_samples < N_SAMPLES:
 
-        def transform(feature_path):
-            """Convert image into numpy array and apply transformation
-               Doing this so that it is consistent with all other datasets
-            """
-            feature = self.loader(self.dir + '/' + feature_path + '.npy')
-            return self.transform(feature)
+            uid = random.randrange(0, len(utts))
+            feature = self.loader(self.dir + '/' + utts[uid] + '.npy')
+            # Get the index of feature
+            if n_samples == 0:
+                start = int(random.uniform(0, len(feature)))
+            else:
+                start = 0
+            stop = int(min(len(feature)-1, max(1.0, start + N_SAMPLES - n_samples)))
+            y = np.concatenate((y, feature[start:stop]), axis=0)
 
-        # Get the index of feature
-        feature = utts[uid]
+            n_samples = len(y)
+            # transform features if required
+
+        feature = self.transform(y)
         label = sid
-
-        # transform features if required
-        feature = transform(feature)
 
         return feature, label
