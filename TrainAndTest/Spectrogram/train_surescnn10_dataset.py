@@ -10,6 +10,7 @@ from __future__ import print_function
 import argparse
 import pathlib
 import pdb
+import random
 import time
 
 from tensorboardX import SummaryWriter
@@ -34,16 +35,17 @@ from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
 
-from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset
-from Process_Data.voxceleb_wav_reader import wav_list_reader
+from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset, SpeakerTrainDataset
+from Process_Data.voxceleb_wav_reader import wav_list_reader, dic_dataset
 
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
-from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat
+from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB, PadCollate, varLengthFeat
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
 # Version conflict
+import warnings
+warnings.filterwarnings("ignore")
 
 import torch._utils
-
 try:
     torch._utils._rebuild_tensor_v2
 except AttributeError:
@@ -53,8 +55,8 @@ except AttributeError:
         tensor._backward_hooks = backward_hooks
         return tensor
     torch._utils._rebuild_tensor_v2 = _rebuild_tensor_v2
-import warnings
-warnings.filterwarnings("ignore")
+
+
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
@@ -68,17 +70,17 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_lis
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/spect/sgd',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/spect/dataset300',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/sgd/checkpoint_1.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/spect/dataset300/checkpoint_35.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=30, metavar='E',
+parser.add_argument('--epochs', type=int, default=45, metavar='E',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 
 # Training options
@@ -90,7 +92,7 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=32, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=2, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -116,9 +118,9 @@ parser.add_argument('--optimizer', default='sgd', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
-parser.add_argument('--seed', type=int, default=2, metavar='S',
+parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
                     help='how many batches to wait before logging training status')
@@ -155,7 +157,7 @@ logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='sgd_0.1')
 
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 if args.cos_sim:
     l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 else:
@@ -163,6 +165,7 @@ else:
 
 # voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
 voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
+train_dataset = dic_dataset(train_set)
 
 # voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
 
@@ -187,8 +190,8 @@ voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
         # truncatedinputfromMFB(),
-        # concateinputfromMFB(),
-        varLengthFeat(),
+        concateinputfromMFB(),
+        # varLengthFeat(),
         totensor()
     ])
     transform_T = transforms.Compose([
@@ -222,9 +225,15 @@ else:
 
 # pdb.set_trace()
 
-train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
+train_dir = SpeakerTrainDataset(dataset=train_dataset, dir=args.dataroot, loader=file_loader, transform=transform)
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
-valid_dir = ValidationDataset(voxceleb=valid_set, dir=args.dataroot, loader=file_loader, class_to_idx=train_dir.class_to_idx ,transform=transform)
+
+indices = list(range(len(test_dir)))
+random.shuffle(indices)
+indices = indices[:4000]
+test_part = torch.utils.data.Subset(test_dir, indices)
+
+valid_dir = ValidationDataset(voxceleb=valid_set, dir=args.dataroot, loader=file_loader, class_to_idx=train_dir.class_to_idx, transform=transform)
 
 del voxceleb
 del train_set
@@ -276,14 +285,12 @@ def main():
     # start = 0
     end = start + args.epochs
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True,
-                                               collate_fn=PadCollate(dim=2),
-                                               **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False,
-                                               collate_fn=PadCollate(dim=2),
-                                               **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
+
     if args.cuda:
         ce = ce.cuda()
 
@@ -304,12 +311,14 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
     total_datasize = 0.
     total_loss = 0.
 
-    if epoch <= 15:
+    if epoch <= 25:
         lr = args.lr
-    elif epoch <= 20:
+    elif epoch <= 32:
         lr = args.lr * 0.1
-    else:
+    elif epoch <= 38:
         lr = args.lr * 0.01
+    else:
+        lr = args.lr * 0.001
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
@@ -444,6 +453,7 @@ def test(test_loader, valid_loader, model, epoch):
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
+
 
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test/EER', eer, epoch)
