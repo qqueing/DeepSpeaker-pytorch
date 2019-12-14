@@ -305,34 +305,33 @@ class concateinputfromMFB(object):
         self.input_per_file = input_per_file
 
     def __call__(self, frames_features):
-
         network_inputs = []
-        num_frames = len(frames_features)
 
         # pdb.set_trace()
-
-        num_utt = math.ceil(float(num_frames) / c.NUM_FRAMES_SPECT)
-        output = np.zeros((int(num_utt*c.NUM_FRAMES_SPECT)-num_frames, frames_features.shape[1]))
-        output = np.concatenate((frames_features, output), axis=0)
+        output = frames_features
+        while len(output)<c.NUM_FRAMES_SPECT:
+            output = np.concatenate((output, frames_features), axis=0)
 
         for i in range(self.input_per_file):
-            j = np.random.randint(low=0, high=num_utt)
-            frames_slice = output[j*c.NUM_FRAMES_SPECT:(j+1)*c.NUM_FRAMES_SPECT]
+            start = np.random.randint(low=0, high=len(output)-c.NUM_FRAMES_SPECT+1)
+            frames_slice = output[start:start+c.NUM_FRAMES_SPECT]
+
             network_inputs.append(frames_slice)
         # pdb.set_trace()
-
         network_inputs = np.array(network_inputs)
+
         if network_inputs.shape[1]==0:
             pdb.set_trace()
         #return_output = network_inputs.reshape((1, network_inputs.shape[0], network_inputs.shape[1], network_inputs.shape[2]))
 
         return network_inputs
 
+
 class varLengthFeat(object):
     """
     prepare feats with true length.
     """
-    def __init__(self, min_chunk_size=300, max_chunk_size=800):
+    def __init__(self, min_chunk_size=300, max_chunk_size=500):
 
         super(varLengthFeat, self).__init__()
         self.min_chunk_size = min_chunk_size
@@ -358,16 +357,14 @@ def pad_tensor(vec, pad, dim):
         pad - the size to pad to
         dim - dimension to pad
     return:
-        a new tensor padded to 'pad' in dimension 'dim'
+        a new tensor padded itself to 'pad' in dimension 'dim'
     """
-    pad_size = list(vec.shape)
+    while vec.shape[dim]<pad:
+        vec = torch.cat([vec, vec], dim=dim)
 
-    if pad_size[dim] <= pad:
-        pad_size[dim] = pad - vec.size(dim)
-        return torch.cat([vec, torch.zeros(*pad_size)], dim=dim)
-    else:
-        start = np.random.randint(low=0, high=pad_size[dim] - pad)
-        return torch.Tensor.narrow(vec, dim=dim, start=start, length=pad)
+    start = np.random.randint(low=0, high=vec.shape[dim]-pad+1)
+
+    return torch.Tensor.narrow(vec, dim=dim, start=start, length=pad)
 
 class PadCollate:
     """
@@ -382,7 +379,7 @@ class PadCollate:
         """
         self.dim = dim
         self.min_chunk_size = 300
-        self.max_chunk_size = 800
+        self.max_chunk_size = 500
         self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
     def pad_collate(self, batch):
@@ -424,7 +421,7 @@ class TripletPadCollate:
         """
         self.dim = dim
         self.min_chunk_size = 300
-        self.max_chunk_size = 800
+        self.max_chunk_size = 500
         self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
     def pad_collate(self, batch):
@@ -476,7 +473,7 @@ class ExtractCollate:
         """
         self.dim = dim
         self.min_chunk_size = 300
-        self.max_chunk_size = 800
+        self.max_chunk_size = 500
         self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
     def extract_collate(self, batch):
