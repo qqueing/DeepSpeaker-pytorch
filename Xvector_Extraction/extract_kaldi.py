@@ -38,7 +38,7 @@ from eval_metrics import evaluate_kaldi_eer
 from logger import Logger
 
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset
-from Process_Data.voxceleb_wav_reader import wav_list_reader
+from Process_Data.voxceleb_wav_reader import wav_list_reader, test_list_reader
 
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB, varLengthFeat, PadCollate, ExtractCollate
@@ -66,20 +66,20 @@ warnings.filterwarnings("ignore")
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
                     help='path to dataset')
 parser.add_argument('--test-dataroot', type=str,
-                    default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+                    default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/soft',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/Fb_No',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ResNet10/soft/checkpoint_37.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/ResNet10/Fb_No/checkpoint_30.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 # Training options
@@ -87,7 +87,7 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=30, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=30, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -113,7 +113,7 @@ parser.add_argument('--optimizer', default='adagrad', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='3', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
@@ -150,9 +150,10 @@ LOG_DIR = args.log_dir + '/run-test_{}-lr{}-wd{}-m{}-embeddings{}' \
 # create logger
 logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='fbank64_norm')
 
 kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
+
+
 if args.cos_sim:
     l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 else:
@@ -160,12 +161,13 @@ else:
 
 # voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
 voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
+voxceleb_test = test_list_reader(args.dataroot)
 
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
         # truncatedinputfromMFB(),
-        # concateinputfromMFB(),
-        varLengthFeat(),
+        concateinputfromMFB(),
+        # varLengthFeat(),
         totensor()
     ])
     transform_T = transforms.Compose([
@@ -174,19 +176,6 @@ if args.acoustic_feature == 'fbank':
         totensor()
     ])
     file_loader = read_MFB
-
-elif args.acoustic_feature == 'spectrogram':
-    # Start from spectrogram
-    transform = transforms.Compose([
-        truncatedinputfromMFB(),
-        totensor()
-    ])
-    transform_T = transforms.Compose([
-        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-        totensor()
-    ])
-    file_loader = read_MFB
-
 else:
     transform = transforms.Compose([
         truncatedinput(),
@@ -199,16 +188,50 @@ else:
 # pdb.set_trace()
 
 train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform, return_uid=True)
+test_dir = ClassificationDataset(voxceleb=voxceleb_test, dir=args.dataroot, loader=file_loader, transform=transform, return_uid=True)
 
 
 del voxceleb
 del train_set
 del valid_set
 
+def extract(train_loader, model, extract_path=args.ckp_dir):
+
+    model.eval()
+    uids, xvector = [], torch.Tensor([])
+    pbar = tqdm(enumerate(train_loader))
+
+    for batch_idx, (data, label, uid) in pbar:
+
+        data = Variable(data.cuda())
+        # print(data.shape)
+        # pdb.set_trace()
+        feats = model.pre_forward(data)
+        feats = feats.data.cpu()
+
+        xvector = torch.cat((xvector, feats), dim=0)
+
+        for i in range(len(uid)):
+            uids.append(uid[i])
+
+        if batch_idx % args.log_interval == 0:
+            pbar.set_description(
+                'Extract : [{:8d}/{:8d} ({:3.0f}%)] '.format(
+                    batch_idx * len(data),
+                    len(train_loader.dataset),
+                    100. * batch_idx / len(train_loader)))
+
+        del feats, data
+
+    ark_file = extract_path + '/test_xvector.ark'
+    scp_file = extract_path + '/test_xvector.scp'
+    np_xvector = xvector.numpy().astype(np.float32)
+    write_xvector_ark(uids, np_xvector, ark_file, scp_file)
+
+
 
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
-    test_display_triplet_distance = False
 
     # print the experiment configuration
     print('\33[91m\nCurrent time is {}.\33[0m'.format(str(time.asctime())))
@@ -241,40 +264,12 @@ def main():
             raise Exception('=> no checkpoint found at {}'.format(args.resume))
 
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, collate_fn=ExtractCollate(dim=2), **kwargs)
-
-    model.eval()
-    uids, xvector = [], torch.Tensor([])
-
-    pbar = tqdm(enumerate(train_loader))
-    # pdb.set_trace()
-
-    for batch_idx, (data, label, uid) in pbar:
-        if args.cuda:
-            data = data.cuda()
-        data = Variable(data)
-        # print(data.shape)
-        # pdb.set_trace()
-        feats = model.pre_forward(data)
-
-        xvector = torch.cat((xvector, feats.cpu()), dim=0)
-        for i in range(len(uid)):
-            uids.append(uid[i])
-
-        if batch_idx % args.log_interval == 0:
-            pbar.set_description(
-                'Extract : [{:8d}/{:8d} ({:3.0f}%)] '.format(
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader)))
-
-    ark_file = args.ckp_dir + '/xvector.ark'
-    scp_file = args.ckp_dir + '/xvector.scp'
-    np_xvector = xvector.numpy().astype(np.float32)
-    write_xvector_ark(uids, np_xvector, ark_file, scp_file)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
 
 
-    writer.close()
+    extract(test_loader, model)
+
 
 
 def test(test_loader, valid_loader, model, epoch):
@@ -317,7 +312,6 @@ def test(test_loader, valid_loader, model, epoch):
                 ))
 
     valid_accuracy = 100. * correct / total_datasize
-    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
@@ -347,8 +341,6 @@ def test(test_loader, valid_loader, model, epoch):
     distances = np.array([subdist for dist in distances for subdist in dist])
 
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/EER', eer, epoch)
-    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
     if args.cos_sim:
         print(
@@ -358,23 +350,6 @@ def test(test_loader, valid_loader, model, epoch):
         print(
             '\33[91mFor l2_distance, Test set verification ERR is {:.8f}%, when threshold is {}. Valid set classificaton accuracy is {:.2f}%.\n\33[0m'.format(
                 100. * eer, eer_threshold, valid_accuracy))
-
-
-def create_optimizer(model, new_lr):
-    # setup optimizer
-    if args.optimizer == 'sgd':
-        optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.99, dampening=0.9,
-                              weight_decay=args.wd)
-    elif args.optimizer == 'adam':
-        optimizer = optim.Adam(model.parameters(), lr=new_lr,
-                               weight_decay=args.wd)
-    elif args.optimizer == 'adagrad':
-        optimizer = optim.Adagrad(model.parameters(),
-                                  lr=new_lr,
-                                  lr_decay=args.lr_decay,
-                                  weight_decay=args.wd)
-    return optimizer
 
 
 if __name__ == '__main__':
