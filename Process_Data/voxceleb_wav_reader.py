@@ -181,6 +181,33 @@ def wav_list_reader(data_path, split=False):
 
     return voxceleb, voxceleb_dev
 
+def test_list_reader(data_path):
+    """
+        Check if resume dataset variables from local list(.npy).
+        Return train and valid set, which are subset of voxceleb dev.
+    :param data_path: the dataset root
+    :return: the data list
+    """
+    voxceleb_list = "Data/voxceleb.npy"
+    voxceleb_test_list = "Data/voxceleb_test.npy"
+
+    try:
+        voxceleb = np.load(voxceleb_list, allow_pickle=True)
+        if len(voxceleb)!=153516:
+            raise ValueError("The number of wav files may be wrong!")
+    except:
+        voxceleb = read_my_voxceleb_structure(data_path)
+        np.save(voxceleb_list, voxceleb)
+
+    try:
+        voxceleb_test = np.load(voxceleb_test_list, allow_pickle=True)
+        if len(voxceleb_test) != 4874:
+            raise ValueError("The number of wav files may be wrong!")
+    except:
+        voxceleb_test = [datum for datum in voxceleb if datum['subset'] == b'test']
+        np.save(voxceleb_test_list, voxceleb_test)
+
+    return voxceleb_test
 
 
 def dic_dataset(train_set):
@@ -198,6 +225,59 @@ def dic_dataset(train_set):
             dataset[utt_spk].append(utt_name)
 
     return dataset
+
+def wav_duration_reader(data_path, split=True):
+    """
+        Check if resume dataset variables from local list(.npy).
+        Return train and valid set, which are subset of voxceleb dev.
+        :param data_path: the dataset root
+        :return: the data list
+    """
+    voxceleb_list = data_path + '/vox_duration.npy'
+    voxceleb_dev_list = data_path + '/vox_duration_dev.npy'
+
+    voxceleb_train_list = data_path + '/vox_duration_train.npy'
+    voxceleb_valid_list = data_path + '/vox_duration_valid.npy'
+
+    if os.path.isfile(voxceleb_list):
+        voxceleb = np.load(voxceleb_list, allow_pickle=True)
+        if len(voxceleb) != 153516:
+            raise ValueError("The number of wav files may be wrong!")
+
+    try:
+        voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
+    except:
+        voxceleb_dev = [datum for datum in voxceleb if datum['subset'] == 'dev']
+        np.save(voxceleb_dev_list, voxceleb_dev)
+
+    if not split:
+        return voxceleb, voxceleb_dev
+
+    if os.path.isfile(voxceleb_valid_list) and os.path.isfile(voxceleb_train_list):
+        train_set = np.load(voxceleb_train_list, allow_pickle=True)
+        valid_set = np.load(voxceleb_valid_list, allow_pickle=True)
+
+        if not len(train_set) + len(valid_set) == len(voxceleb_dev):
+            raise ValueError('Missing utterance')
+
+    spks = set([datum['speaker_id'] for datum in voxceleb_dev])
+    train_set = []
+    valid_set = []
+    for spk in spks:
+        num_utt = 5
+        for utt in voxceleb_dev:
+            if utt['speaker_id'] == spk:
+                if num_utt > 0:
+                    valid_set.append(utt)
+                    num_utt -= 1
+                else:
+                    train_set.append(utt)
+
+    np.save(voxceleb_train_list, train_set)
+    np.save(voxceleb_valid_list, valid_set)
+
+    return voxceleb, train_set, valid_set
+
 
 
 # read_my_voxceleb_structure('/data/voxceleb')
