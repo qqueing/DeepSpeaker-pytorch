@@ -15,6 +15,8 @@ https://github.com/woshildh/a-softmax_pytorch/blob/master/a_softmax.py.
 https://github.com/CoinCheung/pytorch-loss/blob/master/amsoftmax.py
 
 "AngularSoftmax" is completed based on the two loss.
+
+"Center Loss" is based on https://github.com/KaiyangZhou/pytorch-center-loss/blob/master/center_loss.py
 """
 import math
 import torch
@@ -77,18 +79,19 @@ class AngleLinear(nn.Module):#定义最后一层
         return output
 
 class AngleSoftmaxLoss(nn.Module):
-    def __init__(self, lambda_min=5.0, lambda_max=1500.0, gamma=0):
+    def __init__(self, lambda_min=5.0, lambda_max=1500.0, gamma=0, it=0):
         super(AngleSoftmaxLoss, self).__init__()
         self.gamma = gamma
-        self.it = 0
+        self.it = it
         self.lambda_min = lambda_min
         self.lambda_max = lambda_max
 
     def forward(self, x, y):
         '''
-        inputs:
+        x:
             cos_x: [batch, classes_num]
             phi_x: [batch, classes_num]
+        y:
             target: LongTensor,[batch]
         return:
             loss:scalar
@@ -200,7 +203,6 @@ class AngularSoftmax(nn.Module):
 
         return loss
 
-
 class AMSoftmax(nn.Module):
     def __init__(self,
                  in_feats,
@@ -241,6 +243,73 @@ class AMSoftmax(nn.Module):
 
         return costh, loss
 
+class AMSoftmaxLoss(nn.Module):
+    def __init__(self, margin=0.3, s=15):
+        super(AMSoftmaxLoss, self).__init__()
+        self.it = 0
+        self.s = s
+        self.margin = margin
+        self.ce = nn.CrossEntropyLoss()
+
+    def forward(self, costh, label):
+        x_len = costh.pow(2).sum(1).pow(0.5)
+        costh = costh / x_len.view(-1, 1)
+        lb_view = label.view(-1, 1)
+        delt_costh = torch.zeros(costh.size()).scatter_(1, lb_view.cpu().data, self.margin)
+
+        if lb_view.is_cuda:
+            delt_costh = Variable(delt_costh.cuda())
+
+        costh_m = costh - delt_costh
+        costh_m_s = self.s * costh_m
+
+        loss = self.ce(costh_m_s, label)
+
+        return loss
+
+
+class CenterLoss(nn.Module):
+    """Center loss.
+
+    Reference:
+    Wen et al. A Discriminative Feature Learning Approach for Deep Face Recognition. ECCV 2016.
+
+    Args:
+        num_classes (int): number of classes.
+        feat_dim (int): feature dimension.
+    """
+
+    def __init__(self, num_classes=10, feat_dim=2):
+        super(CenterLoss, self).__init__()
+        self.num_classes = num_classes
+        self.feat_dim = feat_dim
+
+        self.centers = nn.Parameter(torch.randn(self.num_classes, self.feat_dim))
+        self.centers.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)  # 初始化权重，在第一维度上做normalize
+
+    def forward(self, x, labels):
+        """
+        Args:
+            x: feature matrix with shape (batch_size, feat_dim).
+            labels: ground truth labels with shape (batch_size).
+        """
+        batch_size = x.size(0)
+        distmat = torch.pow(x, 2).sum(dim=1, keepdim=True).expand(batch_size, self.num_classes) + \
+                  torch.pow(self.centers, 2).sum(dim=1, keepdim=True).expand(self.num_classes, batch_size).t()
+        distmat.addmm_(1, -2, x, self.centers.t())
+
+        classes = torch.arange(self.num_classes).long()
+        #if self.use_gpu: classes = classes.cuda()
+        if self.centers.is_cuda:
+            classes = classes.cuda()
+
+        labels = labels.unsqueeze(1).expand(batch_size, self.num_classes)
+        mask = labels.eq(classes.expand(batch_size, self.num_classes))
+
+        dist = distmat * mask.float()
+        loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
+
+        return loss
 
 # Testing those Loss Classes
 # a = Variable(torch.Tensor([[1., 1., 3.],
