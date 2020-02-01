@@ -2,20 +2,22 @@
 # encoding: utf-8
 import numpy as np
 from python_speech_features import fbank, delta
-
+from speechpy.processing import cmvn,cmvnw
 from Process_Data import constants as c
 import torch
 import librosa
+from speechpy.feature import mfe
 
 from scipy import signal
 from scipy.io import wavfile
 import soundfile as sf
 from pydub import AudioSegment
-
 import os
 import pathlib
 import math
 import pdb
+
+from Process_Data.compute_vad import ComputeVadEnergy
 
 
 def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE, use_logscale=c.USE_LOGSCALE):
@@ -57,7 +59,7 @@ def make_Fbank(filename,
         raise ValueError('wav file does not exist.')
 
     sample_rate, audio = wavfile.read(filename)
-    # audio, sr = librosa.load(filename, sr=sample_rate, mono=True)
+    # audio, sr = librosa.load(filename, sr=None, mono=True)
     #audio = audio.flatten()
 
     filter_banks, energies = fbank(audio,
@@ -84,7 +86,7 @@ def make_Fbank(filename,
         delta_1 = normalize_frames(delta_1, Scale=use_scale)
         delta_2 = normalize_frames(delta_2, Scale=use_scale)
 
-        frames_features = np.hstack([filter_banks, delta_1, delta_2])
+        filter_banks = np.hstack([filter_banks, delta_1, delta_2])
 
     if normalize:
         filter_banks = normalize_frames(filter_banks, Scale=use_scale)
@@ -99,6 +101,61 @@ def make_Fbank(filename,
 
     # np.save(filename.replace('.wav', '.npy'), frames_features)
     return
+
+def compute_fbank_feat(filename, nfilt=c.FILTER_BANK, use_logscale=c.USE_LOGSCALE, use_energy=True, add_energy=True, normalize=c.CMVN, vad=c.VAD):
+    """
+    Making feats more like in kaldi.
+
+    :param filename:
+    :param use_delta:
+    :param nfilt:
+    :param use_logscale:
+    :param use_energy:
+    :param normalize:
+    :return:
+    """
+
+    if not os.path.exists(filename):
+        raise ValueError('Wav file does not exist.')
+
+    sample_rate, audio = wavfile.read(filename)
+    pad_size = np.ceil((len(audio) - 0.025 * sample_rate) / (0.01 * sample_rate)) * 0.01 * sample_rate - len(audio) + 0.025 * sample_rate
+
+    audio = np.lib.pad(audio, (0, int(pad_size)), 'symmetric')
+
+    filter_banks, energies = mfe(audio, sample_rate, frame_length=0.025, frame_stride=0.01, num_filters=nfilt, fft_length=512, low_frequency=0, high_frequency=None)
+
+    if use_energy:
+        if add_energy:
+            # Add an extra dimension to features
+            energies = energies.reshape(energies.shape[0], 1)
+            filter_banks = np.concatenate((energies, filter_banks), axis=1)
+        else:
+            # replace the 1st dim as energy
+            energies = energies.reshape(energies.shape[0], 1)
+            filter_banks[:, 0]=energies[:, 0]
+
+    if use_logscale:
+        filter_banks = np.log(np.maximum(filter_banks, 1e-5))
+        # filter_banks = np.log(filter_banks)
+
+    if normalize=='cmvn':
+        # vec(array): input_feature_matrix (size:(num_observation, num_features))
+        norm_fbank = cmvn(vec=filter_banks, variance_normalization=True)
+    elif normalize=='cmvnw':
+        norm_fbank = cmvnw(vec=filter_banks, win_size=301, variance_normalization=True)
+
+    if use_energy and vad:
+        voiced = []
+        ComputeVadEnergy(filter_banks, voiced)
+        voiced = np.array(voiced)
+        voiced_index = np.argwhere(voiced==1).squeeze()
+        norm_fbank = norm_fbank[voiced_index]
+
+        return norm_fbank, voiced
+
+    return norm_fbank
+
 
 def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT):
     """
@@ -132,7 +189,7 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
     # spectrogram = spectrogram.astype(np.uint8)
 
     # For voxceleb1
-    # file_path = wav_path.replace('Data/Voxceleb1', 'Data/voxceleb1')
+    # file_path = wav_path.replace('Data/voxceleb1', 'Data/voxceleb1')
     # file_path = file_path.replace('.wav', '.npy')
 
     file_path = pathlib.Path(write_path)
@@ -181,7 +238,7 @@ def Make_Fbank(filename,
 
     # sample_rate, audio = wavfile.read(filename)
     # audio, sample_rate = sf.read(filename)
-    audio, sample_rate = librosa.load(filename, sr=c.SAMPLE_RATE)
+    audio, sample_rate = librosa.load(filename, sr=None)
     #audio = audio.flatten()
 
     filter_banks, energies = fbank(audio,
@@ -299,22 +356,23 @@ class concateinputfromMFB(object):
     size: size of the exactly size or the smaller edge
     interpolation: Default: PIL.Image.BILINEAR
     """
-    def __init__(self, input_per_file=1):
+    def __init__(self, input_per_file=1, num_frames=c.NUM_FRAMES_SPECT):
 
         super(concateinputfromMFB, self).__init__()
         self.input_per_file = input_per_file
+        self.num_frames = num_frames
 
     def __call__(self, frames_features):
         network_inputs = []
 
         # pdb.set_trace()
         output = frames_features
-        while len(output)<c.NUM_FRAMES_SPECT:
+        while len(output)<self.num_frames:
             output = np.concatenate((output, frames_features), axis=0)
 
         for i in range(self.input_per_file):
-            start = np.random.randint(low=0, high=len(output)-c.NUM_FRAMES_SPECT+1)
-            frames_slice = output[start:start+c.NUM_FRAMES_SPECT]
+            start = np.random.randint(low=0, high=len(output)-self.num_frames+1)
+            frames_slice = output[start:start+self.num_frames]
 
             network_inputs.append(frames_slice)
         # pdb.set_trace()
@@ -326,7 +384,6 @@ class concateinputfromMFB(object):
 
         return network_inputs
 
-
 class varLengthFeat(object):
     """
     prepare feats with true length.
@@ -336,7 +393,6 @@ class varLengthFeat(object):
         super(varLengthFeat, self).__init__()
         self.min_chunk_size = min_chunk_size
         self.max_chunk_size = max_chunk_size
-        self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
     def __call__(self, frames_features):
         # pdb.set_trace()
@@ -345,6 +401,7 @@ class varLengthFeat(object):
 
         network_inputs.append(output)
         network_inputs = np.array(network_inputs)
+
         if network_inputs.shape[1]==0:
             pdb.set_trace()
 
@@ -363,7 +420,6 @@ def pad_tensor(vec, pad, dim):
         vec = torch.cat([vec, vec], dim=dim)
 
     start = np.random.randint(low=0, high=vec.shape[dim]-pad+1)
-
     return torch.Tensor.narrow(vec, dim=dim, start=start, length=pad)
 
 class PadCollate:
@@ -371,16 +427,18 @@ class PadCollate:
     a variant of callate_fn that pads according to the longest sequence in
     a batch of sequences
     """
-
-    def __init__(self, dim=0):
+    def __init__(self, dim=0, fix_len=False):
         """
         args:
             dim - the dimension to be padded (dimension of time in sequences)
         """
         self.dim = dim
         self.min_chunk_size = 300
-        self.max_chunk_size = 500
-        self.num_chunk = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
+        self.max_chunk_size = 800
+        self.fix_len = fix_len
+
+        if self.fix_len:
+            self.frame_len = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
     def pad_collate(self, batch):
         """
@@ -391,15 +449,15 @@ class PadCollate:
             ys - a LongTensor of all labels in batch
         """
         # pdb.set_trace()
-        # find longest sequence
+        if self.fix_len:
+            frame_len = self.frame_len
+        else:
+            frame_len = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
-        # max_len = max(map(lambda x: x[0].shape[self.dim], batch))
-        frame_len = self.num_chunk
         # pad according to max_len
         map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
         pad_batch = list(map_batch)
         # stack all
-
         xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
         ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
 
@@ -407,6 +465,7 @@ class PadCollate:
 
     def __call__(self, batch):
         return self.pad_collate(batch)
+
 
 class TripletPadCollate:
     """
@@ -557,11 +616,12 @@ def normalize_frames(m, Scale=True):
     """
     if Scale:
         return (m - np.mean(m, axis=0)) / (np.std(m, axis=0) + 2e-12)
-    else:
-        return (m - np.mean(m, axis=0))
+
+    return (m - np.mean(m, axis=0))
 
 
-def pre_process_inputs(signal=np.random.uniform(size=32000), target_sample_rate=8000,use_delta = c.USE_DELTA):
+def pre_process_inputs(signal=np.random.uniform(size=32000), target_sample_rate=8000, use_delta=c.USE_DELTA):
+
     filter_banks, energies = fbank(signal, samplerate=target_sample_rate, nfilt=c.FILTER_BANK, winlen=0.025)
     delta_1 = delta(filter_banks, N=1)
     delta_2 = delta(delta_1, N=1)
@@ -588,6 +648,7 @@ def pre_process_inputs(signal=np.random.uniform(size=32000), target_sample_rate=
     frames_slice = frames_features[j - c.NUM_PREVIOUS_FRAME:j + c.NUM_NEXT_FRAME]
     network_inputs.append(frames_slice)
     return np.array(network_inputs)
+
 
 class truncatedinput(object):
     """Rescales the input PIL.Image to the given 'size'.
@@ -661,7 +722,7 @@ class totensor(object):
             #img = torch.from_numpy(pic)
             # backward compatibility
 
-class to4tensor(object):
+class to2tensor(object):
     """Rescales the input PIL.Image to the given 'size'.
     If 'size' is a 2-element tuple or list in the order of (width, height), it will be the exactly size to scale.
     If 'size' is a number, it will indicate the size of the smaller edge.
@@ -681,14 +742,9 @@ class to4tensor(object):
         """
         if isinstance(pic, np.ndarray):
             # handle numpy array
-            img = torch.from_numpy(pic.transpose((0, 2, 1)))
-            #return img.float()
-            # pdb.set_trace()
-            #img = torch.FloatTensor(pic.transpose((1, 0, 3, 2)))
-            #img = np.float32(pic.transpose((0, 2, 1)))
-            return img.unsqueeze(0)
-            #img = torch.from_numpy(pic)
-            # backward compatibility
+            img = torch.from_numpy(pic)
+            return img
+
 
 class tonormal(object):
 
