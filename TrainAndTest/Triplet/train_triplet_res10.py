@@ -84,7 +84,7 @@ parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--resnet-size', type=int, default=10, metavar='BS',
                     help='resnet size for training (default: 34)')
-parser.add_argument('--batch-size', type=int, default=80, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=100, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -94,12 +94,10 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--n-triplets', type=int, default=960000, metavar='N',
                     help='how many triplets will generate from the dataset')
-
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
+parser.add_argument('--min-softmax-epoch', type=int, default=3, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
-
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
@@ -116,6 +114,9 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
+parser.add_argument('--data-parallel', action='store_true', default=True,
+                    help='using Cosine similarity')
+
 parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='LI',
@@ -136,20 +137,12 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
-if not os.path.exists(args.log_dir):
-    os.makedirs(args.log_dir)
-
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-optim_{}-n{}-lr{}-wd{}-m{}-embeddings{}-msceleb-alpha10'\
-    .format(args.optimizer, args.n_triplets, args.lr, args.wd,
-            args.margin,args.embedding_size)
 
 # create logger
-logger = Logger(LOG_DIR)
 writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='ada_0.05')
-kwargs = {'num_workers': 4, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 
 l2_dist = nn.PairwiseDistance()
 # l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -222,6 +215,9 @@ def main():
     if args.cuda:
         model.cuda()
 
+    if args.data_parallel:
+        model = torch.nn.DataParallel(model, device_ids=[2, 3])
+
     optimizer = create_optimizer(model, args.lr)
     # optionally resume from a checkpoint
     if args.resume:
@@ -241,12 +237,6 @@ def main():
     print('start epoch is : ' + str(start))
     #start = 0
     end = start + args.epochs
-    writer.add_scalar('Train/Accuracy', 0.16498268, 1)
-    writer.add_scalar('Train/Loss', 0.0, 1)
-    writer.add_scalar('Test/Valid_Accuracy', 0.1181, 1)
-    writer.add_scalar('Test/EER', 0.2474549311, 1)
-    writer.add_scalar('Test/Threshold', 1.05243980884552, 1)
-
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, collate_fn=TripletPadCollate(dim=2), **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, collate_fn=PadCollate(dim=2), **kwargs)
@@ -254,8 +244,8 @@ def main():
 
     for epoch in range(start, end):
         train(train_loader, model, optimizer, epoch)
-        test(test_loader, valid_loader, model, epoch-1)
-        #break;
+        test(test_loader, valid_loader, model, epoch)
+        # break
 
     writer.close()
 
@@ -348,20 +338,13 @@ def train(train_loader, model, optimizer, epoch):
             d_n = l2_dist.forward(out_a, out_n)
             all = (d_n - d_p < args.margin).cpu().data.numpy().flatten()
 
-            # log loss value for mini batch.
-            total_coorect = np.where(all == 0)
-            logger.log_value('Minibatch Train Accuracy', len(total_coorect[0]))
-
-            total_dist = (d_n - d_p).cpu().data.numpy().flatten()
-            logger.log_value('Minibatch Train distance', np.mean(total_dist))
-
             hard_triplets = np.where(all == 1)
             if len(hard_triplets[0]) == 0:
                 continue
+
             out_selected_a = Variable(torch.from_numpy(out_a.cpu().data.numpy()[hard_triplets]).cuda())
             out_selected_p = Variable(torch.from_numpy(out_p.cpu().data.numpy()[hard_triplets]).cuda())
             out_selected_n = Variable(torch.from_numpy(out_n.cpu().data.numpy()[hard_triplets]).cuda())
-
 
             selected_label_p = torch.from_numpy(label_p.cpu().numpy()[hard_triplets])
             selected_label_n = torch.from_numpy(label_n.cpu().numpy()[hard_triplets])
@@ -491,6 +474,7 @@ def test(test_loader, valid_loader, model, epoch):
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
+
 
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test/EER', eer, epoch)

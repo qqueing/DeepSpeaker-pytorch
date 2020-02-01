@@ -18,13 +18,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
-
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
 
 import numpy as np
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 from Define_Model.ResNet import ResNet
 from Process_Data.VoxcelebTestset import VoxcelebTestset
@@ -37,8 +36,8 @@ from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, Valid
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
 from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import GenerateSpect, concateinputfromMFB, varLengthFeat, PadCollate
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
+from Process_Data.audio_processing import concateinputfromMFB, varLengthFeat, PadCollate
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio
 # Version conflict
 
 import torch._utils
@@ -52,12 +51,14 @@ except AttributeError:
         tensor._backward_hooks = backward_hooks
         return tensor
     torch._utils._rebuild_tensor_v2 = _rebuild_tensor_v2
+
 import warnings
 warnings.filterwarnings("ignore")
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
-# Model options
+
+# Dataset options
 parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
                     help='path to dataset')
 parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
@@ -65,17 +66,17 @@ parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/y
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
-                    help='folder to output model checkpoints')
-parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/Fbank64_Norm',
+# Checkpoint path options
+parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/Fb_No',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ResNet10/Fbank64_Norm/checkpoint_20.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/ResNet10/Fb_No/checkpoint_20.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
+# Epoch options
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=35, metavar='E',
+parser.add_argument('--epochs', type=int, default=30, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -85,39 +86,42 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
-#parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
-                    help='how many triplets will generate from the dataset')
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
+# optimizer options
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--wd', default=1e-3, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
+parser.add_argument('--momentum', default=0.9, type=float,
+                    metavar='W', help='momentum (default: 0.9)')
+parser.add_argument('--dampening', default=0, type=float,
+                    metavar='W', help='dampening (default: 0.0)')
 parser.add_argument('--optimizer', default='adagrad', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='3', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=3, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
                     help='how many batches to wait before logging training status')
 
+# Making acoustic features
 parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
                     help='choose the acoustic features type.')
 parser.add_argument('--makemfb', action='store_true', default=False,
@@ -135,22 +139,15 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
-if not os.path.exists(args.log_dir):
-    os.makedirs(args.log_dir)
-
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-test_{}-lr{}-wd{}-m{}-embeddings{}'\
-    .format(args.optimizer, args.lr, args.wd,
-            args.margin,args.embedding_size)
 
-# create logger
-logger = Logger(LOG_DIR)
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='fbank64_norm')
+writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='varlen')
 
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+# Args for dataloader
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
+
 if args.cos_sim:
     l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
 else:
@@ -170,7 +167,7 @@ voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 # if args.makespec:
 #     num_pro = 1.
 #     for datum in voxceleb:
-#         # Data/Voxceleb1/
+#         # Data/voxceleb1/
 #         # /data/voxceleb/voxceleb1_wav/
 #         GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
 #                       write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
@@ -192,19 +189,6 @@ if args.acoustic_feature=='fbank':
         totensor()
     ])
     file_loader = read_MFB
-
-elif args.acoustic_feature=='spectrogram':
-    # Start from spectrogram
-    transform = transforms.Compose([
-        truncatedinputfromMFB(),
-        totensor()
-    ])
-    transform_T = transforms.Compose([
-        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-        totensor()
-    ])
-    file_loader = read_MFB
-
 else:
     transform = transforms.Compose([
                         truncatedinput(),
@@ -244,7 +228,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model, args.lr)
-    scheduler = StepLR(optimizer, step_size=18, gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[20, 80], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
 
@@ -273,12 +257,9 @@ def main():
     print('Start epoch is : ' + str(start) + '\n')
     # start = 0
     end = start + args.epochs
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True,
-                                               collate_fn=PadCollate(dim=2),
-                                               **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False,
-                                               collate_fn=PadCollate(dim=2),
-                                               **kwargs)
+
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, collate_fn=PadCollate(dim=2), **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, collate_fn=PadCollate(dim=2), **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     for epoch in range(start, end):
@@ -299,9 +280,7 @@ def train(train_loader, model, optimizer, scheduler, epoch):
     total_loss = 0.
 
     for param_group in optimizer.param_groups:
-        # if epoch % 15 == 0:
-        #     param_group['lr'] = param_group['lr'] * 0.1
-        print('\33[1;34m Optimizer {} learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
+        print('\33[1;34m Optimizer \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     #pdb.set_trace()
@@ -312,7 +291,7 @@ def train(train_loader, model, optimizer, scheduler, epoch):
         if args.cuda:
             data = data.cuda()
         data, label = Variable(data), Variable(label)
-        #print(data.shape)
+
         # pdb.set_trace()
         feats = model.pre_forward(data)
         classfier = model(feats)
@@ -323,8 +302,6 @@ def train(train_loader, model, optimizer, scheduler, epoch):
 
         cross_entropy_loss = ce(classfier, true_labels)
         loss = cross_entropy_loss  # + triplet_loss * args.loss_ratio
-
-        # loss = model.AngularSoftmaxLoss(feats, true_labels)
 
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(predicted_one_labels)
         correct += float((predicted_one_labels.cuda()==true_labels.cuda()).sum().item())
@@ -345,7 +322,7 @@ def train(train_loader, model, optimizer, scheduler, epoch):
                 loss.item(),
                 100. * minibatch_acc))
 
-    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(CKP_DIR, epoch))
+    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.ckp_dir, epoch))
     if not check_path.parent.exists():
         os.makedirs(str(check_path.parent))
 
@@ -353,8 +330,7 @@ def train(train_loader, model, optimizer, scheduler, epoch):
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict()},
-                #'criterion': criterion.state_dict()
-               str(check_path))
+                str(check_path))
 
     print('\n\33[91mFor epoch {}: Train set Accuracy:{:.6f}%, and Average loss is {}. \n\33[0m'.format(epoch, 100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct/total_datasize, epoch)
@@ -447,7 +423,7 @@ def create_optimizer(model, new_lr):
     # setup optimizer
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.99, dampening=0.9,
+                              momentum=args.momentum, dampening=args.dampening,
                               weight_decay=args.wd)
     elif args.optimizer == 'adam':
         optimizer = optim.Adam(model.parameters(), lr=new_lr,

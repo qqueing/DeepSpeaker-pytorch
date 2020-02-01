@@ -70,7 +70,7 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
 parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/asoft_sgd',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/asoft/checkpoint_1.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/asoft/checkpoint_22.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -114,7 +114,6 @@ parser.add_argument('--wd', default=0, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
 parser.add_argument('--dampening', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-
 
 parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
@@ -180,7 +179,7 @@ voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 # if args.makespec:
 #     num_pro = 1.
 #     for datum in voxceleb:
-#         # Data/Voxceleb1/
+#         # Data/voxceleb1/
 #         # /data/voxceleb/voxceleb1_wav/
 #         GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
 #                       write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')

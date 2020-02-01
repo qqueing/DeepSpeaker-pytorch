@@ -9,6 +9,7 @@
 @Time: 2019/12/16 6:36 PM
 @Overview:
 """
+import inspect
 import torch.optim as optim
 
 def create_optimizer(parameters, optimizer, **kwargs):
@@ -38,3 +39,7 @@ def write_test_scalar(writer, epoch, **kwargs):
     writer.add_scalar('Test/Valid_Accuracy', kwargs['valid_accuracy'], epoch)
     writer.add_scalar('Test/EER', kwargs['eer'], epoch)
     writer.add_scalar('Test/Threshold', kwargs['eer_threshold'], epoch)
+
+def retrieve_name(var):
+    callers_local_vars = inspect.currentframe().f_back.f_locals.items()
+    return [var_name for var_name, var_val in callers_local_vars if var_val is var]

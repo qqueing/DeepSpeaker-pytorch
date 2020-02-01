@@ -59,19 +59,19 @@ warnings.filterwarnings("ignore")
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/spect_161',
                     help='path to dataset')
-parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/Fbank64_Norm',
+parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/spect_161',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/dataset_sgd',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/ResNet10/spect_161',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ResNet10/dataset_sgd/checkpoint_12.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/ResNet10/spect_161/checkpoint_12.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -84,7 +84,7 @@ parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPO
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
+parser.add_argument('--embedding-size', type='int', default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
@@ -172,7 +172,7 @@ train_dataset = dic_dataset(train_set)
 # if args.makespec:
 #     num_pro = 1.
 #     for datum in voxceleb:
-#         # Data/Voxceleb1/
+#         # Data/voxceleb1/
 #         # /data/voxceleb/voxceleb1_wav/
 #         GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
 #                       write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
@@ -220,7 +220,7 @@ else:
 
 
 # train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
-train_dir = SpeakerTrainDataset(dataset=train_dataset, dir=args.dataroot, loader=file_loader, transform=transform)
+train_dir = SpeakerTrainDataset(dataset=train_dataset, dir=args.dataroot, loader=file_loader, transform=transform, samples_per_speaker=100)
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
 
 indices = list(range(len(test_dir)))

@@ -200,8 +200,7 @@ def main():
             args.start_epoch = checkpoint['epoch']
             #checkpoint = torch.load(args.resume, map_location='cpu')
 
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k
-                        }
+            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             model.load_state_dict(filtered)
             optimizer.load_state_dict(checkpoint['optimizer'])

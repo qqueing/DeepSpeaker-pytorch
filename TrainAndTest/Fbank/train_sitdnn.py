@@ -142,7 +142,7 @@ if args.make_feats:
     num_pro = 0.
     skip_wav = 0.
     for datum in voxceleb:
-        # Data/Voxceleb1/
+        # Data/voxceleb1/
         # /data/voxceleb/voxceleb1_wav/
         # pdb.set_trace()
         filename = '/home/cca01/work2019/Data/voxceleb2/' + datum['filename'] + '.wav'

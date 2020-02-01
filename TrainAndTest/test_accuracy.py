@@ -12,36 +12,31 @@
 #from __future__ import print_function
 import argparse
 import pdb
+import random
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 from tensorboardX import SummaryWriter
-
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
 
-
 import numpy as np
 from tqdm import tqdm
-
-from Define_Model.ResNet import SimpleResNet
+from Define_Model.ResNet import SimpleResNet, ResNet
 from Define_Model.TDNN import Time_Delay
 from Define_Model.model import ResSpeakerModel
 from eval_metrics import evaluate_kaldi_eer
-
-from logger import Logger
-
 #from DeepSpeakerDataset_static import DeepSpeakerDataset
 from Process_Data.DeepSpeakerDataset_dynamic import DeepSpeakerDataset, ClassificationDataset
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-from Define_Model.model import PairwiseDistance, ResCNNSpeaker, SuperficialResNet
+from Define_Model.model import PairwiseDistance, ResCNNSpeaker, SuperficialResCNN
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB
+    mk_MFB, concateinputfromMFB, varLengthFeat
 # Version conflict
 
 import warnings
@@ -61,67 +56,39 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--dataroot', type=str, default='Data/dataset/voxceleb1/fbank64',
+# parser.add_argument('--dataroot', type=str, default='Data/dataset/voxceleb1/spect_161',
+#                     help='path to dataset')
+# parser.add_argument('--test-dataroot', type=str, default='Data/dataset/voxceleb1/spect_161',
+#                     help='path to voxceleb1 test dataset')
+parser.add_argument('--dataroot', type=str, default='Data/dataset/voxceleb1/fbank64_de',
                     help='path to dataset')
-parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
+# parser.add_argument('--dataroot', type=str, default='Data/dataset/voxceleb1/spect_161',
+#                     help='path to voxceleb1 test dataset')
+
+parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
-                    help='folder to output model checkpoints')
-
-parser.add_argument('--ckp-dir', default='Data/checkpoint',
-                    help='folder to output model checkpoints')
-
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/resnet34_asoftmax/checkpoint_26.pth', type=str, metavar='PATH',
+# parser.add_argument('--resume', default='Data/checkpoint/SuResCNN10/spect/sgd/checkpoint_{}.pth', type=str, metavar='PATH',
 #                     help='path to latest checkpoint (default: none)')
-#
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/resnet34_asoftmax/checkpoint_26.pth', type=str, metavar='PATH',
+# parser.add_argument('--resume', default='Data/checkpoint/SuResCNN10/soft/checkpoint_{}.pth', type=str, metavar='PATH',
 #                     help='path to latest checkpoint (default: none)')
-
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/sures10_asoft/checkpoint_6.pth',
-#                     type=str, metavar='PATH',
-#                     help='path to latest checkpoint (default: none)')
-
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/resnet34_asoftmax/7.7%/checkpoint_{}.pth',
-#                     type=str, metavar='PATH',
-#                     help='path to latest checkpoint (default: none)')
-
-parser.add_argument('--resume',
-                    default='Data/checkpoint/10res_soft/1013_10/checkpoint_{}.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/SiResNet34/soft/dataset200/checkpoint_{}.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
-
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/resnet10_asoftmax/checkpoint_%d.pth', type=str, metavar='PATH',
+# parser.add_argument('--resume', default='Data/checkpoint/ResNet10/Fb_No/checkpoint_{}.pth', type=str, metavar='PATH',
+#                     help='path to latest checkpoint (default: none)')
+# parser.add_argument('--resume', default='Data/checkpoint/ResCNN10/soft/checkpoint_{}.pth', type=str, metavar='PATH',
 #                     help='path to latest checkpoint (default: none)')
 
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/sires34_soft/checkpoint_{}.pth', type=str, metavar='PATH',
-#                     help='path to latest checkpoint (default: none)')
-
-
-# parser.add_argument('--resume',
-#                     default='Data/checkpoint/tdnn_vox1/checkpoint_25.pth',
-#                     type=str, metavar='PATH',
-#                     help='path to latest checkpoint (default: none)')
-
-parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=1, metavar='E',
-                    help='number of epochs to train (default: 10)')
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--resnet-size', type=int, default=10, metavar='E',
                     help='depth of resnet to train (default: 34)')
 parser.add_argument('--batch-size', type=int, default=512, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -131,19 +98,7 @@ parser.add_argument('--n-triplets', type=int, default=100000, metavar='N',
                     help='how many triplets will generate from the dataset')
 parser.add_argument('--margin', type=float, default=0.1, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--min-softmax-epoch', type=int, default=2, metavar='MINEPOCH',
-                    help='minimum epoch for initial parameter using softmax (default: 2')
 
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
-                    help='the ratio softmax loss - triplet loss (default: 2.0')
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
-                    help='learning rate (default: 0.125)')
-parser.add_argument('--lr-decay', default=1e-4, type=float, metavar='LRD',
-                    help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--wd', default=0.0, type=float,
-                    metavar='W', help='weight decay (default: 0.0)')
-parser.add_argument('--optimizer', default='adagrad', type=str,
-                    metavar='OPT', help='The optimizer to use (default: Adagrad)')
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
@@ -154,15 +109,8 @@ parser.add_argument('--seed', type=int, default=3, metavar='S',
 parser.add_argument('--log-interval', type=int, default=1, metavar='LI',
                     help='how many batches to wait before logging training status')
 
-parser.add_argument('--mfb', action='store_true', default=True,
-                    help='start from MFB file')
-parser.add_argument('--makemfb', action='store_true', default=False,
-                    help='need to make mfb file')
-
 parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
                     help='choose the acoustic features type.')
-parser.add_argument('--makespec', action='store_true', default=False,
-                    help='need to make spectrograms file')
 
 args = parser.parse_args()
 
@@ -173,118 +121,49 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 
-if not os.path.exists(args.log_dir):
-    os.makedirs(args.log_dir)
-
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-test{}-lr{}-wd{}-m{}-embeddings{}'.format(args.optimizer, args.lr, args.wd, args.margin, args.embedding_size)
 
-# create logger
-logger = Logger(LOG_DIR)
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 
 
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
-if args.cos_sim:
-    l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
-else:
-    l2_dist = PairwiseDistance(2)
+l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
-voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
+# voxceleb, voxceleb_dev = wav_list_reader(args.dataroot)
 
-if args.makemfb:
-    #pbar = tqdm(voxceleb)
-    for datum in voxceleb:
-        mk_MFB((args.dataroot +'/voxceleb1_wav/' + datum['filename']+'.wav'))
-    print("Complete convert")
-
-# if args.mfb:
-#     transform = transforms.Compose([
-#         truncatedinputfromMFB(),
-#         totensor()
-#     ])
-#     transform_T = transforms.Compose([
-#         truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-#         totensor()
-#     ])
-#     file_loader = read_MFB
-# else:
-#     transform = transforms.Compose([
-#                         truncatedinput(),
-#                         toMFB(),
-#                         totensor(),
-#                         #tonormal()
-#                     ])
-#     file_loader = read_audio
-if args.acoustic_feature=='fbank':
-    transform = transforms.Compose([
-        concateinputfromMFB(),
-        #truncatedinputfromMFB(),
-        totensor()
-    ])
-    transform_T = transforms.Compose([
-        # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-        concateinputfromMFB(input_per_file=args.test_input_per_file),
-        totensor()
-    ])
-    file_loader = read_MFB
-
-elif args.acoustic_feature=='spectrogram':
-    # Start from spectrogram
-    transform = transforms.Compose([
-        truncatedinputfromMFB(),
-        totensor()
-    ])
-    transform_T = transforms.Compose([
-        truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-        totensor()
-    ])
-    file_loader = read_MFB
-
-else:
-    transform = transforms.Compose([
-                        truncatedinput(),
-                        toMFB(),
-                        totensor(),
-                        #tonormal()
-                    ])
-    file_loader = read_audio
-
-
-train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-
-del voxceleb
-del voxceleb_dev
+transform_T = transforms.Compose([
+    varLengthFeat(),
+    totensor()
+])
+file_loader = read_MFB
 
 test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
-writer = SummaryWriter('Log/softmax_res10', filename_suffix='1106')
-
-# qwer = test_dir.__getitem__(3)
-
+indices = list(range(len(test_dir)))
+random.shuffle(indices)
+indices = indices[:4800]
+test_part = torch.utils.data.Subset(test_dir, indices)
 
 def main():
-    # Views the training images and displays the distance on anchor-negative and anchor-positive
-    # test_display_triplet_distance = False
 
     # print the experiment configuration
     print('\nparsed options:\n{}\n'.format(vars(args)))
-    print('\nNumber of Classes:\n{}\n'.format(len(train_dir.classes)))
-
     # instantiate model and initialize weights
     # initial different models
     # model = ResSpeakerModel(embedding_size=args.embedding_size,
     #                          resnet_size=args.resnet_size,
     #                          num_classes=len(train_dir.classes))
     #
-    model = ResCNNSpeaker(embedding_size=args.embedding_size,
-                             resnet_size=args.resnet_size,
-                             num_classes=len(train_dir.classes))
+    # model = ResCNNSpeaker(embedding_size=args.embedding_size,
+    #                          resnet_size=args.resnet_size,
+    #                          num_classes=1211)
 
-    # model = SuperficialResNet(layers=[1, 1, 1, 1],
-    #                           embedding_size=args.embedding_size,
-    #                           n_classes=1211,
-    #                           m=3)
+    # model = SuperficialResCNN(layers=[1, 1, 1, 1], embedding_size=args.embedding_size, n_classes=1211, m=3)
+
+    # model = ResNet(layers=[1, 1, 1, 1],
+    #                channels=[64, 128, 256, 512],
+    #                embedding=args.embedding_size,
+    #                num_classes=1211,
+    #                expansion=2)
 
     # model = ResSpeakerModel(embedding_size=args.embedding_size,
     #                         resnet_size=10,
@@ -298,12 +177,10 @@ def main():
     #
     # model = Time_Delay(context, 64, len(train_dir.classes), node_num, full_context)
 
-    # model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.classes))
+    model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=1211)
 
     if args.cuda:
         model.cuda()
-
-    optimizer = create_optimizer(model, args.lr)
 
     # optionally resume from a checkpoint
     # if args.resume:
@@ -322,21 +199,19 @@ def main():
     #         print('=> no checkpoint found at {}'.format(args.resume))
 
     # epoch = args.start_epoch
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.test_batch_size * 2, shuffle=False, **kwargs)
-
+    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.test_batch_size * 2, shuffle=False, **kwargs)
     #epochs = np.arange(8, 9)
-    epochs = [8]
+    epochs = [28]
 
     for epoch in epochs:
+        # Load model from Checkpoint file
         if os.path.isfile(args.resume.format(epoch)):
             print('=> loading checkpoint {}'.format(args.resume.format(epoch)))
             checkpoint = torch.load(args.resume.format(epoch))
             args.start_epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-
             model.load_state_dict(filtered)
-
             # optimizer.load_state_dict(checkpoint['optimizer'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -406,10 +281,6 @@ def test(test_loader, model, epoch):
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
-        current_sample = data_a.size(0)
-        data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
-        data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
-
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
 
@@ -417,17 +288,24 @@ def test(test_loader, model, epoch):
                                 Variable(data_p), Variable(label)
 
         # compute output
-        out_a, out_p = model(data_a), model(data_p)
+        # _, out_a = model(data_a)
+        # _, out_p = model(data_p)
 
         # TDNN extract
         # out_a = model.pre_forward(data_a)
         # out_p = model.pre_forward(data_p)
         # pdb.set_trace()
-        x_vectors.append((out_a.data.cpu().numpy(), out_p.data.cpu().numpy(), label.data.cpu().numpy()))
+
+        # SiResNet34
+        out_a = model.pre_forward_norm(data_a)
+        out_p = model.pre_forward_norm(data_p)
+
+        # out_a = model.pre_forward_norm(data_a)
+        # out_p = model.pre_forward_norm(data_p)
+        # x_vectors.append((out_a.data.cpu().numpy(), out_p.data.cpu().numpy(), label.data.cpu().numpy()))
 
         dists = l2_dist.forward(out_a, out_p)
         dists = dists.data.cpu().numpy()
-        dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
 
@@ -438,49 +316,23 @@ def test(test_loader, model, epoch):
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
-    try:
-        x_vectors = np.array(x_vectors)
-    except Exception:
-        pdb.set_trace()
+    # try:
+    #     x_vectors = np.array(x_vectors)
+    # except Exception:
+    #     pdb.set_trace()
 
 
     # err, accuracy= evaluate_eer(distances,labels)
     # eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test_Result/eer', eer, epoch)
-    writer.add_scalar('Test_Result/threshold', eer_threshold, epoch)
-    writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
     # try:
-    #     np.save('Data/xvector/test/x_vectors.npy', x_vectors)
-    #     np.save('Data/xvector/test/label.npy', labels)
+    #     np.save('Data/xvector/test/x_vectors_4000.npy', x_vectors)
+    #     # np.save('Data/xvector/test/label_4000.npy', labels)
     # except:
     #     pdb.set_trace()
-
-    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
-
-    if args.cos_sim:
-        print('\33[91mFor cos_distance, Test set ERR is {:.8f} when threshold is {:.8f}. And test accuracy could be {:.2f}%.\n\33[0m'.format(100. * eer, eer_threshold, 100.* accuracy))
-    else:
-        print('\33[91mFor l2_distance, Test set ERR is {:.8f} when threshold is {:.8f}. And test accuracy could be {:.2f}%.\n\33[0m'.format(100. * eer, eer_threshold, 100.* accuracy))
-
-    #logger.log_value('Test Accuracy', np.mean(accuracy))
+    print('\33[91mFor {}_distance, Test set ERR is {:.8f} when threshold is {:.8f}.\n\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold))
 
 
-def create_optimizer(model, new_lr):
-    # setup optimizer
-    if args.optimizer == 'sgd':
-        optimizer = optim.SGD(model.parameters(), lr=new_lr,
-                              momentum=0.99, dampening=0.9,
-                              weight_decay=args.wd)
-    elif args.optimizer == 'adam':
-        optimizer = optim.Adam(model.parameters(), lr=new_lr,
-                               weight_decay=args.wd)
-    elif args.optimizer == 'adagrad':
-        optimizer = optim.Adagrad(model.parameters(),
-                                  lr=new_lr,
-                                  lr_decay=args.lr_decay,
-                                  weight_decay=args.wd)
-    return optimizer
 
 if __name__ == '__main__':
     main()

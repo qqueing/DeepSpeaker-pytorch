@@ -11,6 +11,7 @@
 """
 from __future__ import print_function
 
+import random
 import time
 import torch.nn as nn
 # import sys
@@ -46,17 +47,17 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='TDNN-based x-vector Speaker Recognition')
 
-parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank64',
+parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank24',
                     help='path to local dataset')
 parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/fbank24',
                     help='path to local dataset')
-parser.add_argument('--dataset', type=str, default='/home/cca01/work2019/Data/voxceleb2',
+parser.add_argument('--dataset', type=str, default='/home/cca01/work2019/Data/voxceleb1',
                     help='path to dataset')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
                     help='path to pairs file')
 parser.add_argument('--check-path', type=str, default='Data/checkpoint',
                     help='path to dataset')
-parser.add_argument('--resume', default='Data/checkpoint/tdnn_vox1/checkpoint_5.pth',
+parser.add_argument('--resume', default='Data/checkpoint/TDNN/vox1/soft/checkpoint_4.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -64,7 +65,7 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--acoustic-feature', type=str, default='fbank',
                     help='path to dataset')
@@ -92,7 +93,7 @@ parser.add_argument('--seed', type=int, default=0, metavar='S',
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
+torch.cuda.set_device(int(args.gpu_id))
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
@@ -100,11 +101,9 @@ torch.manual_seed(args.seed)
 # net = Time_Delay(context, 24, 300, node_num, full_context)
 # net = net.to(device)
 
-writer = SummaryWriter(logdir='Log/tdnn', filename_suffix='test_trained_vox2')
-
 print('Prepering dataset list:')
 # voxceleb, voxceleb_dev = voxceleb2_list_reader(args.dataset)
-voxceleb, voxceleb_dev = wav_list_reader(args.dataset)
+# voxceleb, voxceleb_dev = wav_list_reader(args.dataset)
 
 
 # pdb.set_trace()
@@ -123,7 +122,7 @@ if args.acoustic_feature=='fbank':
 #     num_pro = 0.
 #     skip_wav = 0.
 #     for datum in voxceleb:
-#         # Data/Voxceleb1/
+#         # Data/voxceleb1/
 #         # /data/voxceleb/voxceleb1_wav/
 #         # pdb.set_trace()
 #         filename = '/home/cca01/work2019/Data/voxceleb2/' + datum['filename'] + '.wav'
@@ -155,18 +154,68 @@ if args.acoustic_feature=='fbank':
 #     print('\nComputing Fbank features success! Skipped %d wav files.' % skip_wav)
 #     exit(1)
 
-if args.cos_sim:
-    l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
-else:
-    l2_dist = nn.PairwiseDistance(p=2)
+l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else nn.PairwiseDistance(2)
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 
 
-train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-# test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+# train_dir = ClassificationDataset(voxceleb=voxceleb_dev, dir=args.dataroot, loader=file_loader, transform=transform)
+test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+
+indices = list(range(len(test_dir)))
+random.shuffle(indices)
+indices = indices[:4800]
+test_part = torch.utils.data.Subset(test_dir, indices)
 
 # del voxceleb
 # del voxceleb_dev
 print('Prepering dataset Compeleted!')
+
+def main():
+    # print the experiment configuration
+    print('\n\33[91m Current time is {}.\33[0m'.format(str(time.asctime())))
+    print('Parsed options: {}'.format(vars(args)))
+    # print('\nNumber of Speakers:\t{}\n'.format(len(train_dir.classes)))
+
+    context = [[-2, 2], [-2, 0, 2], [-3, 0, 3], [0], [0]]
+    # node_num = [256, 256, 256, 256, 512, 1024, 512, 256]
+    node_num = [512, 512, 512, 512, 1500, 3000, 512, 512]
+    full_context = [True, False, False, True, True]
+
+    # train_set = trainset.TrainSet('../all_feature/')
+    # todo:
+    # train_set = []
+    # train_loader = DataLoader(train_dir, batch_size=args.batch_size, shuffle=True)
+    test_loader = DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    model = Time_Delay(context, 24, 1211, node_num, full_context)
+
+    # model = Time_Delay(context, 24, len(train_dir.classes), node_num, full_context)
+
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+    # torch.set_num_threads(16)
+
+    if args.cuda:
+        model.cuda()
+
+    # optionally resume from a checkpoint
+    if args.resume:
+        if os.path.isfile(args.resume):
+            print('=> loading checkpoint {}'.format(args.resume))
+            checkpoint = torch.load(args.resume)
+            args.start_epoch = checkpoint['epoch']
+            checkpoint = torch.load(args.resume)
+            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+            model.load_state_dict(filtered)
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # criterion.load_state_dict(checkpoint['criterion'])
+
+        else:
+            print('=> no checkpoint found at {}'.format(args.resume))
+
+    start = args.start_epoch
+    print('checkpoint file epoch is : ' + str(start))
+    test(test_loader, model, start)
+    # train(train_loader, model, optimizer, start)
+
 
 def train(train_loader, model, optimizer, epoch):
     # switch to evaluate mode
@@ -225,6 +274,7 @@ def test(test_loader, model, epoch):
         current_sample = data_a.size(0)
         data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
         data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
+
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
         data_a, data_p, label = Variable(data_a, volatile=True), \
@@ -236,6 +286,7 @@ def test(test_loader, model, epoch):
         dists = l2_dist.forward(x_vector_a, x_vector_p)
         dists = dists.data.cpu().numpy()
         dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
+
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
 
@@ -247,20 +298,12 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    np.save('Data/checkpoint/tdnn/1_dist.npy', distances)
-    np.save('Data/checkpoint/tdnn/1_labe.npy', labels)
-
     # err, accuracy= evaluate_eer(distances,labels)
     eer, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim)
 
-    writer.add_scalar('Test_Result/eer', eer, epoch)
-    writer.add_scalar('Test_Result/accuracy', accuracy, epoch)
-    #tpr, fpr, accuracy, val, far = evaluate(distances, labels)
+    print('\33[91mFor {}_distance, Test set ERR is {:.8f}.\n\33[0m'.format( \
+            'cos' if args.cos_sim else 'l2', 100. * eer))
 
-    if args.cos_sim:
-        print('\33[91mFor cos_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
-    else:
-        print('\33[91mFor l2_distance Test set: ERR: {:.8f}%\tBest ACC:{:.8f} \n\33[0m'.format(100. * eer, np.mean(accuracy)))
     #logger.log_value('Test Accuracy', np.mean(accuracy))
 
 
@@ -276,56 +319,6 @@ def test(test_loader, model, epoch):
 
     # print('For epoch %d test set中的准确率为: %d %%' % (epoch, 100 * correct / total))
 
-
-def main():
-    # print the experiment configuration
-    print('\n\33[91m Current time is {}.\n\33[0m'.format(str(time.asctime())))
-    print('Parsed options:\n{}'.format(vars(args)))
-    # print('\nNumber of Speakers:\t{}\n'.format(len(train_dir.classes)))
-
-    context = [[-2, 2], [-2, 0, 2], [-3, 0, 3], [0], [0]]
-    # node_num = [256, 256, 256, 256, 512, 1024, 512, 256]
-    node_num = [512, 512, 512, 512, 1500, 3000, 512, 512]
-    full_context = [True, False, False, True, True]
-
-
-    # train_set = trainset.TrainSet('../all_feature/')
-    # todo:
-    # train_set = []
-    train_loader = DataLoader(train_dir, batch_size=args.batch_size, shuffle=True)
-    # test_loader = DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False)
-
-    model = Time_Delay(context, 64, 1211, node_num, full_context)
-
-    # model = Time_Delay(context, 24, len(train_dir.classes), node_num, full_context)
-
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-    # torch.set_num_threads(16)
-
-    if args.cuda:
-        model.cuda()
-
-    # optionally resume from a checkpoint
-    if args.resume:
-        if os.path.isfile(args.resume):
-            print('=> loading checkpoint {}'.format(args.resume))
-            checkpoint = torch.load(args.resume)
-            args.start_epoch = checkpoint['epoch']
-            checkpoint = torch.load(args.resume)
-
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-
-            model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            # criterion.load_state_dict(checkpoint['criterion'])
-
-        else:
-            print('=> no checkpoint found at {}'.format(args.resume))
-
-    start = args.start_epoch
-    print('checkpoint file epoch is : ' + str(start))
-    # test(test_loader, model, start)
-    train(train_loader, model, optimizer, start)
 
 if __name__ == '__main__':
     main()

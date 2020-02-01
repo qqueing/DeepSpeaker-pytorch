@@ -12,7 +12,6 @@ import pathlib
 import pdb
 import random
 import time
-
 from tensorboardX import SummaryWriter
 
 import torch
@@ -23,7 +22,6 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
-
 import numpy as np
 from torch.optim.lr_scheduler import StepLR, MultiStepLR
 from tqdm import tqdm
@@ -36,12 +34,12 @@ from eval_metrics import evaluate_kaldi_eer
 
 from logger import Logger
 
-from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset
-from Process_Data.voxceleb_wav_reader import wav_list_reader
+from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset, SpeakerTrainDataset
+from Process_Data.voxceleb_wav_reader import wav_list_reader, dic_dataset
 
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
 from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, mk_MFB
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, mk_MFB
 # Version conflict
 
 import torch._utils
@@ -65,20 +63,20 @@ parser.add_argument('--dataroot', type=str, default='/home/cca01/work2019/yangwe
                     help='path to dataset')
 parser.add_argument('--test-dataroot', type=str, default='/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/spect_161',
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/ver_list.txt',
+parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
 parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
-parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/spect/center',
+parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/spect/center_dataset',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/sgd/checkpoint_3.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/spect/center_dataset/checkpoint_3.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=15, metavar='E',
+parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=20, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -88,25 +86,25 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=200, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
-parser.add_argument('--loss-ratio', type=float, default=1e-1, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=1e-3, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 # Optimizer Options
-parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--weight-decay', default=0, type=float,
+parser.add_argument('--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
 parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
@@ -118,7 +116,7 @@ parser.add_argument('--optimizer', default='sgd', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='1', type=str,
+parser.add_argument('--gpu-id', default='2', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=2, metavar='S',
                     help='random seed (default: 0)')
@@ -147,7 +145,7 @@ if args.cuda:
     cudnn.benchmark = True
 
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='sgd_cen')
+writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='cen_d200')
 
 kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
@@ -157,14 +155,11 @@ opt_kwargs = {'lr': args.lr,
               'momentum': args.momentum}
 
 
-if args.cos_sim:
-    l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6)
-else:
-    l2_dist = PairwiseDistance(2)
+l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
 # voxceleb, voxceleb_dev = wav_list_reader(args.test_dataroot)
 voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
-
+train_dataset = dic_dataset(train_set)
 # voxceleb2, voxceleb2_dev = voxceleb2_list_reader(args.dataroot)
 
 # if args.makemfb:
@@ -176,7 +171,7 @@ voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 # if args.makespec:
 #     num_pro = 1.
 #     for datum in voxceleb:
-#         # Data/Voxceleb1/
+#         # Data/voxceleb1/
 #         # /data/voxceleb/voxceleb1_wav/
 #         GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
 #                       write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
@@ -187,14 +182,8 @@ voxceleb, train_set, valid_set = wav_list_reader(args.dataroot, split=True)
 
 if args.acoustic_feature=='fbank':
     transform = transforms.Compose([
-        concateinputfromMFB(),
-        # varLengthFeat(),
-        totensor()
-    ])
-    transform_T = transforms.Compose([
-        # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-        concateinputfromMFB(input_per_file=args.test_input_per_file),
-        # varLengthFeat(),
+        # concateinputfromMFB(),
+        varLengthFeat(),
         totensor()
     ])
     file_loader = read_MFB
@@ -210,8 +199,9 @@ else:
 
 # pdb.set_trace()
 
-train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
-test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
+# train_dir = ClassificationDataset(voxceleb=train_set, dir=args.dataroot, loader=file_loader, transform=transform)
+train_dir = SpeakerTrainDataset(dataset=train_dataset, dir=args.dataroot, loader=file_loader, transform=transform, samples_per_speaker=args.input_per_spks)
+test_dir = VoxcelebTestset(dir=args.dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
@@ -243,7 +233,7 @@ def main():
     params = list(model.parameters()) + list(ce2.parameters())
 
     optimizer = create_optimizer(params, args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[10], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[12, 16], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
 
@@ -269,10 +259,10 @@ def main():
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True,
-                                               # collate_fn=PadCollate(dim=2),
+                                               collate_fn=PadCollate(dim=2),
                                                **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False,
-                                               # collate_fn=PadCollate(dim=2),
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2), shuffle=False,
+                                               collate_fn=PadCollate(dim=2),
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 

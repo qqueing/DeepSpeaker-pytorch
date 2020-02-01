@@ -65,6 +65,6 @@ def correct_uttid(ori_scp_file, spk_id_name, new_scp_file):
                 n.write(uttid + ' ' + ark_pos + '\n')
 
 
-spk_id_name = id2name('../Data/Fb_No/vox1_meta.csv')
-correct_uttid(test_scp_file, spk_id_name, new_test_scp_file)
+# spk_id_name = id2name('Data/dataset/voxceleb1/vox1_meta.csv')
+# correct_uttid(test_scp_file, spk_id_name, new_test_scp_file)
 # utt2spk_from_scp2ark(new_scp_file, new_utt2spk)

@@ -72,8 +72,8 @@ parser.add_argument('--log-dir', default='data/pytorch_speaker_logs',
                     help='folder to output model checkpoints')
 parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/soft',
                     help='folder to output model checkpoints')
-parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/soft/checkpoint_16.pth', type=str, metavar='PATH',
+parser.add_argument('--resume', default='Data/checkpoint/SuResCNN10/asoft/checkpoint_16.pth',
+                    type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -90,7 +90,7 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -153,7 +153,7 @@ if args.cuda:
     cudnn.benchmark = True
 
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='sample')
+writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='asoft')
 
 kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
@@ -184,7 +184,7 @@ voxceleb, train_set, valid_set = wav_duration_reader(data_path=args.dataroot)
 # if args.makespec:
 #     num_pro = 1.
 #     for datum in voxceleb:
-#         # Data/Voxceleb1/
+#         # Data/voxceleb1/
 #         # /data/voxceleb/voxceleb1_wav/
 #         GenerateSpect(wav_path='/data/voxceleb/voxceleb1_wav/' + datum['filename']+'.wav',
 #                       write_path=args.dataroot +'/spectrogram/voxceleb1_wav/' + datum['filename']+'.npy')
@@ -201,8 +201,8 @@ if args.acoustic_feature=='fbank':
     ])
     transform_T = transforms.Compose([
         # truncatedinputfromMFB(input_per_file=args.test_input_per_file),
-        concateinputfromMFB(input_per_file=args.test_input_per_file),
-        # varLengthFeat(),
+        # concateinputfromMFB(input_per_file=args.test_input_per_file),
+        varLengthFeat(),
         totensor()
     ])
     file_loader = read_MFB
@@ -277,7 +277,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True,
                                                # collate_fn=PadCollate(dim=2),
                                                **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False,
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False,
                                                # collate_fn=PadCollate(dim=2),
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)

@@ -320,24 +320,24 @@ class PldaEstiator:
         #                         + TraceSpSp(inv_within_var, stats_.offset_scatter_));
         #   return objf;
 
-    def ComputeObjfPart2(self):
+    # def ComputeObjfPart2(self):
 
         # Returns the objective-function per sample.
         # 计算每个egs的目标函数？
 
-    def ComputeObjf(self):
+    # def ComputeObjf(self):
 
     def Dim(self):
         return self.stats_.Dim()
     # E-step
-    def EstimateOneIter(self):
+    # def EstimateOneIter(self):
 
-    def InitParameters(self):
+    # def InitParameters(self):
 
-    def ResetPerIterStats(self):
+    # def ResetPerIterStats(self):
 
     # gets stats from intra-class variation (stats_.offset_scatter_).
-    def GetStatsFromIntraClass(self):
+    # def GetStatsFromIntraClass(self):
 
     # gets part of stats relating to class means.
     def GetStatsFromClassMeans(self):
@@ -355,7 +355,7 @@ class PldaEstiator:
 
         # for (size_t i = 0; i < stats_.class_info_.size(); i++) {
         # todo
-        for i in range(self.stats_.class_info_.size()):
+        # for i in range(self.stats_.class_info_.size()):
 
         #     const ClassInfo &info = stats_.class_info_[i];
         #     double weight = info.weight;
@@ -383,9 +383,9 @@ class PldaEstiator:
 
 
     # M-step
-    def EstimateFromStats(self):
-
-    # Copy to output.
-    def GetOutput(Plda *plda);
+    # def EstimateFromStats(self):
+    #
+    # # Copy to output.
+    # def GetOutput(Plda *plda);
     #
 
