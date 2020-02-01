@@ -46,9 +46,10 @@ def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
     new_distances = []
 
     for (distance, label) in zip(distances, labels):
-        if cos:
-            distance = 1. - distance
-        new_distances.append(distance)
+        if not cos:
+            distance = -distance
+
+        new_distances.append(-distance)
         if label:
             target.append(distance)
         else:
@@ -59,10 +60,11 @@ def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
     non_target = np.sort(non_target)
 
     target_size = target.size
-    target_position = 0
+    nontarget_size = non_target.size
     # pdb.set_trace()
-    while(target_position+1 < target_size):
-        nontarget_size = non_target.size
+    target_position = 0
+    while target_position+1<target_size:
+    # for target_position in range(target_size):
         nontarget_n = nontarget_size * target_position * 1.0 / target_size
         nontarget_position = int(nontarget_size - 1 - nontarget_n)
 
@@ -71,17 +73,13 @@ def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
         # The exceptions from non targets are samples where cosine score is > the target score
         # if (non_target[nontarget_position] <= target[target_position]):
         #     break
-        if (target[target_position] < non_target[nontarget_position]):
+        if (non_target[nontarget_position] < target[target_position]):
             # print('target[{}]={} is < non_target[{}]={}.'.format(target_position, target[target_position], nontarget_position, non_target[nontarget_position]))
-            target_position += 1
-            continue
-        else:
             break
-        # target_position += 1
+        target_position += 1
 
-    # threshold = target[target_position]
     eer_threshold = target[target_position]
-    eer = 1 - target_position * 1.0 / target_size
+    eer = target_position * 1.0 / target_size
 
     # max_threshold = np.max(distances)
     # thresholds = np.arange(0, max_threshold, 0.001)
