@@ -17,7 +17,7 @@ import random
 import time
 
 from tensorboardX import SummaryWriter
-
+from Process_Data import constants as c
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -152,7 +152,7 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        concateinputfromMFB(),
+        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH),
         # varLengthFeat(),
         to2tensor()
     ])
