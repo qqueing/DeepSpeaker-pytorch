@@ -197,6 +197,7 @@ class NewTDNN(nn.Module):
 
         self.kernel = nn.Linear(input_dim * context_size, output_dim)
         self.nonlinearity = nn.ReLU()
+
         if self.batch_norm:
             self.bn = nn.BatchNorm1d(output_dim)
             self.bn.weight.data.fill_(1)
@@ -310,6 +311,7 @@ class XVectorTDNN(nn.Module):
             x = self.segment8(self.drop(x))
         else:
             x = self.segment8(x)
+        # x = self.relu(x)
 
         return x
 
