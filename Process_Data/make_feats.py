@@ -17,7 +17,7 @@ import threading
 from multiprocessing import Process, Queue
 import time
 import numpy as np
-
+import Process_Data.constants as c
 from Process_Data.audio_processing import make_Fbank, conver_to_wav, Make_Spect, Make_Fbank
 from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from Process_Data.voxceleb_wav_reader import wav_list_reader
@@ -38,7 +38,7 @@ utts = [i['filename'] for i in vox1]
 # vox1_test = [datum for datum in vox1 if datum['subset'] == 'test']
 # spks = list(set([datum['speaker_id'] for datum in vox1]))
 
-data_dir = '/home/cca01/work2019/yangwenhao/mydataset/voxceleb1/spect_161'
+data_dir = 'Data/dataset/voxceleb1/fbank24'
 dataset_path = pathlib.Path(dataset_dir)
 # dev/aac/{}'
 # data_dir = pathlib.Path('/home/cca01/')
@@ -57,7 +57,7 @@ def make_feats_spks(spk_id):
     num_pro = 0.
     skip_wav = 0.
     for datum in all_wav:
-        # Data/Voxceleb1/
+        # Data/voxceleb1/
         # /data/voxceleb/voxceleb1_wav/
         # pdb.set_trace()
         filename = str(datum)
@@ -114,14 +114,15 @@ def make_with_path(path):
             print("Error load exsit npy file")
 
     if os.path.exists(wav_path):
-        np_spec = Make_Spect(wav_path=wav_path, windowsize=0.02, stride=0.01)
-        #np_fbank = Make_Fbank(filename=wav_path)
+        # np_spec = Make_Spect(wav_path=wav_path, windowsize=0.02, stride=0.01)
+        np_fbank = Make_Fbank(filename=wav_path, use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
         file_path = pathlib.Path(write_path)
         if not file_path.parent.exists():
             os.makedirs(str(file_path.parent))
 
-        np.save(write_path, np_spec)
+        # np.save(write_path, np_spec)
+        np.save(write_path, np_fbank)
 
     else:
         raise ValueError(str(wav_path) + ' doesn\'t exist.')

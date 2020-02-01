@@ -160,21 +160,22 @@ def wav_list_reader(data_path, split=False):
             valid_set = np.load(voxceleb_valid_list, allow_pickle=True)
             if not len(train_set)+len(valid_set)==len(voxceleb_dev):
                 raise ValueError('Missing utterance')
-        spks = set([datum['speaker_id'] for datum in voxceleb_dev])
-        train_set = []
-        valid_set = []
-        for spk in spks:
-            num_utt=5
-            for utt in voxceleb_dev:
-                if utt['speaker_id']==spk:
-                    if num_utt>0:
-                        valid_set.append(utt)
-                        num_utt-=1
-                    else:
-                        train_set.append(utt)
+        else:
+            spks = set([datum['speaker_id'] for datum in voxceleb_dev])
+            train_set = []
+            valid_set = []
+            for spk in spks:
+                num_utt=5
+                for utt in voxceleb_dev:
+                    if utt['speaker_id']==spk:
+                        if num_utt>0:
+                            valid_set.append(utt)
+                            num_utt-=1
+                        else:
+                            train_set.append(utt)
 
-        np.save(voxceleb_train_list, train_set)
-        np.save(voxceleb_valid_list, valid_set)
+            np.save(voxceleb_train_list, train_set)
+            np.save(voxceleb_valid_list, valid_set)
 
         return voxceleb, train_set, valid_set
 
@@ -213,14 +214,19 @@ def test_list_reader(data_path):
 def dic_dataset(train_set):
 
     dataset = {}
-    spks = set([datum['speaker_id'].decode('utf-8') for datum in train_set])
+    for vox_item in train_set:
+        for ky in vox_item:
+            if isinstance(vox_item[ky], np.bytes_):
+                vox_item[ky] = vox_item[ky].decode('utf-8')
+
+    spks = set([datum['speaker_id'] for datum in train_set])
 
     for spk in spks:
         dataset[spk] = []
 
     for utt in train_set:
-        utt_name = utt['filename'].decode('utf-8')
-        utt_spk = utt['speaker_id'].decode('utf-8')
+        utt_name = utt['filename']
+        utt_spk = utt['speaker_id']
         if utt_name not in dataset[utt_spk]:
             dataset[utt_spk].append(utt_name)
 
@@ -244,8 +250,15 @@ def wav_duration_reader(data_path, split=True):
         if len(voxceleb) != 153516:
             raise ValueError("The number of wav files may be wrong!")
 
+    for vox_item in voxceleb:
+        for ky in vox_item:
+            if isinstance(vox_item[ky], np.bytes_):
+                vox_item[ky] = vox_item[ky].decode('utf-8')
+
     try:
         voxceleb_dev = np.load(voxceleb_dev_list, allow_pickle=True)
+        if len(voxceleb_dev) == 0:
+            raise Exception('Reloading!')
     except:
         voxceleb_dev = [datum for datum in voxceleb if datum['subset'] == 'dev']
         np.save(voxceleb_dev_list, voxceleb_dev)

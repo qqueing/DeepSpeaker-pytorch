@@ -1,6 +1,9 @@
 DATASET_DIR = '../Data/dataset/'
 AUDIO_DIR = '../Data/dataset/'
 
+# The length of shortest wav
+N_SAMPLES = 800
+MINIMUIN_LENGTH = 400
 
 # Parameters for fbank features
 NUM_PREVIOUS_FRAME = 9
@@ -17,6 +20,8 @@ TRUNCATE_SOUND_FIRST_SECONDS = 0.5
 FILTER_BANK = 64
 
 TDNN_FBANK_FILTER = 23
+CMVN = 'cmvnw'
+VAD = True
 NORMALIZE = True
 
 # Paramters for Spectrogram
@@ -24,10 +29,8 @@ NUM_FFT = 512
 NUM_FRAMES_SPECT = 300
 
 # Parameters for VAD
-
 VAD_ENERGY_THRESHOLD = 5.5
 VAD_ENERGY_MEAN_SCALE = 0.5
-
 VAD_PROPORTION_THRESHOLD = 0.12
 VAD_FRAMES_CONTEXT = 2
 
