@@ -311,7 +311,8 @@ class XVectorTDNN(nn.Module):
             x = self.segment8(self.drop(x))
         else:
             x = self.segment8(x)
-        # x = self.relu(x)
+
+        x = self.relu(x)
 
         return x
 
