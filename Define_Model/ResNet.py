@@ -29,9 +29,12 @@ def conv1x1(in_planes, out_planes, stride=1):
 
 class SimpleResNet(nn.Module):
 
-    def __init__(self, layers, block=BasicBlock, num_classes=1000,
+    def __init__(self, layers, block=BasicBlock,
+                 num_classes=1000,
+                 embedding_size=128,
                  zero_init_residual=False,
-                 groups=1, width_per_group=64,
+                 groups=1,
+                 width_per_group=64,
                  replace_stride_with_dilation=None,
                  norm_layer=None):
         super(SimpleResNet, self).__init__()
@@ -39,7 +42,7 @@ class SimpleResNet(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
-
+        self.embedding_size=embedding_size
         self.inplanes = 16
         self.dilation = 1
         num_filter = [16, 32, 64, 128]
@@ -67,11 +70,11 @@ class SimpleResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc1 = nn.Linear(128 * block.expansion, num_filter[3])
+        self.fc1 = nn.Linear(128 * block.expansion, embedding_size)
         # self.norm = self.l2_norm(num_filter[3])
         self.alpha = 12
 
-        self.fc2 = nn.Linear(num_filter[3], num_classes)
+        self.fc2 = nn.Linear(embedding_size, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

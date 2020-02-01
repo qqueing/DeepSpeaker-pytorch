@@ -69,8 +69,9 @@ class TDNN(nn.Module):
         This function performs the weight multiplication given an arbitrary context. Cannot directly use convolution because in case of only particular frames of context, one needs to select only those frames and perform a convolution across all batch items and all output dimensions of the kernel.
         """
         # pdb.set_trace()
-        x = x.squeeze()
+        x = x.squeeze(1)
         input_size = x.size()
+
         assert len(input_size) == 3, 'Input tensor dimensionality is incorrect. Should be a 3D tensor'
         [batch_size, input_dim, input_sequence_length] = input_size
         #x = x.transpose(1,2).contiguous() # [batch_size, input_dim, input_length]
@@ -140,6 +141,11 @@ class Time_Delay(nn.Module):
         self.input_dim = input_dim
         self.output_dim = output_dim
 
+        for m in self.modules():  # 对于各层参数的初始化
+            if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=2)
         std_x = x.std(dim=2)
@@ -164,53 +170,145 @@ class Time_Delay(nn.Module):
         output = self.fc3(a8)
         return output
 
+# Implement of 'https://github.com/cvqluu/TDNN/blob/master/tdnn.py'
+class NewTDNN(nn.Module):
 
-# Create a TDNN layer
-# layer_context = [-2, 0, 2]
-# input = torch.ones(20, 257, 200)
-# input_n_feat = 257
-# con1 = torch.nn.Conv1d(257, 512, 3, stride=2)
+    def __init__(self, input_dim=23, output_dim=512, context_size=5, stride=1, dilation=1, batch_norm=True, dropout_p=0.0):
+        '''
+        TDNN as defined by https://www.danielpovey.com/files/2015_interspeech_multisplice.pdf
+        Affine transformation not applied globally to all frames but smaller windows with local context
+        batch_norm: True to include batch normalisation after the non linearity
 
+        Context size and dilation determine the frames selected
+        (although context size is not really defined in the traditional sense)
+        For example:
+            context size 5 and dilation 1 is equivalent to [-2,-1,0,1,2]
+            context size 3 and dilation 2 is equivalent to [-2, 0, 2]
+            context size 1 and dilation 1 is equivalent to [0]
+        '''
+        super(NewTDNN, self).__init__()
+        self.context_size = context_size
+        self.stride = stride
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.dilation = dilation
+        self.dropout_p = dropout_p
+        self.batch_norm = batch_norm
 
-# from tensorboardX import SummaryWriter
-# tdnn_layer = TDNN(context=layer_context, input_channels=input_n_feat, output_channels=512, full_context=False)
+        self.kernel = nn.Linear(input_dim * context_size, output_dim)
+        self.nonlinearity = nn.ReLU()
+        if self.batch_norm:
+            self.bn = nn.BatchNorm1d(output_dim)
+            self.bn.weight.data.fill_(1)
+            self.bn.bias.data.zero_()
+        if self.dropout_p:
+            self.drop = nn.Dropout(p=self.dropout_p)
 
+    def set_dropout(self, dropout_p):
+        self.dropout_p = dropout_p
+        self.drop = nn.Dropout(p=self.dropout_p)
 
-# with SummaryWriter(comment='TDNN') as w:
-#     model = tdnn_layer
-#     w.add_graph(model, input, verbose=True)
+    def forward(self, x):
+        '''
+        input: size (batch, seq_len, input_features)
+        outpu: size (batch, new_seq_len, output_features)
+        '''
 
+        _, _, d = x.shape
+        assert (d == self.input_dim), 'Input dimension was wrong. Expected ({}), got ({}) in ({})'.format(self.input_dim, d, str(x.shape))
+        x = x.unsqueeze(1)
 
-# Run a forward pass; batch.size = [BATCH_SIZE, INPUT_CHANNELS, SEQUENCE_LENGTH]
-# outc = con1(input)
-# out = tdnn_layer(input)
-#
-# class Net2(nn.Module):
-#     def __init__(self):
-#         super(Net2, self).__init__()
-#         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
-#         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
-#         self.conv2_drop = nn.Dropout2d()
-#         self.fc1 = nn.Linear(320, 50)
-#         self.fc2 = nn.Linear(50, 10)
-#
-#     def forward(self, x):
-#         x = F.relu(F.max_pool2d(self.conv1(x), 2))
-#         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-#         x = x.view(-1, 320)
-#         x = F.relu(self.fc1(x))
-#         x = F.dropout(x, training=self.training)
-#         x = self.fc2(x)
-#         x = F.log_softmax(x, dim=1)
-#         return x
-#
-# dummy_input = Variable(torch.rand(13, 1, 257, 32))
+        # Unfold input into smaller temporal contexts
+        x = F.unfold(
+            x,
+            (self.context_size, self.input_dim),
+            stride=(1, self.input_dim),
+            dilation=(self.dilation, 1)
+        )
 
+        # N, output_dim*context_size, new_t = x.shape
+        x = x.transpose(1, 2)
+        x = self.kernel(x)
+        x = self.nonlinearity(x)
 
-# model = ResSpeakerModel(resnet_size=34, embedding_size=512, num_classes=1211, feature_dim=64)
-#
-# model = TDNN(context=layer_context, input_channels=input_n_feat, output_channels=512, full_context=False)
-# with SummaryWriter(comment='ResDeepSpeaker') as w:
-#     w.add_graph(model, (dummy_input, ))
-#
-# print('')
+        if self.dropout_p:
+            x = self.drop(x)
+
+        if self.batch_norm:
+            x = x.transpose(1, 2)
+            x = self.bn(x)
+            x = x.transpose(1, 2)
+
+        return x
+
+class XVectorTDNN(nn.Module):
+    def __init__(self, num_spk, dropout_p=0.0):
+        super(XVectorTDNN, self).__init__()
+        self.num_spk = num_spk
+        self.dropout_p = dropout_p
+
+        self.frame1 = NewTDNN(input_dim=24, output_dim=512, context_size=5, dilation=1)
+        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3)
+        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1)
+
+        self.segment6 = nn.Linear(3000, 512)
+        self.segment7 = nn.Linear(512, 512)
+        self.segment8 = nn.Linear(512, num_spk)
+        self.drop = nn.Dropout(p=self.dropout_p)
+
+        self.batch_norm6 = nn.BatchNorm1d(512)
+        self.batch_norm7 = nn.BatchNorm1d(512)
+
+        self.relu = nn.ReLU()
+
+        for m in self.modules():  # 对于各层参数的初始化
+            if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+    def statistic_pooling(self, x):
+        mean_x = x.mean(dim=1)
+        std_x = x.std(dim=1)
+        mean_std = torch.cat((mean_x, std_x), 1)
+        return mean_std
+
+    def set_global_dropout(self, dropout_p):
+        self.dropout_p = dropout_p
+        self.drop = nn.Dropout(p=self.dropout_p)
+
+        self.frame1.set_dropout(dropout_p)
+        self.frame2.set_dropout(dropout_p)
+        self.frame3.set_dropout(dropout_p)
+        self.frame4.set_dropout(dropout_p)
+        self.frame5.set_dropout(dropout_p)
+
+    def pre_forward(self, x):
+        # pdb.set_trace()
+        x = x.squeeze(1).float()
+        x = self.frame1(x)
+        x = self.frame2(x)
+        x = self.frame3(x)
+        x = self.frame4(x)
+        x = self.frame5(x)
+
+        x = self.statistic_pooling(x)
+        x = self.segment6(x)
+        x_vectors = self.relu(self.batch_norm6(x))
+        if self.dropout_p:
+            x_vectors = self.drop(x_vectors)
+
+        return x_vectors
+
+    def forward(self, x):
+        x = self.segment7(x)
+        x = self.relu(self.batch_norm7(x))
+
+        if self.dropout_p:
+            x = self.segment8(self.drop(x))
+        else:
+            x = self.segment8(x)
+
+        return x
+
