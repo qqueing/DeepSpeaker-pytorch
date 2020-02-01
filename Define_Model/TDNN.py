@@ -261,7 +261,8 @@ class XVectorTDNN(nn.Module):
         self.batch_norm6 = nn.BatchNorm1d(512)
         self.batch_norm7 = nn.BatchNorm1d(512)
 
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU6()
+        # self.relu = nn.LeakyReLU()
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
