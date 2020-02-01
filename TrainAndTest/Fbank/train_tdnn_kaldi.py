@@ -75,7 +75,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=12, metavar='E',
+parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -190,7 +190,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[6, 10], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[10, 15], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
