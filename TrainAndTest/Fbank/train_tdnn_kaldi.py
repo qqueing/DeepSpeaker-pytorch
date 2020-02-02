@@ -68,13 +68,13 @@ parser.add_argument('--feat-dim', default=24, type=int, metavar='N',
 parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_5.pth',
+                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_10.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=32, metavar='E',
+parser.add_argument('--epochs', type=int, default=16, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -189,7 +189,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[22], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[11], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
@@ -244,6 +244,8 @@ def compute_dropout(model, epoch, end):
     elif epoch < end:
         dropout_p = final_dropout * (epoch - end*0.5) / end*0.5
 
+    print('\33\n[1;34m Current dropout is {}.'.format(dropout_p))
+
     model.set_global_dropout(dropout_p)
 
 
@@ -258,7 +260,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     for param_group in optimizer.param_groups:
-        print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
+        print('\'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     for batch_idx, (data, label) in pbar:
 
@@ -313,8 +315,8 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
                 #'criterion': criterion.state_dict()
                 str(check_path))
 
-    print('\33[91m TDNN Train Accuracy:{:.4f}%. Average loss is {:.4f}.\n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
-    writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
+    print('\33[91m TDNN Train Accuracy:{:.4f}%. Avg loss is {:.4f}.\n\33[0m'.format(100 * correct / total_datasize, total_loss/len(train_loader)))
+    writer.add_scalar('Train/Accuracy', 100. * correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
 def test(test_loader, valid_loader, model, epoch):
@@ -386,7 +388,7 @@ def test(test_loader, valid_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/EER', eer, epoch)
+    writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
     print('\33[91mFor {}_distance, Test ERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {}.\n\33[0m'.format( \
