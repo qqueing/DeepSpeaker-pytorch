@@ -262,7 +262,7 @@ class XVectorTDNN(nn.Module):
         self.batch_norm6 = nn.BatchNorm1d(512)
         self.batch_norm7 = nn.BatchNorm1d(512)
 
-        self.relu = nn.ReLU6()
+        self.relu = nn.ReLU()
         self.out_act = nn.Sigmoid()
         # self.relu = nn.LeakyReLU()
 
@@ -313,7 +313,7 @@ class XVectorTDNN(nn.Module):
         else:
             x = self.segment8(x)
 
-        x = self.out_act(x)
+        # x = self.out_act(x)
 
         return x
 
