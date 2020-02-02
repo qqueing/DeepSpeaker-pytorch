@@ -407,8 +407,12 @@ def test(test_loader, valid_loader, model, epoch):
     eer_a, eer_threshold_a, accuracy = evaluate_kaldi_eer(distances_a, labels, cos=args.cos_sim, re_thre=True)
     eer_b, eer_threshold_b, accuracy = evaluate_kaldi_eer(distances_b, labels, cos=args.cos_sim, re_thre=True)
 
-    writer.add_scalar('Test/EER', {'embedding_a': 100. * eer_a, 'embedding_b': 100. * eer_b}, epoch)
-    writer.add_scalar('Test/Threshold', {'embedding_a': eer_threshold_a, 'embedding_b': eer_threshold_b}, epoch)
+    writer.add_scalars('Test/EER',
+                       {'embedding_a': 100. * eer_a, 'embedding_b': 100. * eer_b},
+                       epoch)
+    writer.add_scalars('Test/Threshold',
+                       {'embedding_a': eer_threshold_a, 'embedding_b': eer_threshold_b},
+                       epoch)
 
     print('\33[91mFor {}_distance: \n Embeddings a: ERR: {:.8f}. Threshold: {:.8f}. \n Embeddings b: ERR: {:.8f}. Threshold: {:.8f}. \nValid Accuracy is {}.\33[0m'.format( \
         'cos' if args.cos_sim else 'l2', 100. * eer_a, eer_threshold_a, 100. * eer_b, eer_threshold_b, valid_accuracy))
