@@ -83,9 +83,9 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
 
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--input-per-spks', type=int, default=200, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -155,6 +155,11 @@ if args.mfb:
         # varLengthFeat(),
         to2tensor()
     ])
+    transform_T = transforms.Compose([
+        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file),
+        # varLengthFeat(),
+        to2tensor()
+    ])
 else:
     transform = transforms.Compose([
                         truncatedinput(),
@@ -163,7 +168,7 @@ else:
                     ])
 
 train_dir = KaldiTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
-test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform)
+test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
@@ -365,6 +370,10 @@ def test(test_loader, valid_loader, model, epoch):
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
+        current_sample = data_a.size(0)
+        data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
+        data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
+
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
@@ -372,9 +381,11 @@ def test(test_loader, valid_loader, model, epoch):
         # compute output
         out_a = model.pre_forward(data_a)
         out_p = model.pre_forward(data_p)
-
         dists = l2_dist.forward(out_a, out_p)
         dists = dists.data.cpu().numpy()
+
+        dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
+
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
 
