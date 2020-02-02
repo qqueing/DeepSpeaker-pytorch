@@ -298,22 +298,21 @@ class XVectorTDNN(nn.Module):
 
         x = self.statistic_pooling(x)
         x = self.segment6(x)
-        x_vectors = self.relu(self.batch_norm6(x))
-        if self.dropout_p:
-            x_vectors = self.drop(x_vectors)
+        embedding_a = self.relu(self.batch_norm6(x))
 
-        return x_vectors
+        if self.dropout_p:
+            embedding_a = self.drop(embedding_a)
+
+        x = self.segment7(embedding_a)
+        embedding_b = self.relu(self.batch_norm7(x))
+
+        if self.dropout_p:
+            embedding_b = self.drop(embedding_b)
+
+        return embedding_a, embedding_b
 
     def forward(self, x):
-        x = self.segment7(x)
-        x = self.relu(self.batch_norm7(x))
-
-        if self.dropout_p:
-            x = self.segment8(self.drop(x))
-        else:
-            x = self.segment8(x)
-
-        # x = self.out_act(x)
+        x = self.segment8(x)
 
         return x
 
