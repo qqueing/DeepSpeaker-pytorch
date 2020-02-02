@@ -100,7 +100,7 @@ parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--weight-decay', default=1e-4, type=float,
+parser.add_argument('--weight-decay', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
 parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
@@ -194,7 +194,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[11], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[15], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
@@ -239,15 +239,16 @@ def main():
 
 def compute_dropout(model, optimizer, epoch, end):
 
-    init_dropout = 0.1
+    init_dropout = 0
     final_dropout = 0.2
 
-    if epoch < 0.2 * end:
+    if epoch <= 0.2 * end:
         dropout_p = init_dropout
-    elif epoch < 0.5 * end:
-        dropout_p = final_dropout * (epoch - end*0.2) / end*0.3
-    elif epoch < end:
-        dropout_p = final_dropout * (epoch - end*0.5) / end*0.5
+    elif epoch <= 0.5 * end:
+        dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
+
+    elif epoch <= end:
+        dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
 
     print('\33\n[1;34m Current dropout is {}. '.format(dropout_p), end='')
     for param_group in optimizer.param_groups:
@@ -274,7 +275,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model.pre_forward(data)
+        _, feats = model.pre_forward(data)
         classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)
@@ -336,7 +337,7 @@ def test(test_loader, valid_loader, model, epoch):
         data = Variable(data.cuda())
         # compute output
         # pdb.set_trace()
-        out = model.pre_forward(data)
+        _, out = model.pre_forward(data)
         cls = model(out)
 
         predicted_labels = cls
@@ -365,7 +366,7 @@ def test(test_loader, valid_loader, model, epoch):
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
 
-    labels, distances = [], []
+    labels, distances_a, distances_b = [], [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
@@ -378,14 +379,19 @@ def test(test_loader, valid_loader, model, epoch):
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a = model.pre_forward(data_a)
-        out_p = model.pre_forward(data_p)
-        dists = l2_dist.forward(out_a, out_p)
-        dists = dists.data.cpu().numpy()
+        out_a_a, out_a_b = model.pre_forward(data_a)
+        out_p_a, out_p_b = model.pre_forward(data_p)
 
-        dists = dists.reshape(current_sample, args.test_input_per_file).mean(axis=1)
+        dists_a = l2_dist.forward(out_a_a, out_p_a)
+        dists_a = dists_a.data.cpu().numpy()
+        dists_a = dists_a.reshape(current_sample, args.test_input_per_file).mean(axis=1)
+        distances_a.append(dists_a)
 
-        distances.append(dists)
+        dists_b = l2_dist.forward(out_a_b, out_p_b)
+        dists_b = dists_b.data.cpu().numpy()
+        dists_b = dists_b.reshape(current_sample, args.test_input_per_file).mean(axis=1)
+        distances_b.append(dists_b)
+
         labels.append(label.data.cpu().numpy())
 
         if batch_idx % args.log_interval == 0:
@@ -394,15 +400,18 @@ def test(test_loader, valid_loader, model, epoch):
                 100. * batch_idx / len(test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
-    distances = np.array([subdist for dist in distances for subdist in dist])
+    distances_a = np.array([subdist for dist in distances_a for subdist in dist])
+    distances_b = np.array([subdist for dist in distances_b for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/EER', 100. * eer, epoch)
-    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
+    eer_a, eer_threshold_a, accuracy = evaluate_kaldi_eer(distances_a, labels, cos=args.cos_sim, re_thre=True)
+    eer_b, eer_threshold_b, accuracy = evaluate_kaldi_eer(distances_b, labels, cos=args.cos_sim, re_thre=True)
 
-    print('\33[91mFor {}_distance, Test ERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {}.\33[0m'.format( \
-        'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+    writer.add_scalar('Test/EER', {'embedding_a': 100. * eer_a, 'embedding_b': 100. * eer_b}, epoch)
+    writer.add_scalar('Test/Threshold', {'embedding_a': eer_threshold_a, 'embedding_b': eer_threshold_b}, epoch)
+
+    print('\33[91mFor {}_distance: \n Embeddings a: ERR: {:.8f}. Threshold: {:.8f}. \n Embeddings b: ERR: {:.8f}. Threshold: {:.8f}. \nValid Accuracy is {}.\33[0m'.format( \
+        'cos' if args.cos_sim else 'l2', 100. * eer_a, eer_threshold_a, 100. * eer_b, eer_threshold_b, valid_accuracy))
 
 
 if __name__ == '__main__':
