@@ -229,7 +229,7 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        compute_dropout(model, epoch, end)
+        compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         scheduler.step()
@@ -237,7 +237,7 @@ def main():
 
     writer.close()
 
-def compute_dropout(model, epoch, end):
+def compute_dropout(model, optimizer, epoch, end):
 
     init_dropout = 0.1
     final_dropout = 0.2
@@ -249,7 +249,9 @@ def compute_dropout(model, epoch, end):
     elif epoch < end:
         dropout_p = final_dropout * (epoch - end*0.5) / end*0.5
 
-    print('\33\n[1;34m Current dropout is {}.'.format(dropout_p))
+    print('\33\n[1;34m Current dropout is {}. '.format(dropout_p), end='')
+    for param_group in optimizer.param_groups:
+        print('\'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     model.set_global_dropout(dropout_p)
 
@@ -264,9 +266,6 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     output_softmax = nn.Softmax(dim=1)
 
     pbar = tqdm(enumerate(train_loader))
-    for param_group in optimizer.param_groups:
-        print('\'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
-
     for batch_idx, (data, label) in pbar:
 
         if args.cuda:
@@ -402,7 +401,7 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\33[91mFor {}_distance, Test ERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {}.\n\33[0m'.format( \
+    print('\33[91mFor {}_distance, Test ERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {}.\33[0m'.format( \
         'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
 
 
