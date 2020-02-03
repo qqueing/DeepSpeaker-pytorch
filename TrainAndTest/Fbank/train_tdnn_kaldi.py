@@ -65,16 +65,16 @@ parser.add_argument('--test-dir', type=str, default='/home/yangwenhao/projects/k
 
 parser.add_argument('--feat-dim', default=24, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi_drop',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_16.pth',
+                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi_drop/checkpoint_16.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=6, metavar='E',
+parser.add_argument('--epochs', type=int, default=25, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -188,7 +188,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.0)
+    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.1)
 
     if args.cuda:
         model.cuda()
@@ -229,7 +229,7 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        compute_dropout(model, optimizer, epoch, end)
+        # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         scheduler.step()
@@ -239,17 +239,17 @@ def main():
 
 def compute_dropout(model, optimizer, epoch, end):
 
-    init_dropout = 0
-    final_dropout = 0.2
+    # init_dropout = 0
+    final_dropout = 0.1
 
-    if epoch <= 0.2 * end:
-        dropout_p = init_dropout
-    elif epoch <= 0.5 * end:
-        dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
-
-    elif epoch <= end:
-        dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
-
+    # if epoch <= 0.2 * end:
+    #     dropout_p = init_dropout
+    # elif epoch <= 0.5 * end:
+    #     dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
+    #
+    # elif epoch <= end:
+    #     dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
+    dropout_p = final_dropout
     print('\33\n[1;34m Current dropout is {}. '.format(dropout_p), end='')
     for param_group in optimizer.param_groups:
         print('\'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
@@ -265,6 +265,10 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     total_datasize = 0.
     total_loss = 0.
     output_softmax = nn.Softmax(dim=1)
+
+    print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
+    for param_group in optimizer.param_groups:
+        print('\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data, label) in pbar:
@@ -414,7 +418,7 @@ def test(test_loader, valid_loader, model, epoch):
                        {'embedding_a': eer_threshold_a, 'embedding_b': eer_threshold_b},
                        epoch)
 
-    print('For {}_distance: \n \33[91mEmbeddings a: ERR: {:.8f}. Threshold: {:.8f}. \n Embeddings b: ERR: {:.8f}. Threshold: {:.8f}. \n Valid Accuracy is {}.\33[0m'.format( \
+    print('For {}_distance: \n Embeddings a: \33[91mERR: {:.8f}. Threshold: {:.8f}.\33[0m \n Embeddings b: \33[91mERR: {:.8f}. Threshold: {:.8f}. \n Valid Accuracy is {}.\33[0m'.format( \
         'cos' if args.cos_sim else 'l2', 100. * eer_a, eer_threshold_a, 100. * eer_b, eer_threshold_b, valid_accuracy))
 
 
