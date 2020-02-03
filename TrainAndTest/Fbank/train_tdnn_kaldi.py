@@ -68,13 +68,13 @@ parser.add_argument('--feat-dim', default=24, type=int, metavar='N',
 parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_10.pth',
+                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_16.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=16, metavar='E',
+parser.add_argument('--epochs', type=int, default=6, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -96,7 +96,7 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -414,7 +414,7 @@ def test(test_loader, valid_loader, model, epoch):
                        {'embedding_a': eer_threshold_a, 'embedding_b': eer_threshold_b},
                        epoch)
 
-    print('\33[91mFor {}_distance: \n Embeddings a: ERR: {:.8f}. Threshold: {:.8f}. \n Embeddings b: ERR: {:.8f}. Threshold: {:.8f}. \nValid Accuracy is {}.\33[0m'.format( \
+    print('For {}_distance: \n \33[91mEmbeddings a: ERR: {:.8f}. Threshold: {:.8f}. \n Embeddings b: ERR: {:.8f}. Threshold: {:.8f}. \n Valid Accuracy is {}.\33[0m'.format( \
         'cos' if args.cos_sim else 'l2', 100. * eer_a, eer_threshold_a, 100. * eer_b, eer_threshold_b, valid_accuracy))
 
 
