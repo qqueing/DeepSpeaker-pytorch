@@ -188,7 +188,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.1)
+    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.2)
 
     if args.cuda:
         model.cuda()
