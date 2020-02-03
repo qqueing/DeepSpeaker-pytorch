@@ -248,11 +248,11 @@ class XVectorTDNN(nn.Module):
         self.num_spk = num_spk
         self.dropout_p = dropout_p
 
-        self.frame1 = NewTDNN(input_dim=24, output_dim=512, context_size=5, dilation=1)
-        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2)
-        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3)
-        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1)
-        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1)
+        self.frame1 = NewTDNN(input_dim=24, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
+        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
+        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1, dropout_p=dropout_p)
 
         self.segment6 = nn.Linear(3000, 512)
         self.segment7 = nn.Linear(512, 512)
@@ -316,3 +316,153 @@ class XVectorTDNN(nn.Module):
 
         return x
 
+class TDNNLeaky(nn.Module):
+
+    def __init__(self, input_dim=23, output_dim=512, context_size=5, stride=1, dilation=1, batch_norm=True, dropout_p=0.0):
+        '''
+        TDNN as defined by https://www.danielpovey.com/files/2015_interspeech_multisplice.pdf
+        Affine transformation not applied globally to all frames but smaller windows with local context
+        batch_norm: True to include batch normalisation after the non linearity
+
+        Context size and dilation determine the frames selected
+        (although context size is not really defined in the traditional sense)
+        For example:
+            context size 5 and dilation 1 is equivalent to [-2,-1,0,1,2]
+            context size 3 and dilation 2 is equivalent to [-2, 0, 2]
+            context size 1 and dilation 1 is equivalent to [0]
+        '''
+        super(NewTDNN, self).__init__()
+        self.context_size = context_size
+        self.stride = stride
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.dilation = dilation
+        self.dropout_p = dropout_p
+        self.batch_norm = batch_norm
+
+        self.kernel = nn.Linear(input_dim * context_size, output_dim)
+        self.nonlinearity = nn.LeakyReLU(negative_slope=0.1)
+
+        if self.batch_norm:
+            self.bn = nn.BatchNorm1d(output_dim)
+            self.bn.weight.data.fill_(1)
+            self.bn.bias.data.zero_()
+        if self.dropout_p:
+            self.drop = nn.Dropout(p=self.dropout_p)
+
+    def set_dropout(self, dropout_p):
+        self.dropout_p = dropout_p
+        self.drop = nn.Dropout(p=self.dropout_p)
+
+    def forward(self, x):
+        '''
+        input: size (batch, seq_len, input_features)
+        outpu: size (batch, new_seq_len, output_features)
+        '''
+
+        _, _, d = x.shape
+        assert (d == self.input_dim), 'Input dimension was wrong. Expected ({}), got ({}) in ({})'.format(self.input_dim, d, str(x.shape))
+        x = x.unsqueeze(1)
+
+        # Unfold input into smaller temporal contexts
+        x = F.unfold(
+            x,
+            (self.context_size, self.input_dim),
+            stride=(1, self.input_dim),
+            dilation=(self.dilation, 1)
+        )
+
+        # N, output_dim*context_size, new_t = x.shape
+        x = x.transpose(1, 2)
+        x = self.kernel(x)
+        x = self.nonlinearity(x)
+
+        if self.dropout_p:
+            x = self.drop(x)
+
+        if self.batch_norm:
+            x = x.transpose(1, 2)
+            x = self.bn(x)
+            x = x.transpose(1, 2)
+
+        return x
+
+class ETDNN(nn.Module):
+    def __init__(self, num_spk, dropout_p=0.0):
+        super(ETDNN, self).__init__()
+        self.num_spk = num_spk
+        self.dropout_p = dropout_p
+
+        self.frame1 = NewTDNN(input_dim=24, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
+        self.affine2 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
+        self.affine4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
+        self.affine6 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame7 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=4, dropout_p=dropout_p)
+        self.frame8 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame9 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1, dropout_p=dropout_p)
+
+        self.segment10 = nn.Linear(3000, 512)
+        self.segment11 = nn.Linear(512, 512)
+        self.segment12 = nn.Linear(512, num_spk)
+        self.drop = nn.Dropout(p=self.dropout_p)
+
+        self.batch_norm10 = nn.BatchNorm1d(512)
+        self.batch_norm11 = nn.BatchNorm1d(512)
+
+        self.relu = nn.LeakyReLU(negative_slope=0.1)
+        # self.relu = nn.LeakyReLU()
+
+        for m in self.modules():  # 对于各层参数的初始化
+            if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+    def statistic_pooling(self, x):
+        mean_x = x.mean(dim=1)
+        std_x = x.std(dim=1)
+        mean_std = torch.cat((mean_x, std_x), 1)
+        return mean_std
+
+    def set_global_dropout(self, dropout_p):
+        self.dropout_p = dropout_p
+        self.drop = nn.Dropout(p=self.dropout_p)
+
+        for m in self.modules():
+            if isinstance(m, NewTDNN):
+                m.set_dropout(dropout_p)
+
+    def pre_forward(self, x):
+        # pdb.set_trace()
+        x = x.squeeze(1).float()
+
+        x = self.frame1(x)
+        x = self.affine2(x)
+        x = self.frame3(x)
+        x = self.affine4(x)
+        x = self.frame5(x)
+        x = self.affine6(x)
+        x = self.frame7(x)
+        x = self.frame8(x)
+        x = self.frame9(x)
+
+        x = self.statistic_pooling(x)
+        x = self.segment10(x)
+        embedding_a = self.relu(self.batch_norm10(x))
+
+        if self.dropout_p:
+            embedding_a = self.drop(embedding_a)
+
+        x = self.segment11(embedding_a)
+        embedding_b = self.relu(self.batch_norm11(x))
+
+        if self.dropout_p:
+            embedding_b = self.drop(embedding_b)
+
+        return embedding_a, embedding_b
+
+    def forward(self, x):
+        x = self.segment12(x)
+
+        return x
