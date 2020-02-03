@@ -188,13 +188,13 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.2)
+    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.0)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[18], gamma=0.2)
+    scheduler = MultiStepLR(optimizer, milestones=[18], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
@@ -229,7 +229,7 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        # compute_dropout(model, optimizer, epoch, end)
+        compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         scheduler.step()
@@ -239,20 +239,16 @@ def main():
 
 def compute_dropout(model, optimizer, epoch, end):
 
-    # init_dropout = 0
+    init_dropout = 0
     final_dropout = 0.1
 
-    # if epoch <= 0.2 * end:
-    #     dropout_p = init_dropout
-    # elif epoch <= 0.5 * end:
-    #     dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
-    #
-    # elif epoch <= end:
-    #     dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
-    dropout_p = final_dropout
-    print('\33\n[1;34m Current dropout is {}. '.format(dropout_p), end='')
-    for param_group in optimizer.param_groups:
-        print('\'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
+    if epoch <= 0.2 * end:
+        dropout_p = init_dropout
+    elif epoch <= 0.5 * end:
+        dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
+
+    elif epoch <= end:
+        dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
 
     model.set_global_dropout(dropout_p)
 
