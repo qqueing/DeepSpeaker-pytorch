@@ -65,10 +65,10 @@ parser.add_argument('--test-dir', type=str, default='/home/yangwenhao/projects/k
 
 parser.add_argument('--feat-dim', default=24, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi_drop',
+parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi_drop/checkpoint_16.pth',
+                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_16.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
