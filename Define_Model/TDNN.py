@@ -270,6 +270,8 @@ class XVectorTDNN(nn.Module):
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+            elif isinstance(m, NewTDNN):
+                nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
 
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=1)
@@ -388,12 +390,13 @@ class TDNNLeaky(nn.Module):
         return x
 
 class ETDNN(nn.Module):
-    def __init__(self, num_spk, dropout_p=0.0):
+    def __init__(self, num_spk, input_dim=80, dropout_p=0.0):
         super(ETDNN, self).__init__()
         self.num_spk = num_spk
+        self.input_dim = input_dim
         self.dropout_p = dropout_p
 
-        self.frame1 = NewTDNN(input_dim=24, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
+        self.frame1 = NewTDNN(input_dim=input_dim, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
         self.affine2 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
         self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
         self.affine4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
