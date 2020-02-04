@@ -74,14 +74,14 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=25, metavar='E',
+parser.add_argument('--epochs', type=int, default=22, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=96, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -242,11 +242,12 @@ def compute_dropout(model, optimizer, epoch, end):
     init_dropout = 0
     final_dropout = 0.1
 
-    if epoch <= 0.2 * end:
-        dropout_p = init_dropout
-    elif epoch <= 0.5 * end:
-        dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
-
+    # if epoch <= 0.2 * end:
+    #     dropout_p = init_dropout
+    # el
+    if epoch <= 0.5 * end:
+        dropout_p = (final_dropout - init_dropout) * 2 / end * epoch + init_dropout
+        # dropout_p = (final_dropout - init_dropout) * 10 / (end * 3) * epoch + (5*init_dropout-2*final_dropout)/3
     elif epoch <= end:
         dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
 
