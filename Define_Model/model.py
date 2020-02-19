@@ -681,5 +681,23 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
         logit = self.angle_linear(x)
         return logit, x  # 返回倒数第二层
 
+class LSTM_End(nn.Module):
+    def __init__(self, input_dim, num_class, hidden_shape=128, project_dim=64):
+        super(LSTM_End, self).__init__()
 
+        self.hidden_shape = hidden_shape
+        self.lstm_layer = nn.LSTM(input_size=input_dim,
+                                  hidden_size=hidden_shape,
+                                  num_layers=3,
+                                  batch_first=True)
 
+        self.fc1 = nn.Linear(hidden_shape, project_dim)
+        self.fc2 = nn.Linear(project_dim, num_class)
+
+    def forward(self, input):
+        rnn_out, (_,_) = self.lstm_layer(input)
+
+        spk_vec = self.fc1(rnn_out[:, -1, :])
+        logits = self.fc2(spk_vec)
+
+        return spk_vec, logits
