@@ -190,7 +190,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = LSTM_End(input_dim=args.feat_dim, num_class=len(train_dir.num_spks))
+    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks)
 
     if args.cuda:
         model.cuda()
