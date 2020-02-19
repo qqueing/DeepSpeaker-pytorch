@@ -695,6 +695,7 @@ class LSTM_End(nn.Module):
         self.fc2 = nn.Linear(project_dim, num_class)
 
     def forward(self, input):
+        x = torch.squeeze(input)
         rnn_out, (_,_) = self.lstm_layer(input)
 
         spk_vec = self.fc1(rnn_out[:, -1, :])
