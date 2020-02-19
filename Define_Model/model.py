@@ -696,7 +696,7 @@ class LSTM_End(nn.Module):
 
     def forward(self, input):
         # pdb.set_trace()
-        x = torch.squeeze(input)
+        x = torch.squeeze(input)[:,:,1:]
         rnn_out, (_,_) = self.lstm_layer(x)
 
         spk_vec = self.fc1(rnn_out[:, -1, :])
