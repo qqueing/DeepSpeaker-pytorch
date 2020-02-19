@@ -695,9 +695,9 @@ class LSTM_End(nn.Module):
         self.fc2 = nn.Linear(project_dim, num_class)
 
     def forward(self, input):
-        pdb.set_trace()
+        # pdb.set_trace()
         x = torch.squeeze(input)
-        rnn_out, (_,_) = self.lstm_layer(input)
+        rnn_out, (_,_) = self.lstm_layer(x)
 
         spk_vec = self.fc1(rnn_out[:, -1, :])
         logits = self.fc2(spk_vec)
