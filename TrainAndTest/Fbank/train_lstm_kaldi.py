@@ -248,7 +248,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     total_loss = 0.
     output_softmax = nn.Softmax(dim=1)
 
-    print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
+    # print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
     for param_group in optimizer.param_groups:
         print('\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
