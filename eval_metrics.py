@@ -6,7 +6,6 @@ For cosine distance: when the distance is greater than the theshold, it's true.
 import pdb
 
 import numpy as np
-from sklearn.model_selection import KFold
 from scipy import interpolate
 
 def evaluate(distances, labels):
