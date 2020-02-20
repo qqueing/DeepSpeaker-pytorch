@@ -250,7 +250,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
     # print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
     for param_group in optimizer.param_groups:
-        print('\33\[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
+        print('\33\n[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data, label) in pbar:
