@@ -695,7 +695,7 @@ class LSTM_End(nn.Module):
         self.fc2 = nn.Linear(project_dim, num_class)
 
     def forward(self, input):
-        pdb.set_trace()
+
         x = torch.squeeze(input)[:,:,1:]
         rnn_out, (_,_) = self.lstm_layer(x)
 
