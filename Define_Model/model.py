@@ -691,8 +691,12 @@ class LSTM_End(nn.Module):
                                   num_layers=3,
                                   batch_first=True)
 
+        self.relu = ReLU(inplace=True)
         self.fc1 = nn.Linear(hidden_shape, project_dim)
+        self.bn1 = nn.BatchNorm1d(project_dim)
+
         self.fc2 = nn.Linear(project_dim, num_class)
+
 
     def forward(self, input):
 
@@ -700,6 +704,7 @@ class LSTM_End(nn.Module):
         rnn_out, (_,_) = self.lstm_layer(x)
 
         spk_vec = self.fc1(rnn_out[:, -1, :])
+        spk_vec = self.relu(self.bn1(spk_vec))
         logits = self.fc2(spk_vec)
 
         return spk_vec, logits
