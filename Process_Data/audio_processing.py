@@ -406,7 +406,7 @@ class varLengthFeat(object):
 
         if network_inputs.shape[1]==0:
             pdb.set_trace()
-        elif network_inputs.shape>self.max_chunk_size:
+        elif network_inputs.shape[1]>self.max_chunk_size:
             network_inputs = network_inputs[:, :self.max_chunk_size]
 
         return network_inputs
