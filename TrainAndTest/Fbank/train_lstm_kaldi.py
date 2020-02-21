@@ -230,7 +230,7 @@ def main():
                                                collate_fn=RNNPadCollate(dim=1),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2),
-                                               collate_fn=PadCollate(dim=1),
+                                               collate_fn=RNNPadCollate(dim=1),
                                                shuffle=False, **kwargs)
     # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
@@ -267,7 +267,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats, classfier = model(data)
+        feats, classfier = model(data, length)
         # classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)

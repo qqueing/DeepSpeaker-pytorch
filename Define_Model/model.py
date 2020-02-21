@@ -700,11 +700,13 @@ class LSTM_End(nn.Module):
         self.fc2 = nn.Linear(project_dim, num_class)
 
 
-    def forward(self, input):
+    def forward(self, input, length):
 
-        x = torch.squeeze(input)[:,:,1:].float()
+        x = input.float()
         rnn_out, (_,_) = self.lstm_layer(x, (self.h0, self.c0))
 
+        pdb.set_trace()
+        # rnn_last =
         spk_vec = self.fc1(rnn_out[:, -1, :])
         spk_vec = self.relu(self.bn1(spk_vec))
         logits = self.fc2(spk_vec)

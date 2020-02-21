@@ -488,23 +488,18 @@ class RNNPadCollate:
             xs - a tensor of all examples in 'batch' after padding
             ys - a LongTensor of all labels in batch
         """
-        pdb.set_trace()
+        # pdb.set_trace()
         # pad according to max_len
-        data = batch[0, :]
-        labels = batch[1, :]
+        data = [x[0][0] for x in batch]
         data.sort(key=lambda x: len(x), reverse=True)
+        labels = [x[1] for x in batch]
+
         data_length = [len(sq) for sq in data]
-        data = rnn_utils.pad_sequence(data, batch_first=True, padding_value=0)
+        p_data = rnn_utils.pad_sequence(data, batch_first=True, padding_value=0)
+        batch_x_pack = rnn_utils.pack_padded_sequence(p_data, data_length, batch_first=True)
 
-        return data.unsqueeze(-1), labels, data_length
+        return batch_x_pack, labels, data_length
 
-        # map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
-        # pad_batch = list(map_batch)
-        # stack all
-        # xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
-        # ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
-
-        # return xs, ys
 
     def __call__(self, batch):
         return self.pad_collate(batch)
