@@ -288,7 +288,16 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
         # compute gradient and update weights
         optimizer.zero_grad()
-        loss.backward()
+        try:
+            loss.backward()
+        except RuntimeError as exception:
+            if "out of memory" in str(exception):
+                print("WARNING: out of memory")
+                if hasattr(torch.cuda, 'empty_cache'):
+                    torch.cuda.empty_cache()
+            else:
+                pdb.set_trace()
+
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
