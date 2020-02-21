@@ -33,10 +33,10 @@ from tqdm import tqdm
 from Define_Model.TDNN import XVectorTDNN
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.kaldi_file_io import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.kaldi_file_io import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset
 from Define_Model.model import PairwiseDistance, LSTM_End
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
+    mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor, RNNPadCollate
 import warnings
 warnings.filterwarnings("ignore")
 # Version conflict
@@ -153,8 +153,8 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        concateinputfromMFB(num_frames=80),
-        # varLengthFeat(),
+        # concateinputfromMFB(num_frames=80),
+        varLengthFeat(),
         to2tensor()
     ])
     transform_T = transforms.Compose([
@@ -169,7 +169,7 @@ else:
                         totensor(),
                     ])
 
-train_dir = KaldiTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
+train_dir = TrainDataset(dir=args.train_dir, transform=transform)
 # test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 # indices = list(range(len(test_dir)))
@@ -190,7 +190,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks)
+    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size)
 
     if args.cuda:
         model.cuda()
@@ -220,11 +220,17 @@ def main():
     end = start + args.epochs
     
     # pdb.set_trace()
+    # def collate_fn(data):
+    #     data.sort(key=lambda x: len(x), reverse=True)
+    #     data_length = [len(sq) for sq in data]
+    #     data = rnn_utils.pad_sequence(data, batch_first=True, padding_value=0)
+    #     return data.unsqueeze(-1), data_length
+
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
-                                               # collate_fn=PadCollate(dim=1),
+                                               collate_fn=RNNPadCollate(dim=1),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2),
-                                               # collate_fn=PadCollate(dim=1),
+                                               collate_fn=PadCollate(dim=1),
                                                shuffle=False, **kwargs)
     # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
@@ -253,7 +259,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         print('\33\n[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
-    for batch_idx, (data, label) in pbar:
+    for batch_idx, (data, label, length) in pbar:
 
         if args.cuda:
             data = data.cuda()

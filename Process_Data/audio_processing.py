@@ -16,6 +16,8 @@ import os
 import pathlib
 import math
 import pdb
+import torch.nn.utils.rnn as rnn_utils
+
 
 from Process_Data.compute_vad import ComputeVadEnergy
 
@@ -462,6 +464,47 @@ class PadCollate:
         ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
 
         return xs, ys
+
+    def __call__(self, batch):
+        return self.pad_collate(batch)
+
+class RNNPadCollate:
+    """
+    a variant of callate_fn that pads according to the longest sequence in
+    a batch of sequences
+    """
+    def __init__(self, dim=0):
+        """
+        args:
+            dim - the dimension to be padded (dimension of time in sequences)
+        """
+        self.dim = dim
+
+    def pad_collate(self, batch):
+        """
+        args:
+            batch - list of (tensor, label)
+        reutrn:
+            xs - a tensor of all examples in 'batch' after padding
+            ys - a LongTensor of all labels in batch
+        """
+        pdb.set_trace()
+        # pad according to max_len
+        data = batch[0, :]
+        labels = batch[1, :]
+        data.sort(key=lambda x: len(x), reverse=True)
+        data_length = [len(sq) for sq in data]
+        data = rnn_utils.pad_sequence(data, batch_first=True, padding_value=0)
+
+        return data.unsqueeze(-1), labels, data_length
+
+        # map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
+        # pad_batch = list(map_batch)
+        # stack all
+        # xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+        # ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
+
+        # return xs, ys
 
     def __call__(self, batch):
         return self.pad_collate(batch)
