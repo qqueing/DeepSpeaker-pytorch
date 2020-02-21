@@ -59,10 +59,10 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 
 # options for vox1
 parser.add_argument('--train-dir', type=str,
-                    default='/home/hdd2020/yangwenhao/project/lstm_speaker_verification/data/CN-Celeb/dev',
+                    default='/home/hdd2020/yangwenhao/project/lstm_speaker_verification/data/CN-Celeb/dev_no_sli',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/hdd2020/yangwenhao/project/lstm_speaker_verification/data/CN-Celeb/test',
+                    default='/home/hdd2020/yangwenhao/project/lstm_speaker_verification/data/CN-Celeb/test_no_sli',
                     help='path to test dataset')
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
