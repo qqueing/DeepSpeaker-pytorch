@@ -492,7 +492,7 @@ class RNNPadCollate:
         # pad according to max_len
         data = [x[0][0] for x in batch]
         data.sort(key=lambda x: len(x), reverse=True)
-        labels = [x[1] for x in batch]
+        labels = torch.LongTensor([x[1] for x in batch])
 
         data_length = [len(sq) for sq in data]
         p_data = rnn_utils.pad_sequence(data, batch_first=True, padding_value=0)
