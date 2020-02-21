@@ -488,7 +488,7 @@ class RNNPadCollate:
             xs - a tensor of all examples in 'batch' after padding
             ys - a LongTensor of all labels in batch
         """
-        # pdb.set_trace()
+        pdb.set_trace()
         # pad according to max_len
         data = [x[0][0] for x in batch]
         data = [x[:][:40] for x in data]
