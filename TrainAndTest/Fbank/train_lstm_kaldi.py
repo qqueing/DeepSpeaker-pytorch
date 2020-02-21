@@ -76,7 +76,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=22, metavar='E',
+parser.add_argument('--epochs', type=int, default=10000, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -98,7 +98,7 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0.01, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -172,11 +172,6 @@ else:
 train_dir = TrainDataset(dir=args.train_dir, transform=transform)
 # test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
-# indices = list(range(len(test_dir)))
-# random.shuffle(indices)
-# indices = indices[:4800]
-# test_part = torch.utils.data.Subset(test_dir, indices)
-
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                               transform=transform)
@@ -196,9 +191,8 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[16], gamma=0.1)
-    # criterion = AngularSoftmax(in_feats=args.embedding_size,
-    #                           num_classes=len(train_dir.classes))
+    # scheduler = MultiStepLR(optimizer, milestones=[1000], gamma=0.1)
+
     start = 0
     # optionally resume from a checkpoint
     if args.resume:
@@ -218,34 +212,23 @@ def main():
     start += args.start_epoch
     print('Start epoch is : ' + str(start))
     end = start + args.epochs
-    
-    # pdb.set_trace()
-    # def collate_fn(data):
-    #     data.sort(key=lambda x: len(x), reverse=True)
-    #     data_length = [len(sq) for sq in data]
-    #     data = rnn_utils.pad_sequence(data, batch_first=True, padding_value=0)
-    #     return data.unsqueeze(-1), data_length
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
-                                               collate_fn=RNNPadCollate(dim=1),
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
                                                shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2),
-                                               collate_fn=RNNPadCollate(dim=1),
-                                               shuffle=False, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2), collate_fn=RNNPadCollate(dim=1), shuffle=False, **kwargs)
     # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
 
     for epoch in range(start, end):
         # pdb.set_trace()
         # compute_dropout(model, optimizer, epoch, end)
-        train(train_loader, model, optimizer, criterion, scheduler, epoch)
+        train(train_loader, model, optimizer, criterion, epoch)
         # test(test_loader, valid_loader, model, epoch)
-        scheduler.step()
+        # scheduler.step()
         # break
-
     writer.close()
 
-def train(train_loader, model, optimizer, criterion, scheduler, epoch):
+def train(train_loader, model, optimizer, criterion, epoch):
     # switch to evaluate mode
     model.train()
 
@@ -318,8 +301,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
     torch.save({'epoch': epoch,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict()},
+                'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
                 str(check_path))
 
