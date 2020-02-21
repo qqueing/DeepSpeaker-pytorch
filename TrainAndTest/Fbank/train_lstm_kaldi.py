@@ -83,7 +83,7 @@ parser.add_argument('--epochs', type=int, default=22, metavar='E',
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=30, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=80, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -267,10 +267,9 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         # data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        try:
-            feats, classfier = model(data, length)
-        except:
-            pdb.set_trace()
+        if len(length)!=args.batch_size:
+            break
+        feats, classfier = model(data, length)
         # classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)
