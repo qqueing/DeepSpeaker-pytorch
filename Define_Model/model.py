@@ -702,8 +702,8 @@ class LSTM_End(nn.Module):
 
     def forward(self, input, length):
         pdb.set_trace()
-        x = input[:,:,:40].float()
-        rnn_out, (_,_) = self.lstm_layer(x, (self.h0, self.c0))
+
+        rnn_out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
 
 
         # rnn_last =
