@@ -702,10 +702,14 @@ class LSTM_End(nn.Module):
 
     def forward(self, input, length):
 
+
         pdb.set_trace()
         out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
         out_pad, out_len = rnn_utils.pad_packed_sequence(out, batch_first=True)
-        rnn_out = out_pad.index_select(dim=2, index=out_len-1)
+
+        if out_pad.is_cuda:
+            out_len = (out_len-1).cuda()
+        rnn_out = out_pad.index_select(dim=1, index=out_len)
 
         # rnn_last =
         spk_vec = self.fc1(rnn_out)
