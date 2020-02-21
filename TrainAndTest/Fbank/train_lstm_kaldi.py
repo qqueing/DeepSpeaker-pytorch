@@ -98,7 +98,7 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0.01, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -256,7 +256,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
     # print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
     for param_group in optimizer.param_groups:
-        print('\33\n[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
+        print('\33[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data, label, length) in pbar:
