@@ -264,7 +264,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         if args.cuda:
             data = data.cuda()
             label = label.cuda()
-        data, label = Variable(data), Variable(label)
+        # data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
         feats, classfier = model(data, length)
