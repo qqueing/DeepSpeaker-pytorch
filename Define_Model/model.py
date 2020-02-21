@@ -16,7 +16,7 @@ import math
 from torch.autograd import Function
 from torch.nn import CosineSimilarity
 from torch.autograd import Variable
-import torch.nn.functional as F
+import torch.nn.utils.rnn as rnn_utils
 import pdb
 
 from Define_Model.SoftmaxLoss import AngleLinear
@@ -690,8 +690,8 @@ class LSTM_End(nn.Module):
                                   hidden_size=hidden_shape,
                                   num_layers=3,
                                   batch_first=True)
-        self.h0 = torch.rand(3, batch_size, hidden_shape)
-        self.c0 = torch.rand(3, batch_size, hidden_shape)
+        self.h0 = torch.rand(3, batch_size, hidden_shape).cuda()
+        self.c0 = torch.rand(3, batch_size, hidden_shape).cuda()
 
         self.relu = ReLU(inplace=True)
         self.fc1 = nn.Linear(hidden_shape, project_dim)
@@ -701,13 +701,14 @@ class LSTM_End(nn.Module):
 
 
     def forward(self, input, length):
+
         pdb.set_trace()
-
-        rnn_out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
-
+        out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
+        out_pad, out_len = rnn_utils.pad_packed_sequence(out, batch_first=True)
+        rnn_out = out_pad.index_select(dim=2, index=out_len-1)
 
         # rnn_last =
-        spk_vec = self.fc1(rnn_out[:, -1, :])
+        spk_vec = self.fc1(rnn_out)
         spk_vec = self.relu(self.bn1(spk_vec))
         logits = self.fc2(spk_vec)
 
