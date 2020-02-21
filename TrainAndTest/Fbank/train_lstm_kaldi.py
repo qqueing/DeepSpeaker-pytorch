@@ -267,7 +267,10 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         # data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats, classfier = model(data, length)
+        try:
+            feats, classfier = model(data, length)
+        except:
+            pdb.set_trace()
         # classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)
