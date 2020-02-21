@@ -340,9 +340,6 @@ class TrainDataset(data.Dataset):
                     utt2spk_dict[uid] = utt_spk[-1]
         # pdb.set_trace()
 
-        utt_lst = list(utt2spk_dict.keys())
-        random.shuffle(utt_lst)
-
         speakers = [spk for spk in dataset.keys()]
         speakers.sort()
         print('==>There are {} speakers in Dataset.'.format(len(speakers)))
@@ -373,6 +370,11 @@ class TrainDataset(data.Dataset):
                     valid_utt2spk_dict[utt] = utt2spk_dict[utt]
 
         print('==>Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
+        utt_lst = []
+        for uid in list(utt2spk_dict.keys()):
+            if uid not in valid_uid2feat.keys():
+                utt_lst.append(uid)
+        random.shuffle(utt_lst)
 
         self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
         self.speakers = speakers
