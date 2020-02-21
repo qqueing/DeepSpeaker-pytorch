@@ -701,11 +701,11 @@ class LSTM_End(nn.Module):
 
 
     def forward(self, input, length):
-
-        x = input.float()
+        pdb.set_trace()
+        x = input[:,:,:40].float()
         rnn_out, (_,_) = self.lstm_layer(x, (self.h0, self.c0))
 
-        pdb.set_trace()
+
         # rnn_last =
         spk_vec = self.fc1(rnn_out[:, -1, :])
         spk_vec = self.relu(self.bn1(spk_vec))
