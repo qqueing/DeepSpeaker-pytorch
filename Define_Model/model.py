@@ -682,16 +682,17 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
         return logit, x  # 返回倒数第二层
 
 class LSTM_End(nn.Module):
-    def __init__(self, input_dim, num_class, batch_size, hidden_shape=128, project_dim=64):
+    def __init__(self, input_dim, num_class, batch_size, hidden_shape=128, project_dim=64, num_lstm=2):
         super(LSTM_End, self).__init__()
 
+        self.num_lstm = num_lstm
         self.hidden_shape = hidden_shape
         self.lstm_layer = nn.LSTM(input_size=input_dim,
                                   hidden_size=hidden_shape,
-                                  num_layers=2,
+                                  num_layers=self.num_lstm,
                                   batch_first=True)
-        self.h0 = torch.rand(3, batch_size, hidden_shape).cuda()
-        self.c0 = torch.rand(3, batch_size, hidden_shape).cuda()
+        self.h0 = torch.rand(self.num_lstm, batch_size, hidden_shape).cuda()
+        self.c0 = torch.rand(self.num_lstm, batch_size, hidden_shape).cuda()
 
         self.relu = ReLU(inplace=True)
         self.fc1 = nn.Linear(hidden_shape, project_dim)
