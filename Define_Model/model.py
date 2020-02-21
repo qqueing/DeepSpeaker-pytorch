@@ -705,12 +705,13 @@ class LSTM_End(nn.Module):
         out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
         out_pad, out_len = rnn_utils.pad_packed_sequence(out, batch_first=True)
 
+
         out_pad_shape = out_pad.shape
         out_pad_idx = torch.ones(out_pad_shape[0], 1, out_pad_shape[2])
 
         if out_pad.is_cuda:
-            out_len = (out_len-1).cuda()
-            out_pad_idx = out_pad_idx.cuda()
+            out_len = (out_len-1)
+            out_pad_idx = out_pad_idx.cpu()
 
         for n in range(len(out_pad)):
             out_pad_idx[n][0] = out_pad_idx[n][0] * out_len[n]
@@ -719,7 +720,7 @@ class LSTM_End(nn.Module):
         rnn_out = out_pad.gather(dim=1, index=out_pad_idx.long()).squeeze()
 
         # rnn_last =
-        spk_vec = self.fc1(rnn_out)
+        spk_vec = self.fc1(rnn_out.cuda())
         spk_vec = self.relu(self.bn1(spk_vec))
         logits = self.fc2(spk_vec)
 
