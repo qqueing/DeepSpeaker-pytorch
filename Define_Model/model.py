@@ -688,7 +688,7 @@ class LSTM_End(nn.Module):
         self.hidden_shape = hidden_shape
         self.lstm_layer = nn.LSTM(input_size=input_dim,
                                   hidden_size=hidden_shape,
-                                  num_layers=3,
+                                  num_layers=2,
                                   batch_first=True)
         self.h0 = torch.rand(3, batch_size, hidden_shape).cuda()
         self.c0 = torch.rand(3, batch_size, hidden_shape).cuda()
@@ -704,7 +704,6 @@ class LSTM_End(nn.Module):
 
         out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
         out_pad, out_len = rnn_utils.pad_packed_sequence(out, batch_first=True)
-
 
         out_pad_shape = out_pad.shape
         out_pad_idx = torch.ones(out_pad_shape[0], 1, out_pad_shape[2])
