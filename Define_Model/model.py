@@ -716,7 +716,7 @@ class LSTM_End(nn.Module):
             out_pad_idx[n][0] = out_pad_idx[n][0] * out_len[n]
 
         # pdb.set_trace()
-        rnn_out = out_pad.gather(dim=1, index=out_pad_idx.long())
+        rnn_out = out_pad.gather(dim=1, index=out_pad_idx.long()).squeeze()
 
         # rnn_last =
         spk_vec = self.fc1(rnn_out)
