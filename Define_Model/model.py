@@ -703,7 +703,7 @@ class LSTM_End(nn.Module):
     def forward(self, input, length):
 
 
-    # pdb.set_trace()
+    #
         out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
         out_pad, out_len = rnn_utils.pad_packed_sequence(out, batch_first=True)
 
@@ -717,6 +717,7 @@ class LSTM_End(nn.Module):
         for n in range(len(out_pad)):
             out_pad_idx[n][0] = out_pad_idx[n][0] * out_len[n]
 
+        pdb.set_trace()
         rnn_out = out_pad.index_select(dim=1, index=out_pad_idx.long())
 
         # rnn_last =
