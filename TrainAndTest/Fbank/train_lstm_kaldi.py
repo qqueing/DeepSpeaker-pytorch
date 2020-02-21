@@ -83,7 +83,7 @@ parser.add_argument('--epochs', type=int, default=22, metavar='E',
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=50, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=30, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -142,7 +142,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='lstm')
 
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
