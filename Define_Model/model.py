@@ -712,6 +712,7 @@ class LSTM_End(nn.Module):
         if out_pad.is_cuda:
             out_len = (out_len-1)
             out_pad_idx = out_pad_idx.cpu()
+            out_pad = out_pad.cpu()
 
         for n in range(len(out_pad)):
             out_pad_idx[n][0] = out_pad_idx[n][0] * out_len[n]
