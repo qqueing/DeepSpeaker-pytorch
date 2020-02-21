@@ -491,6 +491,7 @@ class RNNPadCollate:
         # pdb.set_trace()
         # pad according to max_len
         data = [x[0][0] for x in batch]
+        data = [x[:][:40] for x in data]
         data.sort(key=lambda x: len(x), reverse=True)
         labels = torch.LongTensor([x[1] for x in batch])
 
