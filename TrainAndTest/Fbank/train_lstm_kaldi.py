@@ -268,7 +268,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
         # pdb.set_trace()
         if len(length)!=args.batch_size:
-            break
+            continue
         feats, classfier = model(data, length)
         # classfier = model(feats)
 
