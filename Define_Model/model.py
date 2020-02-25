@@ -724,3 +724,18 @@ class LSTM_End(nn.Module):
 
         return spk_vec, logits
 
+    def tuple_forward(self, input):
+        """
+        :param input: should be features with fixed length
+        :return:
+        """
+
+        out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
+        rnn_out = out[:,:,-1]
+        # rnn_last =
+        spk_vec = self.fc1(rnn_out.cuda())
+        spk_vec = self.relu(self.bn1(spk_vec))
+        logits = self.fc2(spk_vec)
+
+        return spk_vec, logits
+

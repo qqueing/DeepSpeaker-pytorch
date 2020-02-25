@@ -540,6 +540,8 @@ class KaldiTupleDataset(data.Dataset):
         feat_uids = [self.uid2feat[uid] for uid in uids]
         features = self.transform(feat_uids)
 
+        # features:   eval_utt,    utt1,  ...  ,    utt5
+        # labels:0/1, spk_idx1,spk_idx2,  ...  ,spk_idx2
         return features, labels
 
     def __len__(self):

@@ -161,7 +161,7 @@ if args.mfb:
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=80, input_per_file=args.test_input_per_file),
+        concateinputfromMFB(num_frames=300, input_per_file=args.test_input_per_file),
         # varLengthFeat(),
         to2tensor()
     ])
@@ -174,6 +174,11 @@ else:
 
 train_dir = TrainDataset(dir=args.train_dir, transform=transform)
 test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
+
+indices = list(range(len(test_dir)))
+random.shuffle(indices)
+indices = indices[:4800]
+test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -220,16 +225,15 @@ def main():
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
                                                shuffle=False, **kwargs)
-    # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
     # criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
 
     for epoch in range(start, end):
-        # pdb.set_trace()
         # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, epoch)
         valid(valid_loader, model, epoch)
-        # test(test_loader, valid_loader, model, epoch)
+        test(test_loader, model, epoch)
         scheduler.step()
         # break
     writer.close()
@@ -353,77 +357,32 @@ def valid(valid_loader, model, epoch):
 
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
-
     print('Valid Accuracy is {:.4f}%.'.format(valid_accuracy))
 
-
-def test(test_loader, valid_loader, model, epoch):
+def test(test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
-    valid_pbar = tqdm(enumerate(valid_loader))
-    softmax = nn.Softmax(dim=1)
-
-    correct = 0.
-    total_datasize = 0.
-    for batch_idx, (data, label) in valid_pbar:
-        data = Variable(data.cuda())
-        # compute output
-        # pdb.set_trace()
-        _, out = model.pre_forward(data)
-        cls = model(out)
-
-        predicted_labels = cls
-        true_labels = Variable(label.cuda())
-
-        # pdb.set_trace()
-        predicted_one_labels = softmax(predicted_labels)
-        predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
-
-        batch_correct = (predicted_one_labels.cuda() == true_labels.cuda()).sum().item()
-        minibatch_acc = float(batch_correct / len(predicted_one_labels))
-        correct += batch_correct
-        total_datasize += len(predicted_one_labels)
-
-
-        if batch_idx % args.log_interval == 0:
-            valid_pbar.set_description(
-                'Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(valid_loader.dataset),
-                    100. * batch_idx / len(valid_loader),
-                    100. * minibatch_acc
-                ))
-
-    valid_accuracy = 100. * correct / total_datasize
-    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
-
-    labels, distances_a, distances_b = [], [], []
+    labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
         current_sample = data_a.size(0)
-        data_a = data_a.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
-        data_p = data_p.resize_(args.test_input_per_file * current_sample, 1, data_a.size(2), data_a.size(3))
+        data_a = data_a.resize_(args.test_input_per_file * current_sample, data_a.size(2), data_a.size(3))
+        data_p = data_p.resize_(args.test_input_per_file * current_sample, data_a.size(2), data_a.size(3))
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a_a, out_a_b = model.pre_forward(data_a)
-        out_p_a, out_p_b = model.pre_forward(data_p)
+        out_a, _ = model.tuple_forward(data_a)
+        out_p, _ = model.tuple_forward(data_p)
 
-        dists_a = l2_dist.forward(out_a_a, out_p_a)
+        dists_a = l2_dist.forward(out_a, out_p)
         dists_a = dists_a.data.cpu().numpy()
         dists_a = dists_a.reshape(current_sample, args.test_input_per_file).mean(axis=1)
-        distances_a.append(dists_a)
-
-        dists_b = l2_dist.forward(out_a_b, out_p_b)
-        dists_b = dists_b.data.cpu().numpy()
-        dists_b = dists_b.reshape(current_sample, args.test_input_per_file).mean(axis=1)
-        distances_b.append(dists_b)
+        distances.append(dists_a)
 
         labels.append(label.data.cpu().numpy())
 
@@ -433,22 +392,15 @@ def test(test_loader, valid_loader, model, epoch):
                 100. * batch_idx / len(test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
-    distances_a = np.array([subdist for dist in distances_a for subdist in dist])
-    distances_b = np.array([subdist for dist in distances_b for subdist in dist])
+    distances = np.array([subdist for dist in distances for subdist in dist])
 
     # err, accuracy= evaluate_eer(distances,labels)
-    eer_a, eer_threshold_a, accuracy = evaluate_kaldi_eer(distances_a, labels, cos=args.cos_sim, re_thre=True)
-    eer_b, eer_threshold_b, accuracy = evaluate_kaldi_eer(distances_b, labels, cos=args.cos_sim, re_thre=True)
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
 
-    writer.add_scalars('Test/EER',
-                       {'embedding_a': 100. * eer_a, 'embedding_b': 100. * eer_b},
-                       epoch)
-    writer.add_scalars('Test/Threshold',
-                       {'embedding_a': eer_threshold_a, 'embedding_b': eer_threshold_b},
-                       epoch)
+    writer.add_scalars('Test/EER', 100. * eer, epoch)
 
-    print('For {}_distance: \n Embeddings a: \33[91mERR: {:.8f}. Threshold: {:.8f}.\33[0m \n Embeddings b: \33[91mERR: {:.8f}. Threshold: {:.8f}. \n Valid Accuracy is {}.\33[0m'.format( \
-        'cos' if args.cos_sim else 'l2', 100. * eer_a, eer_threshold_a, 100. * eer_b, eer_threshold_b, valid_accuracy))
+    print('For {}_distance: \n \33[91mERR: {:.8f}. Threshold: {:.8f}.\33[0m'.format('cos' if args.cos_sim else 'l2',
+                                                                                    100. * eer, eer_threshold))
 
 
 if __name__ == '__main__':

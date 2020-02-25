@@ -35,7 +35,8 @@ from tqdm import tqdm
 from Define_Model.TDNN import XVectorTDNN
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset, \
+    KaldiTupleDataset
 from Define_Model.model import PairwiseDistance, LSTM_End
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
     mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor, RNNPadCollate
@@ -69,7 +70,7 @@ parser.add_argument('--test-dir', type=str,
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/LSTM/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/LSTM/tuple/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     default='Data/checkpoint/LSTM/tuple/kaldi/checkpoint_16.pth',
@@ -143,7 +144,7 @@ if args.cuda:
     cudnn.benchmark = True
 
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(args.check_path, filename_suffix='lstm')
+writer = SummaryWriter(args.check_path, filename_suffix='lstm-tuple')
 
 kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
@@ -156,12 +157,12 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        # concateinputfromMFB(num_frames=80),
-        varLengthFeat(max_chunk_size=300),
+        concateinputfromMFB(num_frames=300),
+        # varLengthFeat(max_chunk_size=300),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=80, input_per_file=args.test_input_per_file),
+        concateinputfromMFB(num_frames=300, input_per_file=args.test_input_per_file),
         # varLengthFeat(),
         to2tensor()
     ])
@@ -172,8 +173,13 @@ else:
                         totensor(),
                     ])
 
-train_dir = TrainDataset(dir=args.train_dir, transform=transform)
+train_dir = KaldiTupleDataset(dir=args.train_dir, transform=transform, samples_per_spk=args.input_per_spks)
 test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
+
+indices = list(range(len(test_dir)))
+random.shuffle(indices)
+indices = indices[:4800]
+test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -188,7 +194,8 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size, num_lstm=args.num_lstm)
+    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size,
+                     num_lstm=args.num_lstm)
 
     if args.cuda:
         model.cuda()
@@ -220,7 +227,7 @@ def main():
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
                                                shuffle=False, **kwargs)
-    # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
     # criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
 
