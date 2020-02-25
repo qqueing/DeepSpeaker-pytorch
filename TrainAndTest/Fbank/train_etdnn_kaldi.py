@@ -30,7 +30,7 @@ import numpy as np
 from torch.optim.lr_scheduler import StepLR, MultiStepLR
 from tqdm import tqdm
 
-from Define_Model.TDNN import XVectorTDNN
+from Define_Model.TDNN import XVectorTDNN, ETDNN
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 from Process_Data.kaldi_file_io import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
@@ -188,7 +188,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.2)
+    model = ETDNN(len(train_dir.speakers), dropout_p=0.2)
 
     if args.cuda:
         model.cuda()

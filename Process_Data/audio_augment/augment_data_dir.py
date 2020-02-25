@@ -23,6 +23,7 @@ from __future__ import print_function
 
 import pathlib
 import pdb
+import sys
 import sys, random, argparse, os, imp
 # Append system path
 # sys.path.append("steps/data/")
@@ -239,8 +240,7 @@ def get_new_id(utt, utt_modifier_type, utt_modifier):
 
     return new_utt
 
-def copy_file_if_exists(input_file, output_file, utt_modifier_type,
-                        utt_modifier, fields=[0]):
+def copy_file_if_exists(input_file, output_file, utt_modifier_type, utt_modifier, fields=[0]):
     if os.path.isfile(input_file):
         clean_dict = parse_file_to_dict(input_file,
             value_processor = lambda x: " ".join(x))
@@ -258,8 +258,7 @@ def copy_file_if_exists(input_file, output_file, utt_modifier_type,
                 new_dict[modified_key] = clean_dict[key]
         write_dict_to_file(new_dict, output_file)
 
-def create_augmented_utt2uniq(input_dir, output_dir,
-                            utt_modifier_type, utt_modifier):
+def create_augmented_utt2uniq(input_dir, output_dir, utt_modifier_type, utt_modifier):
     clean_utt2spk_file = input_dir + "/utt2spk"
     clean_utt2spk_dict = parse_file_to_dict(clean_utt2spk_file,
                             value_processor = lambda x: " ".join(x))
@@ -301,7 +300,6 @@ def prepare_noise(root_dir, sampling_rate):
                                     num_good_files, num_bad_files))
     return utt2spk_str, utt2wav_str
 
-
 def get_utt2dur(root_dir):
     return 0
 
@@ -317,8 +315,7 @@ def main():
     num_bg_noises = [int(i) for i in args.num_bg_noises.split(":")]
     if not os.path.exists(input_dir + "/reco2dur"):
         get_utt2dur()
-    reco2dur = parse_file_to_dict(input_dir + "/reco2dur",
-        value_processor = lambda x: float(x[0]))
+    reco2dur = parse_file_to_dict(input_dir + "/reco2dur", value_processor = lambda x: float(x[0]))
     wav_scp_file = open(input_dir + "/wav.scp", 'r').readlines()
 
     noise_wavs = {}
@@ -330,8 +327,7 @@ def main():
     if args.bg_noise_dir:
         bg_noise_wav_filename = args.bg_noise_dir + "/wav.scp"
         bg_noise_utts, bg_noise_wavs = get_noise_list(bg_noise_wav_filename)
-        bg_noise_reco2dur = parse_file_to_dict(args.bg_noise_dir + "/reco2dur",
-            value_processor = lambda x: float(x[0]))
+        bg_noise_reco2dur = parse_file_to_dict(args.bg_noise_dir + "/reco2dur", value_processor = lambda x: float(x[0]))
         noise_wavs.update(bg_noise_wavs)
         noise_reco2dur.update(bg_noise_reco2dur)
 

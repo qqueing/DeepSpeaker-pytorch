@@ -22,11 +22,12 @@ from Process_Data.audio_processing import make_Fbank, conver_to_wav, Make_Spect,
 from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
 from Process_Data.voxceleb_wav_reader import wav_list_reader
 
-NUM_JOB = 10
+NUM_JOB = 4
 spks = ['id00518']
 utts = []
 
-dataset_dir = '/data/voxceleb/voxceleb1_wav'
+# dataset_dir = '/data/voxceleb/voxceleb1_wav'
+dataset_dir = '/home/storage/yangwenhao/data/mydataset/voxceleb/voxceleb1/voxceleb1_wav'
 # dataset_dir = '/home/cca01/work2019/Data/voxceleb1/'
 # voxceleb, voxceleb_dev = voxceleb2_list_reader(dataset_dir)
 # spks = list(set([datum['speaker_id'] for datum in voxceleb_dev]))
@@ -38,7 +39,7 @@ utts = [i['filename'] for i in vox1]
 # vox1_test = [datum for datum in vox1 if datum['subset'] == 'test']
 # spks = list(set([datum['speaker_id'] for datum in vox1]))
 
-data_dir = 'Data/dataset/voxceleb1/fbank24'
+data_dir = '/home/storage/yangwenhao/data/mydataset/voxceleb/vox1_fb24'
 dataset_path = pathlib.Path(dataset_dir)
 # dev/aac/{}'
 # data_dir = pathlib.Path('/home/cca01/')
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     for p in processpool:
         p.join()
 
-    print('For multi process, average making seconds for {} speakers is {}'.format(num_utt, (time.time() - start_time)/num_utt))
+    print('For multi process, average making seconds for {} speakers is {}'.format(num_utt, (time.time() - start_time)))
 
     # start_time = time.time()
     # for spk in missing_spks:

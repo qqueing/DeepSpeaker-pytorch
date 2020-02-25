@@ -726,3 +726,104 @@ class LSTM_End(nn.Module):
         logits = self.fc2(spk_vec)
 
         return spk_vec, logits
+
+
+def tuple_loss(batch_size, tuple_size, spk_representation, labels):
+    '''
+    this function can calcul the tuple loss for a batch
+    spk_representation:    (bashsize*tuplesize, dimension of linear layer)
+    labels:                 0/1
+    weight and bias are scalar
+    '''
+
+    feature_size = spk_representation.shape[1]
+    w = tf.reshape(spk_representation, [batch_size, tuple_size, feature_size])
+    def f1():
+        loss = 0
+        for indice_bash in range(batch_size):
+            # vec[1:] is enroll vectors
+            wi_enroll = w[indice_bash, 1:]    # shape:  (tuple_size-1, feature_size)
+
+            # vec[0] is enroll vectors
+            wi_eval = w[indice_bash, 0]
+
+            # normalize all vectors and avg enroll
+            normlize_wi_enroll = tf.nn.l2_normalize(wi_enroll, dim=1)
+            c_k = tf.reduce_mean(normlize_wi_enroll, 0)              # shape: (feature_size)
+            normlize_ck = tf.nn.l2_normalize(c_k, dim=0)
+            normlize_wi_eval = tf.nn.l2_normalize(wi_eval, dim=0)
+
+            # compute cos(enroll_avg, eval)
+            cos_similarity = tf.reduce_sum(tf.multiply(normlize_ck, normlize_wi_eval))
+
+            score = cos_similarity
+            loss += tf.sigmoid(score)
+        return -tf.log(loss/batch_size)
+
+    def f2():   #nontarget
+        loss = 0
+        for indice_bash in range(batch_size):
+            wi_enroll = w[indice_bash, 1:]    # shape:  (tuple_size-1, feature_size)
+            wi_eval = w[indice_bash, 0]
+            normlize_wi_enroll = tf.nn.l2_normalize(wi_enroll, dim=1)
+            c_k = tf.reduce_mean(normlize_wi_enroll, 0)              # shape: (feature_size)
+            normlize_ck = tf.nn.l2_normalize(c_k, dim=0)
+            normlize_wi_eval = tf.nn.l2_normalize(wi_eval, dim=0)
+
+            cos_similarity = tf.reduce_sum(tf.multiply(normlize_ck, normlize_wi_eval))
+            score = cos_similarity
+
+            loss += (1 - tf.sigmoid(score))
+        return -tf.log(loss/batch_size)
+
+    return tf.cond(tf.equal(labels[0], 1), f1, f2)
+
+class Tuple_Loss(nn.Module):
+    """Center loss.
+
+    Reference:
+    Wen et al. A Discriminative Feature Learning Approach for Deep Face Recognition. ECCV 2016.
+
+    Args:
+        num_classes (int): number of classes.
+        feat_dim (int): feature dimension.
+    """
+
+    def __init__(self, num_classes=10, feat_dim=2):
+        super(Tuple_Loss, self).__init__()
+        self.num_classes = num_classes
+        self.feat_dim = feat_dim
+
+        self.centers = nn.Parameter(torch.randn(self.num_classes, self.feat_dim))
+        self.centers.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)  # 初始化权重，在第一维度上做normalize
+
+    def forward(self, batch_size, spk_representation, labels):
+        """
+        Args:
+            x: feature matrix with shape (batch_size, feat_dim).
+            labels: ground truth labels with shape (batch_size).
+        """
+        feature_size = spk_representation.shape[1]
+        w = tf.reshape(spk_representation, [batch_size, tuple_size, feature_size])
+
+        batch_size = x.size(0)
+        distmat = torch.pow(x, 2).sum(dim=1, keepdim=True).expand(batch_size, self.num_classes) + \
+                  torch.pow(self.centers, 2).sum(dim=1, keepdim=True).expand(self.num_classes, batch_size).t()
+        distmat.addmm_(1, -2, x, self.centers.t())
+
+        classes = torch.arange(self.num_classes).long()
+        # if self.use_gpu: classes = classes.cuda()
+        if self.centers.is_cuda:
+            classes = classes.cuda()
+
+        labels = labels.unsqueeze(1).expand(batch_size, self.num_classes)
+        mask = labels.eq(classes.expand(batch_size, self.num_classes))
+
+        dist = distmat * mask.float()
+
+        # Variance for centers
+        # variance = torch.std(self.centers, dim=1).sum()
+
+        loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
+
+        return loss
