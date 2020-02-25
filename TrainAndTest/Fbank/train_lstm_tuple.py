@@ -72,7 +72,7 @@ parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
 parser.add_argument('--check-path', default='Data/checkpoint/LSTM/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LSTM/soft/kaldi/checkpoint_16.pth',
+                    default='Data/checkpoint/LSTM/tuple/kaldi/checkpoint_16.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
