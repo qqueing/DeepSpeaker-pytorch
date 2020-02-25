@@ -27,7 +27,7 @@ from tqdm import tqdm
 from Define_Model.ResNet import ResNet
 from Process_Data.VoxcelebTestset import VoxcelebTestset
 # from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
-from Process_Data.kaldi_file_io import write_xvector_ark
+from Process_Data.KaldiDataset import write_xvector_ark
 from eval_metrics import evaluate_kaldi_eer
 
 from Process_Data.DeepSpeakerDataset_dynamic import ClassificationDataset, ValidationDataset, SampleTrainDataset

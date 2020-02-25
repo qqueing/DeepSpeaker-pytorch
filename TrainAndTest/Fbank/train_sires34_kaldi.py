@@ -39,7 +39,7 @@ from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 
 from Process_Data.DeepSpeakerDataset_dynamic import  ValidationDataset
-from Process_Data.kaldi_file_io import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
 from Process_Data.voxceleb_wav_reader import wav_list_reader, wav_duration_reader, dic_dataset
 
 from Define_Model.model import PairwiseDistance

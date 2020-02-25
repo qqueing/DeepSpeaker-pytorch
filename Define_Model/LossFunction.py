@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: CenterLoss.py
+@File: LossFunction.py
 @Time: 2020/1/8 3:46 PM
 @Overview:
 """
@@ -59,3 +59,38 @@ class CenterLoss(nn.Module):
         loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
 
         return loss
+
+class TupleLoss(nn.Module):
+
+    def __init__(self, batch_size, tuple_size):
+        super(TupleLoss, self).__init__()
+        self.batch_size = batch_size
+        self.tuple_size = tuple_size
+
+    def forward(self, spk_representation, labels):
+        """
+        Args:
+            x: (bashsize*tuplesize, dimension of linear layer)
+            labels: ground truth labels with shape (batch_size).
+        """
+        feature_size = spk_representation.shape[1]
+        w = torch.reshape(spk_representation, [self.batch_size, self.tuple_size, feature_size])
+
+        loss = 0
+        for indice_bash in range(self.batch_size):
+            wi_enroll = w[indice_bash, 1:]  # shape:  (tuple_size-1, feature_size)
+            wi_eval = w[indice_bash, 0]
+            normlize_wi_enroll = torch.norm(wi_enroll, p=2, dim=1)
+
+            c_k = torch.mean(normlize_wi_enroll, dim=0)  # shape: (feature_size)
+
+            normlize_ck = torch.norm(c_k, p=2, dim=0)
+            normlize_wi_eval = torch.norm(wi_eval, p=2, dim=0)
+
+            cos_similarity = torch.sum(normlize_ck * normlize_wi_eval)
+            score = cos_similarity
+
+            loss += torch.sigmoid(score) * labels[indice_bash] + \
+                    (1 - torch.sigmoid(score)*(1 - labels[indice_bash]))
+
+        return -torch.log(loss / self.batch_size)

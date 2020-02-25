@@ -33,7 +33,7 @@ from tqdm import tqdm
 from Define_Model.TDNN import XVectorTDNN
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.kaldi_file_io import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
     mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
@@ -58,9 +58,9 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 
 # options for vox1
-parser.add_argument('--train-dir', type=str, default='/home/yangwenhao/projects/kaldi/egs/voxceleb/v4/data/vox1_fb24/train_no_sli',
+parser.add_argument('--train-dir', type=str, default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev_no_sli',
                     help='path to dataset')
-parser.add_argument('--test-dir', type=str, default='/home/yangwenhao/projects/kaldi/egs/voxceleb/v4/data/vox1_fb24/test_no_sli',
+parser.add_argument('--test-dir', type=str, default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test_no_sli',
                     help='path to voxceleb1 test dataset')
 
 parser.add_argument('--feat-dim', default=24, type=int, metavar='N',

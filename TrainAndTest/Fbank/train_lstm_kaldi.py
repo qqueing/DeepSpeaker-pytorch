@@ -17,6 +17,8 @@ import random
 import time
 
 from tensorboardX import SummaryWriter
+
+from Define_Model.CenterLoss import TupleLoss
 from Process_Data import constants as c
 import torch
 import torch.nn as nn
@@ -33,7 +35,7 @@ from tqdm import tqdm
 from Define_Model.TDNN import XVectorTDNN
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.kaldi_file_io import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset
 from Define_Model.model import PairwiseDistance, LSTM_End
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
     mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor, RNNPadCollate
@@ -218,7 +220,7 @@ def main():
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2), collate_fn=RNNPadCollate(dim=1), shuffle=False, **kwargs)
     # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
 
     for epoch in range(start, end):
         # pdb.set_trace()
