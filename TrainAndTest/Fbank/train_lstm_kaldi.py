@@ -354,7 +354,7 @@ def valid(valid_loader, model, epoch):
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
 
-    print('Valid Accuracy is {.4f}%.'.format(valid_accuracy))
+    print('Valid Accuracy is {:.4f}%.'.format(valid_accuracy))
 
 
 def test(test_loader, valid_loader, model, epoch):
