@@ -78,7 +78,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=200, metavar='E',
+parser.add_argument('--epochs', type=int, default=60, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -103,7 +103,7 @@ parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO'
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
-parser.add_argument('--lr-decay', default=0.001, type=float, metavar='LRD',
+parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--weight-decay', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
@@ -194,7 +194,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[100, 150], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[20, 38, 50], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
@@ -218,7 +218,8 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
                                                shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size/2), collate_fn=RNNPadCollate(dim=1), shuffle=False, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
+                                               shuffle=False, **kwargs)
     # test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
     # criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
@@ -227,6 +228,7 @@ def main():
         # pdb.set_trace()
         # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, epoch)
+        valid(valid_loader, model, epoch)
         # test(test_loader, valid_loader, model, epoch)
         scheduler.step()
         # break
@@ -251,8 +253,6 @@ def train(train_loader, model, optimizer, criterion, epoch):
         if args.cuda:
             data = data.cuda()
             label = label.cuda()
-        # data, label = Variable(data), Variable(label)
-
         # pdb.set_trace()
         if len(length)!=args.batch_size:
             continue
@@ -293,7 +293,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(
                 epoch,
-                batch_idx * len(data),
+                batch_idx * args.batch_size,
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
                 total_loss/(batch_idx+1),
@@ -313,6 +313,49 @@ def train(train_loader, model, optimizer, criterion, epoch):
     print('\33[91m LSTM Train Accuracy:{:.4f}%. Avg loss is {:.4f}.\n\33[0m'.format(100 * correct / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train/Accuracy', 100. * correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
+
+def valid(valid_loader, model, epoch):
+    # switch to evaluate mode
+    model.eval()
+
+    valid_pbar = tqdm(enumerate(valid_loader))
+    softmax = nn.Softmax(dim=1)
+
+    correct = 0.
+    total_datasize = 0.
+    for batch_idx, (data, label, length) in valid_pbar:
+        if len(length)!=args.batch_size:
+            continue
+
+        if args.cuda:
+            data = data.cuda()
+        # pdb.set_trace()
+        _, classfier = model(data, length)
+
+        true_labels = Variable(label.cuda())
+        predicted_one_labels = softmax(classfier)
+        predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
+
+        batch_correct = (predicted_one_labels.cuda() == true_labels.cuda()).sum().item()
+        minibatch_acc = float(batch_correct / len(predicted_one_labels))
+        correct += batch_correct
+        total_datasize += len(predicted_one_labels)
+
+        if batch_idx % args.log_interval == 0:
+            valid_pbar.set_description(
+                'Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
+                    epoch,
+                    batch_idx * len(data),
+                    len(valid_loader.dataset),
+                    100. * batch_idx / len(valid_loader),
+                    100. * minibatch_acc
+                ))
+
+    valid_accuracy = 100. * correct / total_datasize
+    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
+
+    print('Valid Accuracy is {.4f}%.'.format(valid_accuracy))
+
 
 def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
