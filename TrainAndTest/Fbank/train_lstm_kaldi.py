@@ -59,10 +59,10 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 
 # options for vox1
 parser.add_argument('--train-dir', type=str,
-                    default='/home/hdd2020/yangwenhao/project/lstm_speaker_verification/data/CN-Celeb/dev_no_sli',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev_no_sli',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/hdd2020/yangwenhao/project/lstm_speaker_verification/data/CN-Celeb/test_no_sli',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test_no_sli',
                     help='path to test dataset')
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
@@ -76,14 +76,15 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=10000, metavar='E',
+parser.add_argument('--epochs', type=int, default=2000, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
+parser.add_argument('--num-lstm', default=3, type=int, metavar='N', help='num of layers of lstm')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -170,7 +171,7 @@ else:
                     ])
 
 train_dir = TrainDataset(dir=args.train_dir, transform=transform)
-# test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
+test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -185,13 +186,13 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size)
+    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size, num_lstm=args.num_lstm)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    # scheduler = MultiStepLR(optimizer, milestones=[1000], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[1000], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
@@ -224,7 +225,7 @@ def main():
         # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, epoch)
         # test(test_loader, valid_loader, model, epoch)
-        # scheduler.step()
+        scheduler.step()
         # break
     writer.close()
 
