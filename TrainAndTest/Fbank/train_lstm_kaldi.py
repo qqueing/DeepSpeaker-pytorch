@@ -246,18 +246,15 @@ def train(train_loader, model, optimizer, criterion, epoch):
     for batch_idx, (data, label) in pbar:
 
         if args.cuda:
-            data = data.cuda().squeeze()
+            data = data.float().squeeze().cuda()
             label = label.cuda()
         # pdb.set_trace()
         if len(data) != args.batch_size:
             continue
 
         data, label = Variable(data), Variable(label)
-        try:
-            feats, classfier = model.tuple_forward(data)
-        except:
-            pdb.set_trace()
 
+        feats, classfier = model.tuple_forward(data)
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
