@@ -29,7 +29,7 @@ from torch.optim.lr_scheduler import StepLR, MultiStepLR
 from tqdm import tqdm
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.KaldiDataset import KaldiValidDataset, TrainDataset, TestDataset
+from Process_Data.KaldiDataset import KaldiValidDataset, KaldiTrainDataset, KaldiTestDataset
 from Define_Model.model import PairwiseDistance, LSTM_End
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
     mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor, RNNPadCollate
@@ -150,8 +150,8 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        # concateinputfromMFB(num_frames=80),
-        varLengthFeat(max_chunk_size=300),
+        concateinputfromMFB(num_frames=300, remove_vad=True),
+        # varLengthFeat(max_chunk_size=300),
         to2tensor()
     ])
     transform_T = transforms.Compose([
@@ -166,12 +166,12 @@ else:
                         totensor(),
                     ])
 
-train_dir = TrainDataset(dir=args.train_dir, transform=transform)
-test_dir = TestDataset(dir=args.test_dir, transform=transform_T)
+train_dir = KaldiTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform, num_valid=5)
+test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:4800]
+indices = indices[:6400]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -215,10 +215,8 @@ def main():
     print('Start epoch is : ' + str(start))
     end = start + args.epochs
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
-                                               shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
-                                               shuffle=False, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
     # criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
@@ -245,28 +243,24 @@ def train(train_loader, model, optimizer, criterion, epoch):
         print('\33[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
-    for batch_idx, (data, label, length) in pbar:
+    for batch_idx, (data, label) in pbar:
 
         if args.cuda:
             data = data.cuda()
             label = label.cuda()
         # pdb.set_trace()
-        if len(length)!=args.batch_size:
+        if len(data) != args.batch_size:
             continue
 
-        feats, classfier = model(data, length)
-        # classfier = model(feats)
-
+        feats, classfier = model.tuple_forward(data)
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
         loss = criterion(classfier, label)
 
-        try:
-            batch_correct = float((predicted_one_labels == label).sum().item())
-            minibatch_acc = batch_correct / len(predicted_one_labels)
-        except:
-            pdb.set_trace()
+        batch_correct = float((predicted_one_labels == label).sum().item())
+        minibatch_acc = batch_correct / len(predicted_one_labels)
+
 
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
@@ -275,16 +269,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
         # compute gradient and update weights
         optimizer.zero_grad()
-        try:
-            loss.backward()
-        except RuntimeError as exception:
-            if "out of memory" in str(exception):
-                print("WARNING: out of memory")
-                if hasattr(torch.cuda, 'empty_cache'):
-                    torch.cuda.empty_cache()
-            else:
-                pdb.set_trace()
-
+        loss.backward()
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:

@@ -243,12 +243,13 @@ class NewTDNN(nn.Module):
         return x
 
 class XVectorTDNN(nn.Module):
-    def __init__(self, num_spk, dropout_p=0.0):
+    def __init__(self, num_spk, input_dim=24, dropout_p=0.0):
         super(XVectorTDNN, self).__init__()
         self.num_spk = num_spk
         self.dropout_p = dropout_p
+        self.input_dim = input_dim
 
-        self.frame1 = NewTDNN(input_dim=24, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
+        self.frame1 = NewTDNN(input_dim=self.input_dim, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
         self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
         self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
         self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
