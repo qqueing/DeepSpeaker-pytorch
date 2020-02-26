@@ -446,7 +446,7 @@ class KaldiTupleDataset(data.Dataset):
 
         tuple_lst = []
         if not os.path.exists(train_trials):
-            pdb.set_trace()
+            # pdb.set_trace()
 
             train_trials_f = open(train_trials, 'w')
             for i in range(len(speakers)):
@@ -537,6 +537,7 @@ class KaldiTupleDataset(data.Dataset):
         pairs = self.tuple_lst[sid]
         uids = pairs[:self.num_enroll+1]
         labels = pairs[self.num_enroll+1:]
+        labels = [int(x) for x in labels]
         feat_uids = [self.uid2feat[uid] for uid in uids]
         features = self.transform(feat_uids)
 
