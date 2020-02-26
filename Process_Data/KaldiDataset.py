@@ -452,12 +452,10 @@ class TestDataset(data.Dataset):
                 pair = line.split(' ')
                 pair_a = pair[0].split('-')
                 pair_a[0] = name2spk[pair_a[0]]
-                pair_a[2] = '0' + pair_a[2].rstrip('.wav')
                 a = '-'.join(pair_a)
 
                 pair_b = pair[1].split('-')
                 pair_b[0] = name2spk[pair_b[0]]
-                pair_b[2] = '0' + pair_b[2].rstrip('.wav')
                 b = '-'.join(pair_b)
 
                 if pair[2] == 'nontarget\n':
