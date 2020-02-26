@@ -283,7 +283,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
         loss = ce_loss + tuple_loss
 
-        batch_correct = float((predicted_one_labels == label).sum().item())
+        batch_correct = float((predicted_one_labels == cls_label).sum().item())
         minibatch_acc = batch_correct / len(predicted_one_labels)
 
         correct += batch_correct
