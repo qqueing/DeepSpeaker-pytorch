@@ -537,7 +537,7 @@ class KaldiTupleDataset(data.Dataset):
         self.tuple_lst = tuple_lst
 
     def __getitem__(self, sid):
-        pdb.set_trace()
+        # pdb.set_trace()
         pairs = self.tuple_lst[sid]
         uids = pairs[:self.num_enroll+1]
         labels = pairs[self.num_enroll+1:]
