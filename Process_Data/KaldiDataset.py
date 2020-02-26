@@ -464,7 +464,7 @@ class TestDataset(data.Dataset):
                     pair_true = False
                 else:
                     pair_true = True
-                pdb.set_trace()
+                # pdb.set_trace()
                 trials_pair.append((a, b, pair_true))
 
         print('==>There are {} pairs in test Dataset.\n'.format(len(trials_pair)))
