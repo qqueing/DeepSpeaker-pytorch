@@ -155,7 +155,7 @@ if args.mfb:
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=300, input_per_file=args.test_input_per_file),
+        concateinputfromMFB(num_frames=300, input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])

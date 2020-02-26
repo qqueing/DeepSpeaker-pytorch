@@ -358,11 +358,12 @@ class concateinputfromMFB(object):
     size: size of the exactly size or the smaller edge
     interpolation: Default: PIL.Image.BILINEAR
     """
-    def __init__(self, input_per_file=1, num_frames=c.NUM_FRAMES_SPECT):
+    def __init__(self, input_per_file=1, num_frames=c.NUM_FRAMES_SPECT, remove_vad=False):
 
         super(concateinputfromMFB, self).__init__()
         self.input_per_file = input_per_file
         self.num_frames = num_frames
+        self.remove_vad = remove_vad
 
     def __call__(self, frames_features):
         network_inputs = []
@@ -375,6 +376,8 @@ class concateinputfromMFB(object):
         for i in range(self.input_per_file):
             start = np.random.randint(low=0, high=len(output)-self.num_frames+1)
             frames_slice = output[start:start+self.num_frames]
+            if self.remove_vad:
+                frames_slice = frames_slice[:, 1:]
 
             network_inputs.append(frames_slice)
         # pdb.set_trace()
