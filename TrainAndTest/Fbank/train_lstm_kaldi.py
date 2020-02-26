@@ -376,7 +376,7 @@ def test(test_loader, model, epoch):
 
         dists_a = l2_dist.forward(out_a, out_p)
         dists_a = dists_a.data.cpu().numpy()
-        dists_a = dists_a.reshape(current_sample, args.test_input_per_file).mean(axis=1)
+        dists_a = dists_a.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         distances.append(dists_a)
 
         labels.append(label.data.cpu().numpy())
