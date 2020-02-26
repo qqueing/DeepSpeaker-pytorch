@@ -96,7 +96,7 @@ parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT'
 parser.add_argument('--input-per-spks', type=int, default=160, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
-parser.add_argument('--tuple_size', type=int, default=6, metavar='N',
+parser.add_argument('--tuple-size', type=int, default=6, metavar='N',
                     help='the number of enrolled utterance + 1 (default: 6')
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
@@ -176,8 +176,6 @@ else:
 
 train_dir = KaldiTupleDataset(dir=args.train_dir, transform=transform, samples_per_spk=args.input_per_spks)
 
-train_dir.__getitem__(0)
-
 test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
@@ -198,7 +196,8 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size,
+    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks,
+                     batch_size=args.batch_size * args.tuple_size,
                      num_lstm=args.num_lstm)
 
     if args.cuda:
@@ -231,7 +230,7 @@ def main():
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     # criterion = nn.CrossEntropyLoss().cuda()
-    criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
+    criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size).cuda()]
 
     for epoch in range(start, end):
         pdb.set_trace()
@@ -257,21 +256,30 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data, label) in pbar:
+        if len(data) != args.batch_size:
+            continue
+
+        pair_label = label[:, 0]
+        cls_label = label[:, 1:]
+
+        vec_shape = data.shape
+        data = data.reshape(vec_shape[0] * vec_shape[1], vec_shape[2], vec_shape[3])
+
+        cls_label_shape = cls_label.shape
+        cls_label = cls_label.reshape(cls_label_shape[0] * cls_label_shape[1])
 
         if args.cuda:
-            data = data.squeeze().float().cuda()
-            label = label.cuda()
-        pdb.set_trace()
-        if len(data)!=args.batch_size:
-            continue
+            data = data.float().cuda()
+            cls_label = cls_label.cuda()
+            pair_label = pair_label.cuda()
 
         feats, classfier = model.tuple_forward(data)
 
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
-        ce_loss = criterion[0](classfier, label)
-        tuple_loss = criterion[1](feats, label)
+        ce_loss = criterion[0](classfier, cls_label)
+        tuple_loss = criterion[1](feats, pair_label)
 
         loss = ce_loss + tuple_loss
 
@@ -324,7 +332,7 @@ def valid(valid_loader, model, epoch):
     for batch_idx, (data, label, length) in valid_pbar:
         if len(length)!=args.batch_size:
             continue
-
+        vec_shape = a.shape
         if args.cuda:
             data = data.cuda()
         # pdb.set_trace()
