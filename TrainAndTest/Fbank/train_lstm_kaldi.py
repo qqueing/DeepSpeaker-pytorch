@@ -359,12 +359,12 @@ def test(test_loader, model, epoch):
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
-    for batch_idx, (data_a, data_p, label) in pbar:
+    for batch_idx, (a, p, label) in pbar:
 
-        current_sample = data_a.size(0)
-        pdb.set_trace()
-        data_a = data_a.resize_(args.test_input_per_file * current_sample, data_a.size(2), data_a.size(3))
-        data_p = data_p.resize_(args.test_input_per_file * current_sample, data_a.size(2), data_a.size(3))
+        vec_shape = a.shape
+        # pdb.set_trace()
+        data_a = a.reshape(vec_shape[0] * vec_shape[1], vec_shape[2], vec_shape[3])
+        data_p = p.reshape(vec_shape[0] * vec_shape[1], vec_shape[2], vec_shape[3])
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
