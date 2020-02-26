@@ -403,7 +403,7 @@ class TrainDataset(data.Dataset):
 
 
 class KaldiTupleDataset(data.Dataset):
-    def __init__(self, dir, samples_per_spk, transform, num_valid=5, num_enroll=5):
+    def __init__(self, dir, transform, samples_per_spk=150, num_valid=5, num_enroll=5):
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
@@ -471,6 +471,8 @@ class KaldiTupleDataset(data.Dataset):
 
         tuple_lst = []
         if not os.path.exists(train_trials):
+            pdb.set_trace()
+
             train_trials_f = open(train_trials, 'w')
             for i in range(len(speakers)):
                 spk = speakers[i]
@@ -514,7 +516,6 @@ class KaldiTupleDataset(data.Dataset):
                 tuple_lst.append(line.split())
 
         train_trials_f.close()
-        pdb.set_trace()
 
         print('==>Generate {} tuples for training.\n'.format(len(tuple_lst)))
 
