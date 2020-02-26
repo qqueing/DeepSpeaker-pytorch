@@ -514,6 +514,7 @@ class KaldiTupleDataset(data.Dataset):
                 tuple_lst.append(line.split())
 
         train_trials_f.close()
+        pdb.set_trace()
 
         print('==>Generate {} tuples for training.\n'.format(len(tuple_lst)))
 

@@ -224,10 +224,8 @@ def main():
     print('Start epoch is : ' + str(start))
     end = start + args.epochs
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
-                                               shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
-                                               shuffle=False, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     # criterion = nn.CrossEntropyLoss().cuda()
     criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
