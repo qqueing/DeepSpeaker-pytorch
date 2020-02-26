@@ -252,7 +252,12 @@ def train(train_loader, model, optimizer, criterion, epoch):
         if len(data) != args.batch_size:
             continue
 
-        feats, classfier = model.tuple_forward(data)
+        data, label = Variable(data), Variable(label)
+        try:
+            feats, classfier = model.tuple_forward(data)
+        except:
+            pdb.set_trace()
+
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
@@ -260,7 +265,6 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
         batch_correct = float((predicted_one_labels == label).sum().item())
         minibatch_acc = batch_correct / len(predicted_one_labels)
-
 
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
