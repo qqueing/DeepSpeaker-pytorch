@@ -231,7 +231,7 @@ def main():
     criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
 
     for epoch in range(start, end):
-        # pdb.set_trace()
+        pdb.set_trace()
         # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, epoch)
         test(test_loader, valid_loader, model, epoch)
