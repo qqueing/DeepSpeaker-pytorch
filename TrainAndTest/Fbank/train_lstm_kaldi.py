@@ -225,8 +225,8 @@ def main():
 
     for epoch in range(start, end):
         # compute_dropout(model, optimizer, epoch, end)
-        train(train_loader, model, optimizer, criterion, epoch)
-        valid(valid_loader, model, epoch)
+        # train(train_loader, model, optimizer, criterion, epoch)
+        # valid(valid_loader, model, epoch)
         test(test_loader, model, epoch)
         scheduler.step()
         # break
@@ -362,6 +362,7 @@ def test(test_loader, model, epoch):
     for batch_idx, (data_a, data_p, label) in pbar:
 
         current_sample = data_a.size(0)
+        pdb.set_trace()
         data_a = data_a.resize_(args.test_input_per_file * current_sample, data_a.size(2), data_a.size(3))
         data_p = data_p.resize_(args.test_input_per_file * current_sample, data_a.size(2), data_a.size(3))
 
