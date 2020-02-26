@@ -463,9 +463,9 @@ class KaldiTupleDataset(data.Dataset):
                     for x in positive_enroll:
                         positive_trials.append(x)
 
-                    positive_trials.append(1)
+                    positive_trials.append('1')
                     for m in range(num_enroll):
-                        positive_trials.append(spk_to_idx[spk])
+                        positive_trials.append(str(spk_to_idx[spk]))
 
                     tuple_lst.append(positive_trials)
                     train_trials_f.write(' '.join(positive_trials) + '\n')
@@ -479,9 +479,9 @@ class KaldiTupleDataset(data.Dataset):
                     for x in nagative_enroll:
                         negative_trials.append(x)
 
-                    negative_trials.append(0)
+                    negative_trials.append('0')
                     for m in range(num_enroll):
-                        negative_trials.append(spk_to_idx[nagative_spk])
+                        negative_trials.append(str(spk_to_idx[nagative_spk]))
 
                     tuple_lst.append(negative_trials)
                     train_trials_f.write(' '.join(negative_trials) + '\n')
