@@ -225,9 +225,8 @@ def main():
 
     for epoch in range(start, end):
         # compute_dropout(model, optimizer, epoch, end)
-        # train(train_loader, model, optimizer, criterion, epoch)
-        # valid(valid_loader, model, epoch)
-        test(test_loader, model, epoch)
+        train(train_loader, model, optimizer, criterion, epoch)
+        test(valid_loader, test_loader, model, epoch)
         scheduler.step()
         # break
     writer.close()
@@ -312,7 +311,8 @@ def train(train_loader, model, optimizer, criterion, epoch):
     writer.add_scalar('Train/Accuracy', 100. * correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
-def valid(valid_loader, model, epoch):
+
+def test(valid_loader, test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
@@ -322,7 +322,7 @@ def valid(valid_loader, model, epoch):
     correct = 0.
     total_datasize = 0.
     for batch_idx, (data, label, length) in valid_pbar:
-        if len(length)!=args.batch_size:
+        if len(length) != args.batch_size:
             continue
 
         if args.cuda:
@@ -351,11 +351,6 @@ def valid(valid_loader, model, epoch):
 
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
-    print('Valid Accuracy is {:.4f}%.'.format(valid_accuracy))
-
-def test(test_loader, model, epoch):
-    # switch to evaluate mode
-    model.eval()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
@@ -391,11 +386,9 @@ def test(test_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-
     writer.add_scalar('Test/EER', 100.*eer, epoch)
 
-    print('For {}_distance: \n \33[91mERR: {:.8f}. Threshold: {:.8f}.\33[0m'.format('cos' if args.cos_sim else 'l2',
-                                                                                    100. * eer, eer_threshold))
+    print('For {}_distance: \n \33[91mERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {:.4f}%.\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
 
 
 if __name__ == '__main__':
