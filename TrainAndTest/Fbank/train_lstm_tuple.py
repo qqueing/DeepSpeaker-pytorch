@@ -158,12 +158,12 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        concateinputfromMFB(num_frames=300),
+        concateinputfromMFB(num_frames=300, remove_vad=True),
         # varLengthFeat(max_chunk_size=300),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=300, input_per_file=args.test_input_per_file),
+        concateinputfromMFB(num_frames=300, input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
