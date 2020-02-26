@@ -17,12 +17,8 @@ import random
 import time
 
 from tensorboardX import SummaryWriter
-
-from Define_Model.LossFunction import TupleLoss
-from Process_Data import constants as c
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
@@ -31,11 +27,9 @@ import os
 import numpy as np
 from torch.optim.lr_scheduler import StepLR, MultiStepLR
 from tqdm import tqdm
-
-from Define_Model.TDNN import XVectorTDNN
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset
+from Process_Data.KaldiDataset import KaldiValidDataset, TrainDataset, TestDataset
 from Define_Model.model import PairwiseDistance, LSTM_End
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
     mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor, RNNPadCollate
@@ -173,7 +167,7 @@ else:
                     ])
 
 train_dir = TrainDataset(dir=args.train_dir, transform=transform)
-test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
+test_dir = TestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)

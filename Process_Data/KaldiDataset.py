@@ -402,6 +402,95 @@ class TrainDataset(data.Dataset):
         return len(self.utt_lst)  # 返回一个epoch的采样数
 
 
+class TestDataset(data.Dataset):
+    def __init__(self, dir, transform):
+
+        feat_scp = dir + '/feats.scp'
+        spk2utt = dir + '/spk2utt'
+        trials = dir + '/trials'
+        vox1_meta = dir + '/../vox1_meta.csv'
+
+        if not os.path.exists(feat_scp):
+            raise FileExistsError(feat_scp)
+        if not os.path.exists(spk2utt):
+            raise FileExistsError(spk2utt)
+        if not os.path.exists(trials):
+            raise FileExistsError(trials)
+
+        dataset = {}
+        with open(spk2utt, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                spk_utt = line.split(' ')
+                spk_name = spk_utt[0]
+                if spk_name not in dataset.keys():
+                    spk_utt[-1] = spk_utt[-1].rstrip('\n')
+                    dataset[spk_name] = spk_utt[1:]
+
+        speakers = [spk for spk in dataset.keys()]
+        speakers.sort()
+        print('==>There are {} speakers in Test Dataset.'.format(len(speakers)))
+
+        name2spk = {}
+        with open(vox1_meta, 'r') as n:
+            all_names = n.readlines()
+            for i in range(1, len(all_names)):
+                meta = all_names[i].split()
+                name = meta[1]
+                sid = meta[0]
+                name2spk[name]=sid
+
+        uid2feat = {}
+        for utt_id, feat in kaldi_io.read_mat_scp(feat_scp):
+            uid2feat[utt_id] = feat
+        print('==>There are {} utterances in Test Dataset.'.format(len(uid2feat)))
+
+        trials_pair = []
+        with open(trials, 'r') as t:
+            all_pairs = t.readlines()
+            for line in all_pairs: # Eartha_Kitt-x6uYqmx31kE-0001.wav Eartha_Kitt-8jEAjG6SegY-0008.wav target
+                pair = line.split(' ')
+                pair_a = pair[0].split('-')
+                pair_a[0] = name2spk[pair_a[0]]
+                pair_a[2] = '0' + pair_a[2].rstrip('.wav')
+                a = '-'.join(pair_a)
+
+                pair_b = pair[1].split('-')
+                pair_b[0] = name2spk[pair_b[0]]
+                pair_b[2] = '0' + pair_b[2].rstrip('.wav')
+                b = '-'.join(pair_b)
+
+                if pair[2] == 'nontarget\n':
+                    pair_true = False
+                else:
+                    pair_true = True
+                pdb.set_trace()
+                trials_pair.append((a, b, pair_true))
+
+        print('==>There are {} pairs in test Dataset.\n'.format(len(trials_pair)))
+
+        self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
+        self.speakers = speakers
+        self.uid2feat = uid2feat
+        self.trials_pair = trials_pair
+        self.num_spks = len(speakers)
+        self.transform = transform
+
+    def __getitem__(self, index):
+        uid_a, uid_b, label = self.trials_pair[index]
+
+        data_a = self.uid2feat[uid_a]
+        data_b = self.uid2feat[uid_b]
+
+        data_a = self.transform(data_a)
+        data_b = self.transform(data_b)
+
+        return data_a, data_b, label
+
+    def __len__(self):
+        return len(self.trials_pair)
+
+
 class KaldiTupleDataset(data.Dataset):
     def __init__(self, dir, samples_per_spk, transform, num_valid=5, num_enroll=5):
 
