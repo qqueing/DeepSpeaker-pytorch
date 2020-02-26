@@ -254,7 +254,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
     # print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
     for param_group in optimizer.param_groups:
-        print('\33[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
+        print('\33[1;34m\'{}\' learning rate is {:.6f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data, label) in pbar:
@@ -369,7 +369,8 @@ def test(valid_loader, test_loader, model, epoch):
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (a, p, label) in pbar:
-
+        if len(a) != int(args.batch_size * args.tuple_size / args.test_input_per_file):
+            continue
         vec_shape = a.shape
         # pdb.set_trace()
         data_a = a.reshape(vec_shape[0] * vec_shape[1], vec_shape[2], vec_shape[3])
