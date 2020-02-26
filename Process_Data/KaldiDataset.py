@@ -547,6 +547,7 @@ class KaldiTupleDataset(data.Dataset):
         feats = [self.transform(feat) for feat in feat_uids]
         features = torch.cat(feats, dim=0)
         # features = np.concatenate(feat_uids, axis=0)
+        labels = torch.LongTensor(labels)
 
         # features:   eval_utt,    utt1,  ...  ,    utt5
         # labels:0/1, spk_idx1,spk_idx2,  ...  ,spk_idx2
