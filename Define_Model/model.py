@@ -731,7 +731,7 @@ class LSTM_End(nn.Module):
         """
 
         out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
-        rnn_out = out[:,:,-1]
+        rnn_out = out[:, -1, :].squeeze()
         # rnn_last =
         spk_vec = self.fc1(rnn_out.cuda())
         spk_vec = self.relu(self.bn1(spk_vec))
