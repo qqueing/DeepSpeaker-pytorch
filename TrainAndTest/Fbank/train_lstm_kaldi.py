@@ -307,14 +307,17 @@ def test(valid_loader, test_loader, model, epoch):
 
     correct = 0.
     total_datasize = 0.
-    for batch_idx, (data, label, length) in valid_pbar:
-        if len(length) != args.batch_size:
+    for batch_idx, (data, label) in valid_pbar:
+
+        if len(data) != args.batch_size:
             continue
 
         if args.cuda:
-            data = data.cuda()
-        # pdb.set_trace()
-        _, classfier = model(data, length)
+            data = data.float().squeeze().cuda()
+            label = label.cuda()
+
+        data, label = Variable(data), Variable(label)
+        feats, classfier = model.tuple_forward(data)
 
         true_labels = Variable(label.cuda())
         predicted_one_labels = softmax(classfier)
@@ -348,7 +351,7 @@ def test(valid_loader, test_loader, model, epoch):
         data_p = p.reshape(vec_shape[0] * vec_shape[1], vec_shape[2], vec_shape[3])
 
         if args.cuda:
-            data_a, data_p = data_a.cuda(), data_p.cuda()
+            data_a, data_p = data_a.float().cuda(), data_p.float().cuda()
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
