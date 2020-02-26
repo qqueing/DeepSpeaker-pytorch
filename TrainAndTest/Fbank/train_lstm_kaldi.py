@@ -376,12 +376,10 @@ def test(valid_loader, test_loader, model, epoch):
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
-
-    # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test/EER', 100.*eer, epoch)
 
-    print('For {}_distance: \n \33[91mERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {:.4f}%.\33[0m\n'.format('cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+    print('\33[91mERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {:.4f}%.\33[0m\n'.format('cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
 
 
 if __name__ == '__main__':
