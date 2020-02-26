@@ -100,7 +100,7 @@ parser.add_argument('--tuple-size', type=int, default=6, metavar='N',
                     help='the number of enrolled utterance + 1 (default: 6')
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
@@ -283,7 +283,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
         ce_loss = criterion[0](classfier, cls_label)
         tuple_loss = criterion[1](feats, pair_label)
 
-        loss = ce_loss + tuple_loss
+        loss = ce_loss + args.loss_ratio * tuple_loss
 
         batch_correct = float((predicted_one_labels == cls_label).sum().item())
         minibatch_acc = batch_correct / len(predicted_one_labels)
