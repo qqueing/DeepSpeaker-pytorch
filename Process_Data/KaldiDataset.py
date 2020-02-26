@@ -473,7 +473,6 @@ class KaldiTupleDataset(data.Dataset):
 
         tuple_lst = []
         if not os.path.exists(train_trials):
-            # pdb.set_trace()
 
             train_trials_f = open(train_trials, 'w')
             for i in range(len(speakers)):
@@ -491,6 +490,7 @@ class KaldiTupleDataset(data.Dataset):
                         positive_trials.append(x)
 
                     positive_trials.append('1')
+                    positive_trials.append(str(spk_to_idx[spk]))
                     for m in range(num_enroll):
                         positive_trials.append(str(spk_to_idx[spk]))
 
@@ -507,6 +507,7 @@ class KaldiTupleDataset(data.Dataset):
                         negative_trials.append(x)
 
                     negative_trials.append('0')
+                    negative_trials.append(str(spk_to_idx[spk]))
                     for m in range(num_enroll):
                         negative_trials.append(str(spk_to_idx[nagative_spk]))
 
