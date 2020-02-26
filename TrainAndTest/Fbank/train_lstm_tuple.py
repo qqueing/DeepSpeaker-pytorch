@@ -175,6 +175,9 @@ else:
                     ])
 
 train_dir = KaldiTupleDataset(dir=args.train_dir, transform=transform, samples_per_spk=args.input_per_spks)
+
+train_dir.__getitem__(0)
+
 test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
