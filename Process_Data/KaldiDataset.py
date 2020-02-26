@@ -444,31 +444,6 @@ class KaldiTupleDataset(data.Dataset):
         spk_to_idx = {speakers[i]: i for i in range(len(speakers))}
         idx_to_spk = {i: speakers[i] for i in range(len(speakers))}
 
-        uid2feat = {}  # 'Eric_McCormack-Y-qKARMSO7k-0001.wav': feature[frame_length, feat_dim]
-        pbar = tqdm(enumerate(kaldi_io.read_mat_scp(feat_scp)))
-        for idx, (utt_id, feat) in pbar:
-            uid2feat[utt_id] = feat
-
-        print('==>There are {} utterances in Train Dataset.'.format(len(uid2feat)))
-        valid_set = {}
-        valid_uid2feat = {}
-        valid_utt2spk_dict = {}
-
-        for spk in speakers:
-            if spk not in valid_set.keys():
-                valid_set[spk] = []
-                for i in range(num_valid):
-                    if len(dataset[spk]) <= 1:
-                        break
-                    j = np.random.randint(len(dataset[spk]))
-                    utt = dataset[spk].pop(j)
-                    valid_set[spk].append(utt)
-
-                    valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
-                    valid_utt2spk_dict[utt] = utt2spk_dict[utt]
-
-        print('==>Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
-
         tuple_lst = []
         if not os.path.exists(train_trials):
             pdb.set_trace()
@@ -518,6 +493,31 @@ class KaldiTupleDataset(data.Dataset):
         train_trials_f.close()
 
         print('==>Generate {} tuples for training.\n'.format(len(tuple_lst)))
+
+        uid2feat = {}  # 'Eric_McCormack-Y-qKARMSO7k-0001.wav': feature[frame_length, feat_dim]
+        pbar = tqdm(enumerate(kaldi_io.read_mat_scp(feat_scp)))
+        for idx, (utt_id, feat) in pbar:
+            uid2feat[utt_id] = feat
+
+        print('==>There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        valid_set = {}
+        valid_uid2feat = {}
+        valid_utt2spk_dict = {}
+
+        for spk in speakers:
+            if spk not in valid_set.keys():
+                valid_set[spk] = []
+                for i in range(num_valid):
+                    if len(dataset[spk]) <= 1:
+                        break
+                    j = np.random.randint(len(dataset[spk]))
+                    utt = dataset[spk].pop(j)
+                    valid_set[spk].append(utt)
+
+                    valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
+                    valid_utt2spk_dict[utt] = utt2spk_dict[utt]
+
+        print('==>Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
 
         self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
         self.speakers = speakers
