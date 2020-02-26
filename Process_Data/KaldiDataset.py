@@ -472,7 +472,7 @@ class KaldiTupleDataset(data.Dataset):
         tuple_lst = []
         if not os.path.exists(train_trials):
             train_trials_f = open(train_trials, 'w')
-            for i in len(speakers):
+            for i in range(len(speakers)):
                 spk = speakers[i]
                 for j in range(samples_per_spk):
                     eval_utts = dataset[spk].copy()
