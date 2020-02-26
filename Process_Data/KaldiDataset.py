@@ -18,6 +18,7 @@ import Process_Data.constants as c
 import kaldi_io
 import numpy as np
 import torch.utils.data as data
+import torch
 
 def write_xvector_ark(uid, xvector, write_path, set):
     """
@@ -541,10 +542,11 @@ class KaldiTupleDataset(data.Dataset):
         uids = pairs[:self.num_enroll+1]
         labels = pairs[self.num_enroll+1:]
         labels = [int(x) for x in labels]
-        feat_uids = [np.expand_dims(self.uid2feat[uid], axis=0) for uid in uids]
 
-        features = np.concatenate(feat_uids, axis=0)
-        features = self.transform(features)
+        feat_uids = [self.uid2feat[uid] for uid in uids]
+        feats = [self.transform(feat) for feat in feat_uids]
+        features = torch.cat(feats, dim=0)
+        # features = np.concatenate(feat_uids, axis=0)
 
         # features:   eval_utt,    utt1,  ...  ,    utt5
         # labels:0/1, spk_idx1,spk_idx2,  ...  ,spk_idx2
