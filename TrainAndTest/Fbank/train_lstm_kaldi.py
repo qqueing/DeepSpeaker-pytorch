@@ -72,7 +72,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=200, metavar='E',
+parser.add_argument('--epochs', type=int, default=60, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -95,7 +95,7 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -187,13 +187,17 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size, num_lstm=args.num_lstm)
+    model = LSTM_End(input_dim=args.feat_dim,
+                     num_class=train_dir.num_spks,
+                     batch_size=args.batch_size,
+                     num_lstm=args.num_lstm,
+                     dropout_p=0.2)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[40, 80, 120, 160], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[35], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint

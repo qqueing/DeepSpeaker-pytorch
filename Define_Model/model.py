@@ -679,7 +679,7 @@ class SuperficialResCNN(nn.Module):  # 定义resnet
         return logit, x  # 返回倒数第二层
 
 class LSTM_End(nn.Module):
-    def __init__(self, input_dim, num_class, batch_size, hidden_shape=128, project_dim=64, num_lstm=2):
+    def __init__(self, input_dim, num_class, batch_size, hidden_shape=128, project_dim=64, num_lstm=2, dropout_p=0.2):
         super(LSTM_End, self).__init__()
 
         self.num_lstm = num_lstm
@@ -687,11 +687,15 @@ class LSTM_End(nn.Module):
         self.lstm_layer = nn.LSTM(input_size=input_dim,
                                   hidden_size=hidden_shape,
                                   num_layers=self.num_lstm,
-                                  batch_first=True)
+                                  batch_first=True,
+                                  dropout=dropout_p)
+
         self.h0 = torch.rand(self.num_lstm, batch_size, hidden_shape).cuda()
         self.c0 = torch.rand(self.num_lstm, batch_size, hidden_shape).cuda()
 
         self.relu = ReLU(inplace=True)
+        self.dropout = nn.Dropout(p=dropout_p)
+
         self.fc1 = nn.Linear(hidden_shape, project_dim)
         self.bn1 = nn.BatchNorm1d(project_dim)
 
@@ -734,7 +738,9 @@ class LSTM_End(nn.Module):
         rnn_out = out[:, -1, :].squeeze()
         # rnn_last =
         spk_vec = self.fc1(rnn_out.cuda())
+        spk_vec = self.dropout(spk_vec)
         spk_vec = self.relu(self.bn1(spk_vec))
+
         logits = self.fc2(spk_vec)
 
         return spk_vec, logits
