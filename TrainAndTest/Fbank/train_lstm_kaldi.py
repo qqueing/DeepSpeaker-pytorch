@@ -72,7 +72,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=60, metavar='E',
+parser.add_argument('--epochs', type=int, default=100, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -197,7 +197,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[35], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[40, 75], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
@@ -379,7 +379,7 @@ def test(valid_loader, test_loader, model, epoch):
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test/EER', 100.*eer, epoch)
 
-    print('\33[91mERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {:.4f}%.\33[0m\n'.format('cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+    print('\33[91mERR: {:.8f}. Threshold: {:.8f}. Valid Accuracy is {:.4f}%.\33[0m\n'.format(100. * eer, eer_threshold, valid_accuracy))
 
 
 if __name__ == '__main__':
