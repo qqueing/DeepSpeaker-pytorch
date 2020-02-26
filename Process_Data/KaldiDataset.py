@@ -585,12 +585,15 @@ class KaldiTupleDataset(data.Dataset):
         self.tuple_lst = tuple_lst
 
     def __getitem__(self, sid):
+        pdb.set_trace()
         pairs = self.tuple_lst[sid]
         uids = pairs[:self.num_enroll+1]
         labels = pairs[self.num_enroll+1:]
         labels = [int(x) for x in labels]
-        feat_uids = [self.uid2feat[uid] for uid in uids]
-        features = self.transform(feat_uids)
+        feat_uids = [np.expand_dims(self.uid2feat[uid], axis=0) for uid in uids]
+
+        features = np.concatenate(feat_uids, axis=0)
+        features = self.transform(features)
 
         # features:   eval_utt,    utt1,  ...  ,    utt5
         # labels:0/1, spk_idx1,spk_idx2,  ...  ,spk_idx2
