@@ -392,7 +392,7 @@ def test(test_loader, model, epoch):
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
 
-    writer.add_scalars('Test/EER', 100. * eer, epoch)
+    writer.add_scalar('Test/EER', 100.*eer, epoch)
 
     print('For {}_distance: \n \33[91mERR: {:.8f}. Threshold: {:.8f}.\33[0m'.format('cos' if args.cos_sim else 'l2',
                                                                                     100. * eer, eer_threshold))
