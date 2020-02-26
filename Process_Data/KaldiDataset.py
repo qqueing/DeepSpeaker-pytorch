@@ -469,13 +469,9 @@ class KaldiTupleDataset(data.Dataset):
 
         print('==>Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
 
-        train_trials_f = open(train_trials, 'r+')
         tuple_lst = []
-        tuple_lst_f = train_trials_f.readlines()
-
-        if len(tuple_lst_f) != samples_per_spk*2*len(speakers):
-            train_trials_f.seek()
-
+        if not os.path.exists(train_trials):
+            train_trials_f = open(train_trials, 'w')
             for i in len(speakers):
                 spk = speakers[i]
                 for j in range(samples_per_spk):
@@ -513,8 +509,10 @@ class KaldiTupleDataset(data.Dataset):
                     tuple_lst.append(negative_trials)
                     train_trials_f.write(' '.join(negative_trials) + '\n')
         else:
-            for line in train_trials_f:
+            train_trials_f = open(train_trials, 'r')
+            for line in train_trials_f.readlines():
                 tuple_lst.append(line.split())
+
         train_trials_f.close()
 
         print('==>Generate {} tuples for training.\n'.format(len(tuple_lst)))
