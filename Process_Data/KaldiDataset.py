@@ -444,55 +444,6 @@ class KaldiTupleDataset(data.Dataset):
         spk_to_idx = {speakers[i]: i for i in range(len(speakers))}
         idx_to_spk = {i: speakers[i] for i in range(len(speakers))}
 
-        tuple_lst = []
-        if not os.path.exists(train_trials):
-            # pdb.set_trace()
-
-            train_trials_f = open(train_trials, 'w')
-            for i in range(len(speakers)):
-                spk = speakers[i]
-                for j in range(samples_per_spk):
-                    eval_utts = dataset[spk].copy()
-                    positive_eval_idx = np.random.randint(0, len(eval_utts))
-                    eval_utt = eval_utts[positive_eval_idx]
-                    eval_utts.pop(positive_eval_idx)
-                    positive_enroll = np.random.choice(eval_utts, size=num_enroll)
-
-                    positive_trials = []
-                    positive_trials.append(eval_utt)
-                    for x in positive_enroll:
-                        positive_trials.append(x)
-
-                    positive_trials.append('1')
-                    for m in range(num_enroll):
-                        positive_trials.append(str(spk_to_idx[spk]))
-
-                    tuple_lst.append(positive_trials)
-                    train_trials_f.write(' '.join(positive_trials) + '\n')
-
-                    negative_trials = []
-                    negative_trials.append(eval_utt)
-                    nagative_spks = speakers.copy()
-                    nagative_spks.pop(i)
-                    nagative_spk = np.random.choice(nagative_spks)
-                    nagative_enroll = np.random.choice(dataset[nagative_spk], size=num_enroll)
-                    for x in nagative_enroll:
-                        negative_trials.append(x)
-
-                    negative_trials.append('0')
-                    for m in range(num_enroll):
-                        negative_trials.append(str(spk_to_idx[nagative_spk]))
-
-                    tuple_lst.append(negative_trials)
-                    train_trials_f.write(' '.join(negative_trials) + '\n')
-        else:
-            train_trials_f = open(train_trials, 'r')
-            for line in train_trials_f.readlines():
-                tuple_lst.append(line.split())
-
-        train_trials_f.close()
-
-        print('==>Generate {} tuples for training.\n'.format(len(tuple_lst)))
 
         uid2feat = {}  # 'Eric_McCormack-Y-qKARMSO7k-0001.wav': feature[frame_length, feat_dim]
         pbar = tqdm(enumerate(kaldi_io.read_mat_scp(feat_scp)))
