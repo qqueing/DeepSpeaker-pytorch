@@ -87,7 +87,7 @@ parser.add_argument('--num-lstm', default=3, type=int, metavar='N', help='num of
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -96,13 +96,14 @@ parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT'
 parser.add_argument('--input-per-spks', type=int, default=160, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
-#parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--tuple_size', type=int, default=6, metavar='N',
+                    help='the number of enrolled utterance + 1 (default: 6')
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -178,7 +179,7 @@ test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:4800]
+indices = indices[:6400]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -228,15 +229,14 @@ def main():
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, collate_fn=RNNPadCollate(dim=1),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    criterion = nn.CrossEntropyLoss().cuda()
-    # criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
+    # criterion = nn.CrossEntropyLoss().cuda()
+    criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
 
     for epoch in range(start, end):
         # pdb.set_trace()
         # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, epoch)
-        valid(valid_loader, model, epoch)
-        # test(test_loader, valid_loader, model, epoch)
+        test(test_loader, valid_loader, model, epoch)
         scheduler.step()
         # break
     writer.close()
@@ -255,28 +255,27 @@ def train(train_loader, model, optimizer, criterion, epoch):
         print('\33[1;34m\'{}\' learning rate is {:.4f}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
-    for batch_idx, (data, label, length) in pbar:
+    for batch_idx, (data, label) in pbar:
 
         if args.cuda:
-            data = data.cuda()
+            data = data.squeeze().float().cuda()
             label = label.cuda()
-        # pdb.set_trace()
-        if len(length)!=args.batch_size:
+        pdb.set_trace()
+        if len(data)!=args.batch_size:
             continue
 
-        feats, classfier = model(data, length)
-        # classfier = model(feats)
+        feats, classfier = model.tuple_forward(data)
 
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
 
-        loss = criterion(classfier, label)
+        ce_loss = criterion[0](classfier, label)
+        tuple_loss = criterion[1](feats, label)
 
-        try:
-            batch_correct = float((predicted_one_labels == label).sum().item())
-            minibatch_acc = batch_correct / len(predicted_one_labels)
-        except:
-            pdb.set_trace()
+        loss = ce_loss + tuple_loss
+
+        batch_correct = float((predicted_one_labels == label).sum().item())
+        minibatch_acc = batch_correct / len(predicted_one_labels)
 
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
@@ -285,16 +284,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
         # compute gradient and update weights
         optimizer.zero_grad()
-        try:
-            loss.backward()
-        except RuntimeError as exception:
-            if "out of memory" in str(exception):
-                print("WARNING: out of memory")
-                if hasattr(torch.cuda, 'empty_cache'):
-                    torch.cuda.empty_cache()
-            else:
-                pdb.set_trace()
-
+        loss.backward()
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
