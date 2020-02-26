@@ -246,7 +246,7 @@ def train(train_loader, model, optimizer, criterion, epoch):
     for batch_idx, (data, label) in pbar:
 
         if args.cuda:
-            data = data.cuda()
+            data = data.cuda().squeeze()
             label = label.cuda()
         # pdb.set_trace()
         if len(data) != args.batch_size:
