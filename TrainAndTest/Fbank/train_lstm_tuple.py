@@ -238,7 +238,7 @@ def main():
         # pdb.set_trace()
         # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, epoch)
-        test(test_loader, valid_loader, model, epoch)
+        test(valid_loader, test_loader, model, epoch)
         scheduler.step()
         # break
     writer.close()
