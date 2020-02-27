@@ -63,16 +63,16 @@ parser.add_argument('--test-dir', type=str,
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/LSTM/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/LSTM/soft_0.5/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LSTM/soft/kaldi/checkpoint_49.pth',
+                    default='Data/checkpoint/LSTM/soft/kaldi_0.5/checkpoint_49.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=100, metavar='E',
+parser.add_argument('--epochs', type=int, default=150, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -86,7 +86,7 @@ parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=160, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=256, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -191,13 +191,13 @@ def main():
                      num_class=train_dir.num_spks,
                      batch_size=args.batch_size,
                      num_lstm=args.num_lstm,
-                     dropout_p=0.2)
+                     dropout_p=0.5)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[40, 75], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[50, 100], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
