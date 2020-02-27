@@ -63,7 +63,7 @@ parser.add_argument('--train-dir', type=str, default='/home/yangwenhao/local/pro
 parser.add_argument('--test-dir', type=str, default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test_no_sli',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--feat-dim', default=24, type=int, metavar='N',
+parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
                     help='folder to output model checkpoints')
@@ -74,20 +74,20 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=22, metavar='E',
+parser.add_argument('--epochs', type=int, default=25, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=96, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=32, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=200, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=256, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -106,7 +106,7 @@ parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
 parser.add_argument('--dampening', default=0, type=float,
                     metavar='W', help='dampening for sgd (default: 0.0)')
-parser.add_argument('--optimizer', default='sgd', type=str,
+parser.add_argument('--optimizer', default='adam', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 
 # Device options
@@ -114,7 +114,7 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--gpu-id', default='0', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
-parser.add_argument('--seed', type=int, default=2, metavar='S',
+parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='LI',
                     help='how many batches to wait before logging training status')
@@ -140,7 +140,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='kaldi_fixlen')
 
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
@@ -151,12 +151,12 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH),
+        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file),
+        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
@@ -172,7 +172,7 @@ test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:4800]
+indices = indices[:6400]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -188,13 +188,13 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.0)
+    model = XVectorTDNN(len(train_dir.speakers), dropout_p=0.2)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[16], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[15], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
@@ -229,7 +229,7 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        compute_dropout(model, optimizer, epoch, end)
+        # compute_dropout(model, optimizer, epoch, end)
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         scheduler.step()
@@ -252,7 +252,6 @@ def compute_dropout(model, optimizer, epoch, end):
         dropout_p = -2. * final_dropout / end * epoch + 2 * final_dropout
 
     model.set_global_dropout(dropout_p)
-
 
 def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     # switch to evaluate mode
