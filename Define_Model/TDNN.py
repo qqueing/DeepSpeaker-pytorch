@@ -13,18 +13,8 @@ fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
 import pdb
-
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.nn.utils import weight_norm
-import torch.nn.functional as F
-
 from Define_Model.model import ReLU
-
 __author__ = 'Jonas Van Der Donckt'
-
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -198,7 +188,7 @@ class NewTDNN(nn.Module):
         self.batch_norm = batch_norm
 
         self.kernel = nn.Linear(input_dim * context_size, output_dim)
-        self.nonlinearity = nn.ReLU()
+        self.nonlinearity = ReLU()
 
         if self.batch_norm:
             self.bn = nn.BatchNorm1d(output_dim)
@@ -232,10 +222,10 @@ class NewTDNN(nn.Module):
         # N, output_dim*context_size, new_t = x.shape
         x = x.transpose(1, 2)
         x = self.kernel(x)
-        x = self.nonlinearity(x)
-
         if self.dropout_p:
             x = self.drop(x)
+
+        x = self.nonlinearity(x)
 
         if self.batch_norm:
             x = x.transpose(1, 2)
@@ -266,7 +256,7 @@ class XVectorTDNN(nn.Module):
         self.batch_norm7 = nn.BatchNorm1d(512)
 
         self.relu = ReLU()
-        self.out_act = nn.Sigmoid()
+        # self.out_act = nn.Sigmoid()
         # self.relu = nn.LeakyReLU()
 
         for m in self.modules():  # 对于各层参数的初始化
