@@ -58,14 +58,17 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 
 # options for vox1
-parser.add_argument('--train-dir', type=str, default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev_no_sli',
+parser.add_argument('--train-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev_no_sli',
                     help='path to dataset')
-parser.add_argument('--test-dir', type=str, default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test_no_sli',
+parser.add_argument('--test-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test_no_sli',
                     help='path to voxceleb1 test dataset')
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
+parser.add_argument('--check-path',
+                    default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     default='Data/checkpoint/TDNN/XVextor/soft/kaldi/checkpoint_16.pth',
@@ -96,11 +99,11 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--weight-decay', default=1e-4, type=float,
+parser.add_argument('--weight-decay', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
 parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
@@ -188,7 +191,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = XVectorTDNN(len(train_dir.speakers), input_dim=args.feat_dim, dropout_p=0.2)
+    model = XVectorTDNN(len(train_dir.speakers), input_dim=args.feat_dim, dropout_p=0.1)
 
     if args.cuda:
         model.cuda()
@@ -282,11 +285,8 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
 
         loss = criterion(classfier, label)
 
-        try:
-            batch_correct = float((predicted_one_labels == label).sum().item())
-            minibatch_acc = batch_correct / len(predicted_one_labels)
-        except:
-            pdb.set_trace()
+        batch_correct = float((predicted_one_labels == label).sum().item())
+        minibatch_acc = batch_correct / len(predicted_one_labels)
 
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
