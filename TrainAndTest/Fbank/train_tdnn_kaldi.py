@@ -143,7 +143,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='kaldi_fixlen')
 
-kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
