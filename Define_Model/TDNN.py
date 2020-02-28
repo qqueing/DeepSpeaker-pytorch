@@ -222,15 +222,14 @@ class NewTDNN(nn.Module):
         # N, output_dim*context_size, new_t = x.shape
         x = x.transpose(1, 2)
         x = self.kernel(x)
-        if self.dropout_p:
-            x = self.drop(x)
 
         x = self.nonlinearity(x)
-
         if self.batch_norm:
             x = x.transpose(1, 2)
             x = self.bn(x)
             x = x.transpose(1, 2)
+        if self.dropout_p:
+            x = self.drop(x)
 
         return x
 
