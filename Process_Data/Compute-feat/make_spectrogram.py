@@ -138,7 +138,7 @@ if __name__ == "__main__":
             j = num_utt
 
         out_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-        if os.path.exists(out_dir):
+        if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
         p = MakeFeatsProcess(out_dir, wav_scp[i * chunk:j], i, completed_queue)
