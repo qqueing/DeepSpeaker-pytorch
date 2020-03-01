@@ -105,8 +105,8 @@ class MakeFeatsProcess(Process):
             pair = wav.split()
             compute_wav_path(pair, self.feat_scp, self.feat_ark)
             self.queue.put(pair[0])
-            if self.queue.qsize() % 100 == 0:
-                print(self.queue.qsize())
+            if self.queue.qsize() % 50 == 0:
+                print('>> Process %s:' % str(self.proid) + str(self.queue.qsize()))
 
         print('>>Process {} finished!'.format(self.proid))
 
