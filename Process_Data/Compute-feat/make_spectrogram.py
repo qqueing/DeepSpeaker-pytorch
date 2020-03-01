@@ -25,8 +25,6 @@ from kaldi_io import kaldi_io
 import Process_Data.constants as c
 from Process_Data.audio_processing import Make_Spect
 
-data_dir = sys.argv[1]
-
 parser = argparse.ArgumentParser(description='Computing spectrogram!')
 
 parser.add_argument('--nj', type=int, default=12, metavar='E',
