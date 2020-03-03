@@ -118,22 +118,25 @@ if __name__ == "__main__":
     processpool = []
 
     print('Plan to make feats for %d utterances.' % num_utt)
-    for i in range(0, nj):
-        j = (i + 1) * chunk
+    try:
+        for i in range(0, nj):
+            j = (i + 1) * chunk
 
-        if i == (nj - 1):
-            j = num_utt
+            if i == (nj - 1):
+                j = num_utt
 
-        write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-        if not os.path.exists(write_dir):
-            os.makedirs(write_dir)
+            write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+            if not os.path.exists(write_dir):
+                os.makedirs(write_dir)
 
-        p = MakeFeatsProcess(write_dir, wav_scp[i * chunk:j], i, completed_queue)
-        p.start()
-        processpool.append(p)
+            p = MakeFeatsProcess(write_dir, wav_scp[i * chunk:j], i, completed_queue)
+            p.start()
+            processpool.append(p)
 
-    for p in processpool:
-        p.join()
+        for p in processpool:
+            p.join()
+    except:
+        raise Exception('Making Suspended!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
     print('>>Splited Data root is %s. Cat all scripts together.' % str(Split_dir))
