@@ -136,6 +136,8 @@ if __name__ == "__main__":
         for p in processpool:
             p.join()
     except:
+        for p in processpool:
+            p.terminate()
         sys.exit('Making Suspended!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
