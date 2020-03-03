@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-
 """
 @Author: yangwenhao
 @Contact: 874681044@qq.com
@@ -9,18 +8,6 @@
 @Time: 2020/3/3 7:55 PM
 @Overview:
 """
-# !/usr/bin/env python
-# encoding: utf-8
-
-"""
-@Author: yangwenhao
-@Contact: 874681044@qq.com
-@Software: PyCharm
-@File: make_spectrogram.py
-@Time: 2020/2/28 5:53 PM
-@Overview: Make Spectorgrams with kaldi data format.
-"""
-
 from __future__ import print_function
 import argparse
 import os
