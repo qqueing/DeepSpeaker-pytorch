@@ -46,36 +46,8 @@ parser.add_argument('--vad-frames-context', type=int, default=2, metavar='E',
 args = parser.parse_args()
 
 
-def compute_wav_path(data_path):
-    wav_scp = os.path.join(data_path, 'wav.scp')
-    feat_scp = os.path.join(data_path, 'feat.scp')
-    feat_ark = os.path.join(data_path, 'feat.ark')
-
-    assert os.path.exists(wav_scp)
-
-    f = open(wav_scp, 'r')
-    wav_scp_lsts = f.readlines()
-    f.close()
-
-    uid2path = {}
-    for line in wav_scp_lsts:
-        l = line.split()
-        uid2path[l[0]] = l[1]
-
-    with open(feat_scp, 'w') as scp, open(feat_ark, 'wb') as ark:
-        for uid in uid2path.keys():
-            feat = Make_Spect(wav_path=uid2path[uid], windowsize=0.02, stride=0.01)
-            # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
-
-            len_vec = len(feat.tobytes())
-            key = uid
-            kaldi_io.write_vec_flt(ark, feat, key=key)
-
-            scp.write(str(uid[i]) + ' ' + str(feat_scp) + ':' + str(ark.tell() - len_vec - 10) + '\n')
-
-
-def compute_wav_path(wav, feat_scp, feat_ark):
-    feat = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01)
+def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
+    feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
     # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
     len_vec = len(feat.tobytes())
@@ -83,6 +55,8 @@ def compute_wav_path(wav, feat_scp, feat_ark):
     kaldi_io.write_vec_flt(feat_ark, feat, key=key)
 
     feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
+    utt2dur.write('%s %.6f' % (str(key), duration))
+    utt2num_frames.write('%s %d' % (str(key), len(feat)))
 
 
 class MakeFeatsProcess(Process):
@@ -96,19 +70,23 @@ class MakeFeatsProcess(Process):
         #  wav_scp = os.path.join(data_path, 'wav.scp')
         feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
         feat_ark = os.path.join(out_dir, 'feat.%d.ark' % proid)
+        utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
+        utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
         self.feat_scp = open(feat_scp, 'w')
         self.feat_ark = open(feat_ark, 'wb')
+        self.utt2dur = open(utt2dur, 'w')
+        self.utt2num_frames = open(utt2num_frames, 'w')
 
     def run(self):
         for wav in self.item:
             pair = wav.split()
-            compute_wav_path(pair, self.feat_scp, self.feat_ark)
+            compute_wav_path(pair, self.feat_scp, self.feat_ark, self.utt2dur, self.utt2num_frames)
             self.queue.put(pair[0])
-            if self.queue.qsize() % 50 == 0:
+            if self.queue.qsize() % 1000 == 0:
                 print('>> Process %s:' % str(self.proid) + str(self.queue.qsize()))
 
-        print('>>Process {} finished!'.format(self.proid))
+        print('>> Process {} finished!'.format(self.proid))
 
 
 if __name__ == "__main__":
@@ -118,6 +96,13 @@ if __name__ == "__main__":
     out_dir = args.out_dir
 
     wav_scp_f = os.path.join(data_dir, 'wav.scp')
+
+    print('Copy wav.scp, spk2utt, utt2spk to %s' % out_dir)
+    for f in ['wav.scp', 'spk2utt', 'utt2spk']:
+        orig_f = os.path.join(data_dir, f)
+        targ_f = os.path.join(out_dir, f)
+        os.system('cp %s %s' % (orig_f, targ_f))
+
     with open(wav_scp_f, 'r') as f:
         wav_scp = f.readlines()
         assert len(wav_scp) > 0
@@ -139,18 +124,42 @@ if __name__ == "__main__":
         if i == (nj - 1):
             j = num_utt
 
-        out_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
+        write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+        if not os.path.exists(write_dir):
+            os.makedirs(write_dir)
 
-        p = MakeFeatsProcess(out_dir, wav_scp[i * chunk:j], i, completed_queue)
+        p = MakeFeatsProcess(write_dir, wav_scp[i * chunk:j], i, completed_queue)
         p.start()
         processpool.append(p)
 
     for p in processpool:
         p.join()
 
-    print('For multi process Completed!')
+    Split_dir = os.path.join(out_dir, 'Split%d' % nj)
+    print('>>Splited Data root is %s. Cat all scripts together.' % str(Split_dir))
+
+    all_scp_path = [os.path.join(Split_dir, '%d/feat.%d.scp' % (i, i)) for i in range(nj)]
+    feat_scp = os.path.join(out_dir, 'feats.scp')
+    with open(feat_scp, 'w') as feat_scp_f:
+        for item in all_scp_path:
+            for txt in open(item, 'r').readlines():
+                feat_scp_f.write(txt)
+
+    all_scp_path = [os.path.join(Split_dir, '%d/utt2dur.%d' % (i, i)) for i in range(nj)]
+    utt2dur = os.path.join(out_dir, 'utt2dur')
+    with open(utt2dur, 'w') as utt2dur_f:
+        for item in all_scp_path:
+            for txt in open(str(item), 'r').readlines():
+                utt2dur_f.write(txt)
+
+    all_scp_path = [os.path.join(Split_dir, '%d/utt2num_frames.%d' % (i, i)) for i in range(nj)]
+    utt2num_frames = os.path.join(out_dir, 'utt2num_frames')
+    with open(utt2num_frames, 'w') as utt2num_frames_f:
+        for item in all_scp_path:
+            for txt in open(str(item), 'r').readlines():
+                utt2num_frames_f.write(txt)
+
+    print('For multi process Completed, write all files in: %s' % out_dir)
 
 """
 For multi threads, average making seconds for 47 speakers is 4.579958657

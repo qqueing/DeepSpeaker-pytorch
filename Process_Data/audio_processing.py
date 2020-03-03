@@ -18,8 +18,7 @@ import math
 import pdb
 import torch.nn.utils.rnn as rnn_utils
 
-
-from Process_Data.compute_vad import ComputeVadEnergy
+from Process_Data.Compute_Feat.compute_vad import ComputeVadEnergy
 
 
 def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE, use_logscale=c.USE_LOGSCALE):
@@ -203,7 +202,7 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
     # return spectrogram
 
 
-def Make_Spect(wav_path, windowsize, stride, window=np.hamming):
+def Make_Spect(wav_path, windowsize, stride, window=np.hamming, duration=False):
     """
     read wav as float type.
     :param wav_path:
@@ -214,6 +213,7 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming):
     """
 
     samples, samplerate = sf.read(wav_path)
+
     S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
                      hop_length=int((windowsize-stride) * samplerate),
                      window=window(int(windowsize * samplerate)))  # 进行短时傅里叶变换，参数意义在一开始有定义
@@ -221,6 +221,9 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming):
     feature, _ = librosa.magphase(S)
     feature = np.log1p(feature)  # log1p操作
     feature = feature.transpose()
+    if duration:
+        duration = len(samples) / samplerate
+        normalize_frames(feature), duration
 
     return normalize_frames(feature)
 

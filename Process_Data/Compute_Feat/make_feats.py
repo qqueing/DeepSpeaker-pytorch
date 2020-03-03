@@ -177,10 +177,6 @@ if __name__ == "__main__":
         if i==(NUM_JOB-1):
             j = num_utt
 
-        # t = MyThread(missing_spks[i*trunk:j], i)
-        # t.start()
-        # threadpool.append(t)
-
         p = MakeFeatsProcess(utts[i*chunk:j], i, queue)
         p.start()
         processpool.append(p)

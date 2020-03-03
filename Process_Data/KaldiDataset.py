@@ -37,17 +37,7 @@ def write_xvector_ark(uid, xvector, write_path, set):
     scp_file = write_path+'/{}_xvector.scp'.format(set)
 
     # write scp and ark file
-    with open(scp_file, 'w') as scp, open(ark_file, 'wb') as ark:
-        for i in range(len(uid)):
-            vec = xvector[i]
-            len_vec = len(vec.tobytes())
-            key = uid[i]
 
-            kaldi_io.write_vec_flt(ark, vec, key=key)
-            # print(ark.tell())
-            scp.write(str(uid[i]) + ' ' + str(ark_file) + ':' + str(ark.tell()-len_vec-10) + '\n')
-
-    print('\nark,scp files are in: {}, {}.'.format(ark_file, scp_file))
 
     # Prepare utt2spk file
     if set=='train':
