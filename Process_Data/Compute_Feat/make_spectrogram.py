@@ -94,6 +94,8 @@ if __name__ == "__main__":
     nj = args.nj
     data_dir = args.data_dir
     out_dir = args.out_dir
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
     wav_scp_f = os.path.join(data_dir, 'wav.scp')
 
