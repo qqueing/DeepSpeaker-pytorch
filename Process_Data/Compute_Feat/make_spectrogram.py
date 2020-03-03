@@ -136,7 +136,7 @@ if __name__ == "__main__":
         for p in processpool:
             p.join()
     except:
-        raise Exception('Making Suspended!')
+        sys.exit('Making Suspended!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
     print('>>Splited Data root is %s. Cat all scripts together.' % str(Split_dir))
@@ -163,6 +163,7 @@ if __name__ == "__main__":
                 utt2num_frames_f.write(txt)
 
     print('For multi process Completed, write all files in: %s' % out_dir)
+    sys.exit()
 
 """
 For multi threads, average making seconds for 47 speakers is 4.579958657
