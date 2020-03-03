@@ -27,7 +27,7 @@ from Process_Data.audio_processing import Make_Spect
 
 parser = argparse.ArgumentParser(description='Computing spectrogram!')
 
-parser.add_argument('--nj', type=int, default=12, metavar='E',
+parser.add_argument('--nj', type=int, default=16, metavar='E',
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--data-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev',
