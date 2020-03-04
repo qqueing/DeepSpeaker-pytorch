@@ -64,7 +64,9 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test_no_sli',
                     help='path to test dataset')
 
-parser.add_argument('--feat-dim', default=512, type=int, metavar='N',
+parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
+                    help='acoustic feature dimension')
+parser.add_argument('--embedding-dim', default=512, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--check-path', default='Data/checkpoint/ALSTM/soft/kaldi',
                     help='folder to output model checkpoints')
@@ -141,6 +143,8 @@ if args.cuda:
 
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='alstm')
+if not os.path.exists(args.check_path):
+    os.makedirs(args.check_path)
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
 opt_kwargs = {'lr': args.lr,
@@ -193,13 +197,14 @@ def main():
     # instantiate
     # model and initialize weights
     model = AttentionLSTM(input_dim=args.feat_dim, num_class=train_dir.num_spks, batch_size=args.batch_size,
-                          project_dim=args.feat_dim, num_lstm=args.num_lstm, dropout_p=0.1)
+                          project_dim=args.embedding_dim, num_lstm=args.num_lstm, hidden_shape=128,
+                          dropout_p=0.1, attention_dim=128)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[50, 100], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[50, 80], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
@@ -226,6 +231,10 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
     # criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size)]
+
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
+    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()},
+               check_path)
 
     for epoch in range(start, end):
         # compute_dropout(model, optimizer, epoch, end)
@@ -292,9 +301,6 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
     # options for vox1
     check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
-    if not check_path.parent.exists():
-        os.makedirs(str(check_path.parent))
-
     torch.save({'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},

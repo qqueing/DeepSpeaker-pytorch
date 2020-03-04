@@ -766,9 +766,9 @@ class AttentionLSTM(nn.Module):
         self.relu = ReLU(inplace=True)
         self.dropout = nn.Dropout(p=dropout_p)
 
-        self.attention_linear = nn.Linear(hidden_shape, hidden_shape)
+        self.attention_linear = nn.Linear(hidden_shape, attention_dim)
         self.attention_activation = nn.Sigmoid()
-        self.attention_vector = nn.Parameter(torch.rand(hidden_shape, 1))
+        self.attention_vector = nn.Parameter(torch.rand(attention_dim, 1))
         self.attention_soft = nn.Tanh()
 
         self.fc1 = nn.Linear(hidden_shape, project_dim)
