@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 # encoding: utf-8
 """
 @Author: yangwenhao
@@ -55,6 +55,11 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         if queue.qsize() % 1000 == 0:
             print('== Process %s:' % str(proid) + str(queue.qsize()))
 
+    feat_scp.close()
+    feat_ark.close()
+    utt2dur.close()
+    utt2num_frames.close()
+
     print('>> Process {} finished!'.format(proid))
 
 
@@ -105,32 +110,40 @@ if __name__ == "__main__":
     start_time = time.time()
 
     completed_queue = Queue()
-    processpool = []
-
+    # processpool = []
     print('Plan to make feats for %d utterances.' % num_utt)
-    try:
-        for i in range(0, nj):
-            j = (i + 1) * chunk
+    # for i in range(0, nj):
+    #     j = (i + 1) * chunk
+    #
+    #     if i == (nj - 1):
+    #         j = num_utt
+    #
+    #     write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+    #     if not os.path.exists(write_dir):
+    #         os.makedirs(write_dir)
+    #
+    #     p = Process(target=MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
+    #     p.start()
+    #     processpool.append(p)
+    #
+    # for p in processpool:
+    #     p.join()
+    pool = Pool(processes=nj)  # 创建4个进程
+    for i in range(0, nj):
+        j = (i + 1) * chunk
 
-            if i == (nj - 1):
-                j = num_utt
+        if i == (nj - 1):
+            j = num_utt
 
-            write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-            if not os.path.exists(write_dir):
-                os.makedirs(write_dir)
+        write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+        if not os.path.exists(write_dir):
+            os.makedirs(write_dir)
 
-            p = Process(target=MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
-            p.start()
-            processpool.append(p)
+        pool.apply_async(MakeFeatsProcess, (write_dir, wav_scp[i * chunk:j], i, completed_queue))
 
-        for p in processpool:
-            p.join()
-
-        print(' >> Computing Completed!')
-    except:
-        for p in processpool:
-            p.terminate()
-        sys.exit('Making Suspended!')
+    pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
+    pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
+    print(' >> Computing Completed!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
     print(' >> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
