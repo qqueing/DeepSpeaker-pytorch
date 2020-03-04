@@ -32,8 +32,8 @@ def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
     kaldi_io.write_vec_flt(feat_ark, feat, key=key)
 
     feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
-    utt2dur.write('%s %.6f' % (str(key), duration))
-    utt2num_frames.write('%s %d' % (str(key), len(feat)))
+    utt2dur.write('%s %.6f\n' % (str(key), duration))
+    utt2num_frames.write('%s %d\n' % (str(key), len(feat)))
 
 
 def MakeFeatsProcess(out_dir, item, proid, queue):
@@ -131,7 +131,6 @@ if __name__ == "__main__":
     pool = Pool(processes=nj)  # 创建4个进程
     for i in range(0, nj):
         j = (i + 1) * chunk
-
         if i == (nj - 1):
             j = num_utt
 
