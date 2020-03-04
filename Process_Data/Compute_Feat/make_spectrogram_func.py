@@ -66,13 +66,13 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=16, metavar='E',
+    parser.add_argument('--nj', type=int, default=4, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
