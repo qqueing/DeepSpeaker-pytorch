@@ -29,7 +29,7 @@ def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
 
     len_vec = len(feat.tobytes())
     key = wav[0]
-    kaldi_io.write_vec_flt(feat_ark, feat, key=key)
+    kaldi_io.write_mat(feat_ark, feat, key=key)
 
     feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
     utt2dur.write('%s %.6f\n' % (str(key), duration))
@@ -53,6 +53,7 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         compute_wav_path(pair, feat_scp, feat_ark, utt2dur, utt2num_frames)
         queue.put(pair[0])
         if queue.qsize() % 1000 == 0:
+            break
             print('\rProcessed [%6s]/[148642]' % str(queue.qsize()), end='')
 
     feat_scp.close()
