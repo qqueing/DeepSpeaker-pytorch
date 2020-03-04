@@ -14,7 +14,7 @@ import os
 import pathlib
 import sys
 import pdb
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Process, Queue, Pool, Manager
 import time
 import numpy as np
 from kaldi_io import kaldi_io
@@ -109,7 +109,9 @@ if __name__ == "__main__":
     chunk = int(num_utt / nj)
     start_time = time.time()
 
-    completed_queue = Queue()
+    # completed_queue = Queue()
+    manager = Manager()
+    completed_queue = manager.Queue()
     # processpool = []
     print('Plan to make feats for %d utterances.' % num_utt)
     # for i in range(0, nj):
