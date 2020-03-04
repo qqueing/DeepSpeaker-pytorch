@@ -14,6 +14,7 @@ import torch.optim as optim
 
 def create_optimizer(parameters, optimizer, **kwargs):
     # setup optimizer
+    parameters = filter(lambda p: p.requires_grad, parameters)
     if optimizer == 'sgd':
         opt = optim.SGD(parameters,
                               lr=kwargs['lr'],
