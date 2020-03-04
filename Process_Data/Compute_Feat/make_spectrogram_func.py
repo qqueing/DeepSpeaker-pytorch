@@ -52,7 +52,7 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         pair = wav.split()
         compute_wav_path(pair, feat_scp, feat_ark, utt2dur, utt2num_frames)
         queue.put(pair[0])
-        if queue.qsize() % 1000 == 0:
+        if queue.qsize() % 2000 == 0:
             print('== Process %s:' % str(proid) + str(queue.qsize()))
 
     feat_scp.close()
@@ -114,23 +114,7 @@ if __name__ == "__main__":
     completed_queue = manager.Queue()
     # processpool = []
     print('Plan to make feats for %d utterances.' % num_utt)
-    # for i in range(0, nj):
-    #     j = (i + 1) * chunk
-    #
-    #     if i == (nj - 1):
-    #         j = num_utt
-    #
-    #     write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-    #     if not os.path.exists(write_dir):
-    #         os.makedirs(write_dir)
-    #
-    #     p = Process(target=MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
-    #     p.start()
-    #     processpool.append(p)
-    #
-    # for p in processpool:
-    #     p.join()
-    pool = Pool(processes=nj)  # 创建4个进程
+    pool = Pool(processes=nj)  # 创建nj个进程
     for i in range(0, nj):
         j = (i + 1) * chunk
         if i == (nj - 1):
@@ -139,10 +123,6 @@ if __name__ == "__main__":
         write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
         if not os.path.exists(write_dir):
             os.makedirs(write_dir)
-        # param = {'out_dir':write_dir,
-        #          'item': wav_scp[i * chunk:j],
-        #          'proid': i,
-        #          'queue':completed_queue}
         pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
