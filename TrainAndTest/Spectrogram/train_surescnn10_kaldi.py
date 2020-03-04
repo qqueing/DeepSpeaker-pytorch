@@ -63,7 +63,7 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--ckp-dir', default='Data/checkpoint/SuResCNN10/spect/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     default='Data/checkpoint/SuResCNN10/spect/kaldi/checkpoint_35.pth', type=str, metavar='PATH',
@@ -147,9 +147,12 @@ if args.cuda:
 
 # create logger
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='kaldi_192')
+writer = SummaryWriter(logdir=args.check_path, filename_suffix='kaldi_192')
 
-kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+if not os.path.exists(args.check_path):
+    os.makedirs(args.check_path)
+
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
@@ -204,8 +207,8 @@ def main():
     print('Number of Speakers: {}.\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size, n_classes=len(train_dir.classes),
-                              m=args.margin)
+    model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size,
+                              n_classes=len(train_dir.classes), m=args.margin)
 
     if args.cuda:
         model.cuda()
@@ -241,6 +244,13 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
+
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
+    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()},
+               # 'criterion': criterion.state_dict()
+               check_path)
+
     if args.cuda:
         ce = ce.cuda()
 
@@ -257,7 +267,7 @@ def main():
 def train(train_loader, model, ce, optimizer, scheduler, epoch):
     # switch to evaluate mode
     model.train()
-    # labels, distances = [], []
+
     correct = 0.
     total_datasize = 0.
     total_loss = 0.
@@ -266,7 +276,6 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         print('\33[1;34m Optimizer \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     pbar = tqdm(enumerate(train_loader))
-
     output_softmax = nn.Softmax(dim=1)
 
     for batch_idx, (data, label) in pbar:
@@ -305,16 +314,13 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
                     loss.item(),
                     100. * minibatch_acc))
 
-    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.ckp_dir, epoch))
-    if not check_path.parent.exists():
-        os.makedirs(str(check_path.parent))
-
-    torch.save({'epoch': epoch + 1,
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
+    torch.save({'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict()},
                # 'criterion': criterion.state_dict()
-               str(check_path))
+               check_path)
 
     print('\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Average loss: {}.\n\33[0m'.format(epoch, 100 * float(
         correct) / total_datasize, total_loss / len(train_loader)))
@@ -351,8 +357,7 @@ def test(test_loader, valid_loader, model, epoch):
         total_datasize += len(predicted_one_labels)
 
         if batch_idx % args.log_interval == 0:
-            valid_pbar.set_description(
-                'Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
+            valid_pbar.set_description('Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
                     len(valid_loader.dataset),
