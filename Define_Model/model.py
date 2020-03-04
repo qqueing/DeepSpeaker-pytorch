@@ -760,8 +760,8 @@ class AttentionLSTM(nn.Module):
                                   batch_first=True,
                                   dropout=dropout_p)
 
-        self.h0 = torch.rand(self.num_lstm, batch_size, hidden_shape)
-        self.c0 = torch.rand(self.num_lstm, batch_size, hidden_shape)
+        self.h0 = nn.Parameter(torch.rand(self.num_lstm, batch_size, hidden_shape), requires_grad=False)
+        self.c0 = nn.Parameter(torch.rand(self.num_lstm, batch_size, hidden_shape), requires_grad=False)
 
         self.relu = ReLU(inplace=True)
         self.dropout = nn.Dropout(p=dropout_p)
