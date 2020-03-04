@@ -52,8 +52,8 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         pair = wav.split()
         compute_wav_path(pair, feat_scp, feat_ark, utt2dur, utt2num_frames)
         queue.put(pair[0])
-        if queue.qsize() % 2000 == 0:
-            print('Processed [%6s]/[148642]:' % str(queue.qsize()), end='')
+        if queue.qsize() % 1000 == 0:
+            print('\rProcessed [%6s]/[148642]:' % str(queue.qsize()), end='')
 
     feat_scp.close()
     feat_ark.close()
