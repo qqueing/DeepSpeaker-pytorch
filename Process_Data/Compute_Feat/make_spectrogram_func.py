@@ -143,7 +143,7 @@ if __name__ == "__main__":
         #          'item': wav_scp[i * chunk:j],
         #          'proid': i,
         #          'queue':completed_queue}
-        pool.map(MakeFeatsProcess, write_dir, wav_scp[i * chunk:j], i, completed_queue)
+        pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
     pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
