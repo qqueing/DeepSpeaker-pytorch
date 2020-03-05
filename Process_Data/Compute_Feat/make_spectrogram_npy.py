@@ -28,8 +28,8 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
     # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
     key = wav[0]
     # pdb.set_trace()
-    save_path = os.path.join((feat_path, wav[0], '.npy'))
-    print(save_path)
+    save_path = os.path.join((feat_path, wav[0] + '.npy'))
+    print('save path:' + save_path)
 
     np.save(save_path, feat)
 
@@ -55,6 +55,7 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
     for wav in item:
         pair = wav.split()
         compute_wav_path(pair, feat_scp, feat_path, utt2dur, utt2num_frames)
+
         queue.put(pair[0])
 
         if queue.qsize() % 1000 == 0:
@@ -127,6 +128,7 @@ if __name__ == "__main__":
         write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
         if not os.path.exists(write_dir):
             os.makedirs(write_dir)
+
         pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
