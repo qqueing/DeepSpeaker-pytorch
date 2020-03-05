@@ -28,7 +28,8 @@ from tqdm import tqdm
 
 from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, KaldiScriptDataset
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, KaldiScriptDataset, \
+    ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
@@ -186,17 +187,17 @@ else:
 
 # pdb.set_trace()
 
-train_dir = KaldiScriptDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
-test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
+train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
+test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
 indices = indices[:6400]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
-valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
-                              valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                              transform=transform)
+valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
+                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
+                               transform=transform)
 
 
 def main():
@@ -210,7 +211,7 @@ def main():
 
     # instantiate model and initialize weights
     model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size,
-                              n_classes=len(train_dir.classes), m=args.margin)
+                              n_classes=train_dir.num_spks, m=args.margin)
 
     if args.cuda:
         model.cuda()

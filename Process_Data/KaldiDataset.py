@@ -643,7 +643,7 @@ class KaldiExtractDataset(data.Dataset):
         return len(self.uid2feat)  # 返回一个epoch的采样数
 
 
-class KaldiScriptDataset(data.Dataset):
+class ScriptTrainDataset(data.Dataset):
     def __init__(self, dir, samples_per_speaker, transform, num_valid=5):
 
         feat_scp = dir + '/feats.scp'
@@ -706,7 +706,7 @@ class KaldiScriptDataset(data.Dataset):
                     valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
                     valid_utt2spk_dict[utt] = utt2spk_dict[utt]
 
-        print('==> Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
+        print('==> Spliting {} utterances for Validation.'.format(len(valid_uid2feat)))
 
         self.feat_dim = read_mat(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers
@@ -754,6 +754,106 @@ class KaldiScriptDataset(data.Dataset):
     def __len__(self):
         return self.samples_per_speaker * len(self.speakers)  # 返回一个epoch的采样数
 
+
+class ScriptValidDataset(data.Dataset):
+    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict, transform):
+        speakers = [spk for spk in valid_set.keys()]
+        speakers.sort()
+        self.speakers = speakers
+        self.dataset = valid_set
+        self.valid_set = valid_set
+        self.uid2feat = valid_uid2feat
+        self.utt2spk_dict = valid_utt2spk_dict
+        self.spk_to_idx = spk_to_idx
+        self.num_spks = len(speakers)
+        self.transform = transform
+
+    def __getitem__(self, index):
+        uid = list(self.uid2feat.keys())[index]
+        spk = self.utt2spk_dict[uid]
+        y = read_mat(self.uid2feat[uid])
+
+        feature = self.transform(y)
+        label = self.spk_to_idx[spk]
+
+        return feature, label
+
+    def __len__(self):
+        return len(self.uid2feat)
+
+
+class ScriptTestDataset(data.Dataset):
+    def __init__(self, dir, transform):
+
+        feat_scp = dir + '/feats.scp'
+        spk2utt = dir + '/spk2utt'
+        trials = dir + '/trials'
+
+        if not os.path.exists(feat_scp):
+            raise FileExistsError(feat_scp)
+        if not os.path.exists(spk2utt):
+            raise FileExistsError(spk2utt)
+        if not os.path.exists(trials):
+            raise FileExistsError(trials)
+
+        dataset = {}
+        with open(spk2utt, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                spk_utt = line.split(' ')
+                spk_name = spk_utt[0]
+                if spk_name not in dataset.keys():
+                    spk_utt[-1] = spk_utt[-1].rstrip('\n')
+                    dataset[spk_name] = spk_utt[1:]
+
+        speakers = [spk for spk in dataset.keys()]
+        speakers.sort()
+        print('    There are {} speakers in Test Dataset.'.format(len(speakers)))
+
+        uid2feat = {}
+        with open(feat_scp, 'r') as f:
+            for line in f.readlines():
+                uid, feat_offset = line.split()
+                uid2feat[uid] = feat_offset
+
+        print('    There are {} utterances in Test Dataset.'.format(len(uid2feat)))
+
+        trials_pair = []
+        with open(trials, 'r') as t:
+            all_pairs = t.readlines()
+            for line in all_pairs:
+                pair = line.split(' ')
+                if pair[2] == 'nontarget\n':
+                    pair_true = False
+                else:
+                    pair_true = True
+
+                trials_pair.append((pair[0], pair[1], pair_true))
+
+        print('==>There are {} pairs in test Dataset.\n'.format(len(trials_pair)))
+
+        self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
+        self.speakers = speakers
+        self.uid2feat = uid2feat
+        self.trials_pair = trials_pair
+        self.num_spks = len(speakers)
+        self.transform = transform
+
+    def __getitem__(self, index):
+        uid_a, uid_b, label = self.trials_pair[index]
+
+        feat_a = self.uid2feat[uid_a]
+        feat_b = self.uid2feat[uid_b]
+        y_a = read_mat(feat_a)
+        y_b = read_mat(feat_b)
+
+        data_a = self.transform(y_a)
+        data_b = self.transform(y_b)
+
+        return data_a, data_b, label
+
+    def __len__(self):
+        return len(self.trials_pair)
 # uid = ['A.J._Buckley-1zcIwhmdeo4-0001.wav', 'A.J._Buckley-1zcIwhmdeo4-0002.wav', 'A.J._Buckley-1zcIwhmdeo4-0003.wav', 'A.J._Buckley-7gWzIy6yIIk-0001.wav']
 # xvector = np.random.randn(4, 512).astype(np.float32)
 #
