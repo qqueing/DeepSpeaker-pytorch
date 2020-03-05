@@ -55,13 +55,10 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         # print('111')
         pair = wav.split()
         key = pair[0]
-        # pdb.set_trace()
-        # compute_wav_path(pair, feat_scp, feat_path, utt2dur, utt2num_frames)
         feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
         # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
         save_path = os.path.join(feat_path, key + '.npy')
-        # print('save path:' + save_path)
         np.save(save_path, feat)
 
         feat_scp.write(str(key) + ' ' + save_path + '\n')
@@ -83,7 +80,7 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=1, metavar='E',
+    parser.add_argument('--nj', type=int, default=16, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev',
@@ -131,7 +128,7 @@ if __name__ == "__main__":
     manager = Manager()
     completed_queue = manager.Queue()
     # processpool = []
-    print('Plan to make feats for %d utterances in %s.' % (num_utt, str(start_time)))
+    print('Plan to make feats for %d utterances in %s.' % (num_utt, str(time.asctime())))
     # MakeFeatsProcess(out_dir, wav_scp, 0, completed_queue)
 
     pool = Pool(processes=nj)  # 创建nj个进程
