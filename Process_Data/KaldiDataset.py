@@ -832,7 +832,7 @@ class ScriptTestDataset(data.Dataset):
 
         print('==>There are {} pairs in test Dataset.\n'.format(len(trials_pair)))
 
-        self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
+        self.feat_dim = read_mat(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers
         self.uid2feat = uid2feat
         self.trials_pair = trials_pair
