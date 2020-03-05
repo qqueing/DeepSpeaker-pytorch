@@ -53,6 +53,7 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
     utt2num_frames = open(utt2num_frames, 'w')
 
     for wav in item:
+        print('111')
         pair = wav.split()
         # compute_wav_path(pair, feat_scp, feat_path, utt2dur, utt2num_frames)
         feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
@@ -126,11 +127,12 @@ if __name__ == "__main__":
     chunk = int(num_utt / nj)
     start_time = time.time()
 
+
     # completed_queue = Queue()
     manager = Manager()
     completed_queue = manager.Queue()
     # processpool = []
-    print('Plan to make feats for %d utterances.' % num_utt)
+    print('Plan to make feats for %d utterances in %s.' % (num_utt, str(start_time)))
     pool = Pool(processes=nj)  # 创建nj个进程
     for i in range(0, nj):
         j = (i + 1) * chunk
