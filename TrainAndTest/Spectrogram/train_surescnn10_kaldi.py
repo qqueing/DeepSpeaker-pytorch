@@ -28,8 +28,7 @@ from tqdm import tqdm
 
 from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, KaldiScriptDataset, \
-    ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
