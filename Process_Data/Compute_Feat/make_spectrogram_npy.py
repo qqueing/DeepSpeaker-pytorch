@@ -56,11 +56,11 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         print('111')
         pair = wav.split()
         # compute_wav_path(pair, feat_scp, feat_path, utt2dur, utt2num_frames)
-        feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
+        feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
         # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
-        key = wav[0]
+        key = pair[0]
         # pdb.set_trace()
-        save_path = os.path.join((feat_path, wav[0] + '.npy'))
+        save_path = os.path.join((feat_path, pair[0] + '.npy'))
         print('save path:' + save_path)
 
         np.save(save_path, feat)
