@@ -54,7 +54,19 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
 
     for wav in item:
         pair = wav.split()
-        compute_wav_path(pair, feat_scp, feat_path, utt2dur, utt2num_frames)
+        # compute_wav_path(pair, feat_scp, feat_path, utt2dur, utt2num_frames)
+        feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
+        # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
+        key = wav[0]
+        # pdb.set_trace()
+        save_path = os.path.join((feat_path, wav[0] + '.npy'))
+        print('save path:' + save_path)
+
+        np.save(save_path, feat)
+
+        feat_scp.write(str(key) + ' ' + save_path + '\n')
+        utt2dur.write('%s %.6f\n' % (str(key), duration))
+        utt2num_frames.write('%s %d\n' % (str(key), len(feat)))
 
         queue.put(pair[0])
 
