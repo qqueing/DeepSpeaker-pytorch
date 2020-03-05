@@ -29,6 +29,8 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
     key = wav[0]
     # pdb.set_trace()
     save_path = os.path.join((feat_path, wav[0], '.npy'))
+    print(save_path)
+
     np.save(save_path, feat)
 
     feat_scp.write(str(key) + ' ' + save_path + '\n')
