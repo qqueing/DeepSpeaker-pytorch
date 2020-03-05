@@ -68,16 +68,16 @@ parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--embedding-dim', default=512, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/ALSTM/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/ALSTM/soft/kaldi_0.001',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ALSTM/soft/kaldi/checkpoint_49.pth',
+                    default='Data/checkpoint/ALSTM/soft/kaldi_0.001/checkpoint_49.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=100, metavar='E',
+parser.add_argument('--epochs', type=int, default=150, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -100,7 +100,7 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.005, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -204,7 +204,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[50, 80], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[120, 170], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
