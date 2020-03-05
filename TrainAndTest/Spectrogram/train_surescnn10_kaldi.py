@@ -206,7 +206,7 @@ def main():
     # print the experiment configuration
     print('\nCurrent time is \33[91m{}\33[0m.'.format(str(time.asctime())))
     print('Parsed options: {}'.format(vars(args)))
-    print('Number of Speakers: {}.\n'.format(len(train_dir.classes)))
+    print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
     # instantiate model and initialize weights
     model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size,
