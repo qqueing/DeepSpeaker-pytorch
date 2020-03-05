@@ -28,9 +28,8 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
     # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
     key = wav[0]
     # pdb.set_trace()
-    save_path = os.path.join((feat_path, wav[0] + '.npy'))
-    print('save path:' + save_path)
-
+    save_path = os.path.join(feat_path, wav[0] + '.npy')
+    # print('save path:' + save_path)
     np.save(save_path, feat)
 
     feat_scp.write(str(key) + ' ' + save_path + '\n')
@@ -61,8 +60,8 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
         feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
         # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
         key = pair[0]
-        save_path = os.path.join((feat_path, pair[0] + '.npy'))
-        print('save path:' + save_path)
+        save_path = os.path.join(feat_path, pair[0] + '.npy')
+        # print('save path:' + save_path)
 
         np.save(save_path, feat)
 
@@ -134,22 +133,22 @@ if __name__ == "__main__":
     completed_queue = manager.Queue()
     # processpool = []
     print('Plan to make feats for %d utterances in %s.' % (num_utt, str(start_time)))
-    MakeFeatsProcess(out_dir, wav_scp, 0, completed_queue)
+    # MakeFeatsProcess(out_dir, wav_scp, 0, completed_queue)
 
-    # pool = Pool(processes=nj)  # 创建nj个进程
-    # for i in range(0, nj):
-    #     j = (i + 1) * chunk
-    #     if i == (nj - 1):
-    #         j = num_utt
-    #
-    #     write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-    #     if not os.path.exists(write_dir):
-    #         os.makedirs(write_dir)
-    #
-    #     pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
-    #
-    # pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
-    # pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
+    pool = Pool(processes=nj)  # 创建nj个进程
+    for i in range(0, nj):
+        j = (i + 1) * chunk
+        if i == (nj - 1):
+            j = num_utt
+
+        write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+        if not os.path.exists(write_dir):
+            os.makedirs(write_dir)
+
+        pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
+
+    pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
+    pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
     print(' >> Computing Completed!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
