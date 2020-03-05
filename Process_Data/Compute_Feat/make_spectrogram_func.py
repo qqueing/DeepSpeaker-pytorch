@@ -31,7 +31,7 @@ def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
     key = wav[0]
     kaldi_io.write_mat(feat_ark, feat, key=key)
 
-    feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
+    feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 15) + '\n')
     utt2dur.write('%s %.6f\n' % (str(key), duration))
     utt2num_frames.write('%s %d\n' % (str(key), len(feat)))
 
