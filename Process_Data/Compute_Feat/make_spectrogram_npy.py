@@ -27,8 +27,8 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
     feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
     # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
     key = wav[0]
-    pdb.set_trace()
-    save_path = os.join((feat_path, wav[0], '.npy'))
+    # pdb.set_trace()
+    save_path = os.path.join((feat_path, wav[0], '.npy'))
     np.save(save_path, feat)
 
     feat_scp.write(str(key) + ' ' + save_path + '\n')
