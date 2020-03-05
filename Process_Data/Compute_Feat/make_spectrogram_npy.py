@@ -134,20 +134,22 @@ if __name__ == "__main__":
     completed_queue = manager.Queue()
     # processpool = []
     print('Plan to make feats for %d utterances in %s.' % (num_utt, str(start_time)))
-    pool = Pool(processes=nj)  # 创建nj个进程
-    for i in range(0, nj):
-        j = (i + 1) * chunk
-        if i == (nj - 1):
-            j = num_utt
+    MakeFeatsProcess(out_dir, wav_scp, 0, completed_queue)
 
-        write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-        if not os.path.exists(write_dir):
-            os.makedirs(write_dir)
-
-        pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
-
-    pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
-    pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
+    # pool = Pool(processes=nj)  # 创建nj个进程
+    # for i in range(0, nj):
+    #     j = (i + 1) * chunk
+    #     if i == (nj - 1):
+    #         j = num_utt
+    #
+    #     write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+    #     if not os.path.exists(write_dir):
+    #         os.makedirs(write_dir)
+    #
+    #     pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
+    #
+    # pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
+    # pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
     print(' >> Computing Completed!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
