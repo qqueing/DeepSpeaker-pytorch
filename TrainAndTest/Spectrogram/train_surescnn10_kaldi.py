@@ -28,7 +28,7 @@ from tqdm import tqdm
 
 from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, KaldiScriptDataset
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
@@ -186,7 +186,7 @@ else:
 
 # pdb.set_trace()
 
-train_dir = KaldiTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
+train_dir = KaldiScriptDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
 test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))

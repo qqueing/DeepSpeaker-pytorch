@@ -19,6 +19,7 @@ import kaldi_io
 import numpy as np
 import torch.utils.data as data
 import torch
+from kaldi_io import read_mat
 
 def write_xvector_ark(uid, xvector, write_path, set):
     """
@@ -546,6 +547,212 @@ class KaldiTupleDataset(data.Dataset):
 
     def __len__(self):
         return len(self.tuple_lst)  # 返回一个epoch的采样数
+
+
+class KaldiExtractDataset(data.Dataset):
+    def __init__(self, dir, samples_per_speaker, transform, num_valid=5):
+
+        feat_scp = dir + '/feats.scp'
+        spk2utt = dir + '/spk2utt'
+        utt2spk = dir + '/utt2spk'
+
+        if not os.path.exists(feat_scp):
+            raise FileExistsError(feat_scp)
+        if not os.path.exists(spk2utt):
+            raise FileExistsError(spk2utt)
+
+        dataset = {}
+        with open(spk2utt, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                spk_utt = line.split(' ')
+                spk_name = spk_utt[0]
+                if spk_name not in dataset.keys():
+                    spk_utt[-1] = spk_utt[-1].rstrip('\n')
+                    dataset[spk_name] = spk_utt[1:]
+
+        utt2spk_dict = {}
+        with open(utt2spk, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                utt_spk = line.split(' ')
+                uid = utt_spk[0]
+                if uid not in utt2spk_dict.keys():
+                    utt_spk[-1] = utt_spk[-1].rstrip('\n')
+                    utt2spk_dict[uid] = utt_spk[-1]
+        # pdb.set_trace()
+
+        speakers = [spk for spk in dataset.keys()]
+        speakers.sort()
+        print('==> There are {} speakers in Dataset.'.format(len(speakers)))
+        spk_to_idx = {speakers[i]: i for i in range(len(speakers))}
+        idx_to_spk = {i: speakers[i] for i in range(len(speakers))}
+
+        uid2feat = {}  # 'Eric_McCormack-Y-qKARMSO7k-0001.wav': feature[frame_length, feat_dim]
+        pbar = tqdm(enumerate(kaldi_io.read_mat_scp(feat_scp)))
+        for idx, (utt_id, feat) in pbar:
+            uid2feat[utt_id] = feat
+
+        print('==> There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        valid_set = {}
+        valid_uid2feat = {}
+        valid_utt2spk_dict = {}
+
+        for spk in speakers:
+            if spk not in valid_set.keys():
+                valid_set[spk] = []
+                for i in range(num_valid):
+                    if len(dataset[spk]) <= 1:
+                        break
+                    j = np.random.randint(len(dataset[spk]))
+                    utt = dataset[spk].pop(j)
+                    utt2spk_dict.pop(utt)
+                    valid_set[spk].append(utt)
+
+                    valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
+                    valid_utt2spk_dict[utt] = utt2spk_dict[utt]
+
+        print('==> Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
+
+        self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
+        self.speakers = speakers
+        self.dataset = dataset
+        self.valid_set = valid_set
+        self.valid_uid2feat = valid_uid2feat
+        self.valid_utt2spk_dict = valid_utt2spk_dict
+        self.uid2feat = uid2feat
+        self.spk_to_idx = spk_to_idx
+        self.idx_to_spk = idx_to_spk
+        self.num_spks = len(speakers)
+        self.transform = transform
+        self.samples_per_speaker = samples_per_speaker
+        self.uids = list(self.uid2feat.keys())
+        self.utt2spk_dict = utt2spk_dict
+
+    def __getitem__(self, index):
+        uid = self.uids[index]
+        y = self.uid2feat[uid]
+        feature = self.transform(y)
+
+        spk = self.utt2spk[uid]
+        label = self.spk_to_idx[spk]
+
+        return feature, label, uid
+
+    def __len__(self):
+        return len(self.uid2feat)  # 返回一个epoch的采样数
+
+
+class KaldiScriptDataset(data.Dataset):
+    def __init__(self, dir, samples_per_speaker, transform, num_valid=5):
+
+        feat_scp = dir + '/feats.scp'
+        spk2utt = dir + '/spk2utt'
+        utt2spk = dir + '/utt2spk'
+
+        if not os.path.exists(feat_scp):
+            raise FileExistsError(feat_scp)
+        if not os.path.exists(spk2utt):
+            raise FileExistsError(spk2utt)
+
+        dataset = {}
+        with open(spk2utt, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                spk_utt = line.split(' ')
+                spk_name = spk_utt[0]
+                if spk_name not in dataset.keys():
+                    spk_utt[-1] = spk_utt[-1].rstrip('\n')
+                    dataset[spk_name] = spk_utt[1:]
+
+        utt2spk_dict = {}
+        with open(utt2spk, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                utt_spk = line.split(' ')
+                uid = utt_spk[0]
+                if uid not in utt2spk_dict.keys():
+                    utt_spk[-1] = utt_spk[-1].rstrip('\n')
+                    utt2spk_dict[uid] = utt_spk[-1]
+        # pdb.set_trace()
+
+        speakers = [spk for spk in dataset.keys()]
+        speakers.sort()
+        print('==> There are {} speakers in Dataset.'.format(len(speakers)))
+        spk_to_idx = {speakers[i]: i for i in range(len(speakers))}
+        idx_to_spk = {i: speakers[i] for i in range(len(speakers))}
+
+        uid2feat = {}  # 'Eric_McCormack-Y-qKARMSO7k-0001.wav': feature[frame_length, feat_dim]
+        with open(feat_scp, 'r') as f:
+            for line in f.readlines():
+                uid, feat_offset = line.split()
+                uid2feat[uid] = feat_offset
+
+        print('==> There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        valid_set = {}
+        valid_uid2feat = {}
+        valid_utt2spk_dict = {}
+
+        for spk in speakers:
+            if spk not in valid_set.keys():
+                valid_set[spk] = []
+                for i in range(num_valid):
+                    if len(dataset[spk]) <= 1:
+                        break
+                    j = np.random.randint(len(dataset[spk]))
+                    utt = dataset[spk].pop(j)
+                    valid_set[spk].append(utt)
+
+                    valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
+                    valid_utt2spk_dict[utt] = utt2spk_dict[utt]
+
+        print('==> Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
+
+        self.feat_dim = read_mat(uid2feat[dataset[speakers[0]][0]]).shape[1]
+        self.speakers = speakers
+        self.dataset = dataset
+        self.valid_set = valid_set
+        self.valid_uid2feat = valid_uid2feat
+        self.valid_utt2spk_dict = valid_utt2spk_dict
+        self.uid2feat = uid2feat
+        self.spk_to_idx = spk_to_idx
+        self.idx_to_spk = idx_to_spk
+        self.num_spks = len(speakers)
+        self.transform = transform
+        self.samples_per_speaker = samples_per_speaker
+
+    def __getitem__(self, sid):
+        sid %= self.num_spks
+        spk = self.idx_to_spk[sid]
+        utts = self.dataset[spk]
+        n_samples = 0
+        y = np.array([[]]).reshape(0, self.feat_dim)
+
+        frames = c.N_SAMPLES
+        while n_samples < frames:
+
+            uid = random.randrange(0, len(utts))
+            feature = read_mat(self.uid2feat[utts[uid]])
+
+            # Get the index of feature
+            if n_samples == 0:
+                start = int(random.uniform(0, len(feature)))
+            else:
+                start = 0
+            stop = int(min(len(feature) - 1, max(1.0, start + frames - n_samples)))
+            try:
+                y = np.concatenate((y, feature[start:stop]), axis=0)
+            except:
+                pdb.set_trace()
+            n_samples = len(y)
+            # transform features if required
+
+        feature = self.transform(y)
+        label = sid
+        return feature, label
+
+    def __len__(self):
+        return self.samples_per_speaker * len(self.speakers)  # 返回一个epoch的采样数
 
 # uid = ['A.J._Buckley-1zcIwhmdeo4-0001.wav', 'A.J._Buckley-1zcIwhmdeo4-0002.wav', 'A.J._Buckley-1zcIwhmdeo4-0003.wav', 'A.J._Buckley-7gWzIy6yIIk-0001.wav']
 # xvector = np.random.randn(4, 512).astype(np.float32)
