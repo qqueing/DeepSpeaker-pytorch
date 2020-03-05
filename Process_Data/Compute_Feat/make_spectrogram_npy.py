@@ -19,7 +19,6 @@ from multiprocessing import Process, Queue, Pool, Manager
 import time
 import numpy as np
 from kaldi_io import kaldi_io
-
 import Process_Data.constants as c
 from Process_Data.audio_processing import Make_Spect
 
@@ -27,9 +26,8 @@ from Process_Data.audio_processing import Make_Spect
 def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
     feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
     # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
-
-    len_vec = len(feat.tobytes())
     key = wav[0]
+    pdb.set_trace()
     save_path = os.join((feat_path, wav[0], '.npy'))
     np.save(save_path, feat)
 
@@ -41,7 +39,7 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
 def MakeFeatsProcess(out_dir, item, proid, queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    feat_path = os.path.join(out_dir, 'feats.%d')
+    feat_path = os.path.join(out_dir, 'feats.%d' % proid)
     if not os.path.exists(feat_path):
         os.makedirs(feat_path)
 
