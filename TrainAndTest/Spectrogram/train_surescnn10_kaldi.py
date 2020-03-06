@@ -36,7 +36,6 @@ from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLe
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
 # Version conflict
 import warnings
-
 warnings.filterwarnings("ignore")
 
 import torch._utils
@@ -151,7 +150,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='kaldi_192')
 
-kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 4, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
