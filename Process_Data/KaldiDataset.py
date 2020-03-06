@@ -708,7 +708,7 @@ class ScriptTrainDataset(data.Dataset):
 
         print('==> Spliting {} utterances for Validation.'.format(len(valid_uid2feat)))
 
-        self.feat_dim = read_mat(uid2feat[dataset[speakers[0]][0]]).shape[1]
+        self.feat_dim = np.load(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers
         self.dataset = dataset
         self.valid_set = valid_set
@@ -732,7 +732,7 @@ class ScriptTrainDataset(data.Dataset):
         while n_samples < frames:
 
             uid = random.randrange(0, len(utts))
-            feature = read_mat(self.uid2feat[utts[uid]])
+            feature = np.load(self.uid2feat[utts[uid]])
 
             # Get the index of feature
             if n_samples == 0:
@@ -771,7 +771,7 @@ class ScriptValidDataset(data.Dataset):
     def __getitem__(self, index):
         uid = list(self.uid2feat.keys())[index]
         spk = self.utt2spk_dict[uid]
-        y = read_mat(self.uid2feat[uid])
+        y = np.load(self.uid2feat[uid])
 
         feature = self.transform(y)
         label = self.spk_to_idx[spk]
@@ -844,8 +844,8 @@ class ScriptTestDataset(data.Dataset):
 
         feat_a = self.uid2feat[uid_a]
         feat_b = self.uid2feat[uid_b]
-        y_a = read_mat(feat_a)
-        y_b = read_mat(feat_b)
+        y_a = np.load(feat_a)
+        y_b = np.load(feat_b)
 
         data_a = self.transform(y_a)
         data_b = self.transform(y_b)
