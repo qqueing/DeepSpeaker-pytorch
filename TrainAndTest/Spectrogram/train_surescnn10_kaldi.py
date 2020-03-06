@@ -150,7 +150,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='kaldi_192')
 
-kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 16, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
@@ -282,10 +282,9 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
     for batch_idx, (data, label) in pbar:
         if args.cuda:
             data = data.float().cuda()
-
         data, label = Variable(data), Variable(label)
 
-        # pdb.set_trace()
+        pdb.set_trace()
         classfier, _ = model(data)
         true_labels = label.cuda()
 
