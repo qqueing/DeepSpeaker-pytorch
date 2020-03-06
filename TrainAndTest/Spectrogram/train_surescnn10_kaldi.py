@@ -288,10 +288,9 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         # pdb.set_trace()
         classfier, _ = model(data)
         true_labels = label.cuda()
-
-        loss = ce(classfier, true_labels)
-
         cos_theta, phi_theta = classfier
+        loss = ce(cos_theta, true_labels)
+
         predicted_labels = output_softmax(cos_theta)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
