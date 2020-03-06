@@ -690,8 +690,8 @@ class LSTM_End(nn.Module):
                                   batch_first=True,
                                   dropout=dropout_p)
 
-        self.h0 = torch.rand(self.num_lstm, batch_size, hidden_shape).cuda()
-        self.c0 = torch.rand(self.num_lstm, batch_size, hidden_shape).cuda()
+        self.h0 = nn.Parameter(torch.rand(self.num_lstm, batch_size, hidden_shape), requires_grad=False)
+        self.c0 = nn.Parameter(torch.rand(self.num_lstm, batch_size, hidden_shape), requires_grad=False)
 
         self.relu = ReLU(inplace=True)
         self.dropout = nn.Dropout(p=dropout_p)
@@ -701,8 +701,7 @@ class LSTM_End(nn.Module):
 
         self.fc2 = nn.Linear(project_dim, num_class)
 
-
-    def forward(self, input, length):
+    def varlen_forward(self, input, length):
 
         out, (_,_) = self.lstm_layer(input, (self.h0, self.c0))
         out_pad, out_len = rnn_utils.pad_packed_sequence(out, batch_first=True)
@@ -724,11 +723,13 @@ class LSTM_End(nn.Module):
         # rnn_last =
         spk_vec = self.fc1(rnn_out.cuda())
         spk_vec = self.relu(self.bn1(spk_vec))
+        spk_vec = self.dropout(spk_vec)
+
         logits = self.fc2(spk_vec)
 
         return spk_vec, logits
 
-    def tuple_forward(self, input):
+    def forward(self, input):
         """
         :param input: should be features with fixed length
         :return:
@@ -738,8 +739,8 @@ class LSTM_End(nn.Module):
         rnn_out = out[:, -1, :].squeeze()
         # rnn_last =
         spk_vec = self.fc1(rnn_out.cuda())
-        spk_vec = self.dropout(spk_vec)
         spk_vec = self.relu(self.bn1(spk_vec))
+        spk_vec = self.dropout(spk_vec)
 
         logits = self.fc2(spk_vec)
 
@@ -800,8 +801,8 @@ class AttentionLSTM(nn.Module):
         rnn_out = self.attention_layer(out)
         # rnn_last =
         spk_vec = self.fc1(rnn_out)
-        spk_vec = self.dropout(spk_vec)
         spk_vec = self.relu(self.bn1(spk_vec))
+        spk_vec = self.dropout(spk_vec)
 
         logits = self.fc2(spk_vec)
 

@@ -68,16 +68,16 @@ parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--embedding-dim', default=512, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--check-path', default='Data/checkpoint/ALSTM/soft/kaldi_0.001',
+parser.add_argument('--check-path', default='Data/checkpoint/ALSTM/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ALSTM/soft/kaldi_0.001/checkpoint_49.pth',
+                    default='Data/checkpoint/ALSTM/soft/kaldi/checkpoint_49.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=150, metavar='E',
+parser.add_argument('--epochs', type=int, default=90, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -97,7 +97,7 @@ parser.add_argument('--input-per-spks', type=int, default=256, metavar='IPFT',
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
@@ -204,7 +204,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[120, 170], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[45], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
@@ -271,14 +271,12 @@ def train(train_loader, model, optimizer, criterion, epoch):
         data, label = Variable(data), Variable(label)
 
         feats, classfier = model(data)
-        predicted_labels = output_softmax(classfier)
-        predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-
         loss = criterion(classfier, label)
 
+        predicted_labels = output_softmax(classfier)
+        predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
         batch_correct = float((predicted_one_labels == label).sum().item())
         minibatch_acc = batch_correct / len(predicted_one_labels)
-
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
         total_loss += loss.item()
@@ -359,6 +357,8 @@ def test(valid_loader, test_loader, model, epoch):
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (a, p, label) in pbar:
+        if len(a) != args.batch_size / args.test_input_per_file:
+            continue
 
         vec_shape = a.shape
         # pdb.set_trace()

@@ -740,10 +740,7 @@ class ScriptTrainDataset(data.Dataset):
             else:
                 start = 0
             stop = int(min(len(feature) - 1, max(1.0, start + frames - n_samples)))
-            try:
-                y = np.concatenate((y, feature[start:stop]), axis=0)
-            except:
-                pdb.set_trace()
+            y = np.concatenate((y, feature[start:stop]), axis=0)
             n_samples = len(y)
             # transform features if required
 
@@ -830,7 +827,7 @@ class ScriptTestDataset(data.Dataset):
 
                 trials_pair.append((pair[0], pair[1], pair_true))
 
-        print('==>There are {} pairs in test Dataset.\n'.format(len(trials_pair)))
+        print('==>There are {} pairs in test Dataset.'.format(len(trials_pair)))
 
         self.feat_dim = np.load(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers

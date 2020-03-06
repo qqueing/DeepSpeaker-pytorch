@@ -57,7 +57,7 @@ except AttributeError:
     torch._utils._rebuild_tensor_v2 = _rebuild_tensor_v2
 
 # Training settings
-parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
+parser = argparse.ArgumentParser(description='PyTorch LSTM Speaker Recognition')
 # Model options
 
 # options for vox1
@@ -70,6 +70,8 @@ parser.add_argument('--test-dir', type=str,
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
+parser.add_argument('--embedding-dim', default=512, type=int, metavar='N',
+                    help='acoustic feature dimension')
 parser.add_argument('--check-path', default='Data/checkpoint/LSTM/tuple/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
@@ -79,7 +81,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=100, metavar='E',
+parser.add_argument('--epochs', type=int, default=90, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
@@ -93,7 +95,7 @@ parser.add_argument('--test-batch-size', type=int, default=192, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=160, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 parser.add_argument('--tuple-size', type=int, default=6, metavar='N',
@@ -147,7 +149,9 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='lstm-tuple')
 
-kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+if not os.path.exists(args.check_path):
+    os.makedirs(args.check_path)
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
@@ -198,13 +202,13 @@ def main():
     # model and initialize weights
     model = LSTM_End(input_dim=args.feat_dim, num_class=train_dir.num_spks,
                      batch_size=args.batch_size * args.tuple_size,
-                     num_lstm=args.num_lstm)
+                     project_dim=args.embedding_dim, num_lstm=args.num_lstm, dropout_p=0.1)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[40, 75], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[60], gamma=0.1)
 
     start = 0
     # optionally resume from a checkpoint
@@ -233,6 +237,9 @@ def main():
         args.batch_size * args.tuple_size / args.test_input_per_file), shuffle=False, **kwargs)
     # criterion = nn.CrossEntropyLoss().cuda()
     criterion = [nn.CrossEntropyLoss().cuda(), TupleLoss(args.batch_size, args.tuple_size).cuda()]
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
+    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()},
+               check_path)
 
     for epoch in range(start, end):
         # pdb.set_trace()
@@ -275,19 +282,15 @@ def train(train_loader, model, optimizer, criterion, epoch):
             cls_label = cls_label.cuda()
             pair_label = pair_label.cuda()
 
-        feats, classfier = model.tuple_forward(data)
+        feats, classfier = model(data)
+        ce_loss = criterion[0](classfier, cls_label)
+        tuple_loss = criterion[1](feats, pair_label)
+        loss = (1 - args.loss_ratio) * ce_loss + args.loss_ratio * tuple_loss
 
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-
-        ce_loss = criterion[0](classfier, cls_label)
-        tuple_loss = criterion[1](feats, pair_label)
-
-        loss = ce_loss + args.loss_ratio * tuple_loss
-
         batch_correct = float((predicted_one_labels == cls_label).sum().item())
         minibatch_acc = batch_correct / len(predicted_one_labels)
-
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
         total_loss += loss.item()
@@ -299,26 +302,25 @@ def train(train_loader, model, optimizer, criterion, epoch):
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(
-                epoch,
-                batch_idx * args.batch_size,
-                len(train_loader.dataset),
-                100. * batch_idx / len(train_loader),
-                total_loss/(batch_idx+1),
-                100. * minibatch_acc))
+            pbar.set_description(
+                'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(epoch,
+                                                                                                              batch_idx * args.batch_size,
+                                                                                                              len(train_loader.dataset),
+                                                                                                              100. * batch_idx / len(train_loader),
+                                                                                                              total_loss / (batch_idx+1),
+                                                                                                              100. * minibatch_acc))
 
     # options for vox1
     check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
-    if not check_path.parent.exists():
-        os.makedirs(str(check_path.parent))
-
     torch.save({'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()},
                 #'criterion': criterion.state_dict()
                 str(check_path))
 
-    print('\33[91m LSTM Train Accuracy:{:.4f}%. Avg loss is {:.4f}.\n\33[0m'.format(100 * correct / total_datasize, total_loss/len(train_loader)))
+    print(
+        '\33[91m LSTM Tuple Train Accuracy:{:.4f}%. Avg loss is {:.4f}.\n\33[0m'.format(100 * correct / total_datasize,
+                                                                                        total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', 100. * correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
@@ -342,13 +344,11 @@ def test(valid_loader, test_loader, model, epoch):
             label = label.cuda()
 
         data, label = Variable(data), Variable(label)
-        feats, classfier = model.tuple_forward(data)
+        feats, classfier = model(data)
 
-        true_labels = Variable(label.cuda())
         predicted_one_labels = softmax(classfier)
         predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
-
-        batch_correct = (predicted_one_labels.cuda() == true_labels.cuda()).sum().item()
+        batch_correct = (predicted_one_labels.cuda() == label.cuda()).sum().item()
         minibatch_acc = float(batch_correct / len(predicted_one_labels))
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
