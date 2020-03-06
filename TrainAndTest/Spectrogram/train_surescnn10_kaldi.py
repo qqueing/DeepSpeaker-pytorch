@@ -62,10 +62,10 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_soft',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_soft/checkpoint_35.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi/checkpoint_35.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -150,7 +150,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='kaldi_192')
 
-kwargs = {'num_workers': 16, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
@@ -244,8 +244,8 @@ def main():
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-    # ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
-    ce = nn.CrossEntropyLoss().cuda()
+    ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
+    # ce = nn.CrossEntropyLoss().cuda()
 
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
     torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
@@ -289,7 +289,8 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         classfier, _ = model(data)
         true_labels = label.cuda()
         cos_theta, phi_theta = classfier
-        loss = ce(cos_theta, true_labels)
+
+        loss = ce(classfier, true_labels)
 
         predicted_labels = output_softmax(cos_theta)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
