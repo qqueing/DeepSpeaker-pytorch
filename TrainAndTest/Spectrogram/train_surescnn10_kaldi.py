@@ -123,7 +123,7 @@ parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=100, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
@@ -371,6 +371,12 @@ def test(test_loader, valid_loader, model, epoch):
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
+
+        vec_shape = data_a.shape
+        # pdb.set_trace()
+        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
@@ -382,7 +388,9 @@ def test(test_loader, valid_loader, model, epoch):
         out_p = out_p_
 
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
+
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
 
