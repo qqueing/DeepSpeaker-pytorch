@@ -62,10 +62,10 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_soft',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi/checkpoint_35.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_soft/checkpoint_35.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -84,7 +84,7 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--input-per-spks', type=int, default=128, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=160, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -113,7 +113,7 @@ parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
 parser.add_argument('--dampening', default=0, type=float,
                     metavar='W', help='dampening for sgd (default: 0.0)')
-parser.add_argument('--optimizer', default='adam', type=str,
+parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 
 # Device options
