@@ -84,7 +84,7 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=128, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -103,7 +103,7 @@ parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
 parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
                     help='random seed (default: 0)')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -113,7 +113,7 @@ parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
 parser.add_argument('--dampening', default=0, type=float,
                     metavar='W', help='dampening for sgd (default: 0.0)')
-parser.add_argument('--optimizer', default='sgd', type=str,
+parser.add_argument('--optimizer', default='adam', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 
 # Device options
@@ -306,12 +306,12 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description(
-                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Loss: {:.4f} Batch Accuracy: {:.4f}%'.format(
+                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.4f} Batch Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100. * batch_idx / len(train_loader),
-                    loss.item(),
+                    total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
 
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
@@ -322,7 +322,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
                # 'criterion': criterion.state_dict()
                check_path)
 
-    print('\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Average loss: {}.\n\33[0m'.format(epoch, 100 * float(
+    print('\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\n\33[0m'.format(epoch, 100 * float(
         correct) / total_datasize, total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
@@ -405,8 +405,8 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\33[91mFor {}_distance, Test verification ERR is {:.4f}%, when threshold is {}. Valid ' \
-          'set classificaton accuracy is {:.2f}%.\n\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
+    print('\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
+          'Accuracy is {:.2f}%.\n\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
                                                                   eer_threshold, valid_accuracy))
 
 
