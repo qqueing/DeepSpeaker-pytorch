@@ -308,16 +308,13 @@ def train(train_loader, model, optimizer, criterion, epoch):
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description(
-                'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(epoch,
-                                                                                                              batch_idx * args.batch_size,
-                                                                                                              len(
-                                                                                                                  train_loader.dataset),
-                                                                                                              100. * batch_idx / len(
-                                                                                                                  train_loader),
-                                                                                                              total_loss / (
-                                                                                                                          batch_idx + 1),
-                                                                                                              100. * minibatch_acc))
+            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] ' \
+                                 'Avg Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(epoch,
+                                                                                   batch_idx * args.batch_size,
+                                                                                   len(train_loader.dataset),
+                                                                                   100. * batch_idx / len(train_loader),
+                                                                                   total_loss / (batch_idx + 1),
+                                                                                   100. * minibatch_acc))
 
     # options for vox1
     check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
