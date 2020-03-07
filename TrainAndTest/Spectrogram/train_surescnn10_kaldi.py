@@ -62,10 +62,10 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi/checkpoint_35.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft/checkpoint_35.pth', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
