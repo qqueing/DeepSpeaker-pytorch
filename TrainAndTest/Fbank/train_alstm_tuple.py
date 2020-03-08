@@ -98,10 +98,12 @@ parser.add_argument('--test-batch-size', type=int, default=192, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=32, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 parser.add_argument('--tuple-size', type=int, default=6, metavar='N',
+                    help='the number of enrolled utterance + 1 (default: 6')
+parser.add_argument('--nagative-pair', type=int, default=5, metavar='N',
                     help='the number of enrolled utterance + 1 (default: 6')
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
@@ -181,7 +183,8 @@ else:
         totensor(),
     ])
 
-train_dir = KaldiTupleDataset(dir=args.train_dir, transform=transform, samples_per_spk=args.input_per_spks)
+train_dir = KaldiTupleDataset(dir=args.train_dir, transform=transform,
+                              nagative_pair=args.nagative_pair, samples_per_spk=args.input_per_spks)
 
 test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform_T)
 
