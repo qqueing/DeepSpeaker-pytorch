@@ -107,7 +107,7 @@ parser.add_argument('--nagative-pair', type=int, default=5, metavar='N',
                     help='the number of enrolled utterance + 1 (default: 6')
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=0.5, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
