@@ -740,6 +740,7 @@ class LSTM_End(nn.Module):
         # rnn_last =
         spk_vec = self.fc1(rnn_out.cuda())
         spk_vec = self.relu(self.bn1(spk_vec))
+        spk_vec = spk_vec / torch.norm(spk_vec, p=2, dim=1, keepdim=True)
         spk_vec = self.dropout(spk_vec)
 
         logits = self.fc2(spk_vec)
@@ -802,6 +803,8 @@ class AttentionLSTM(nn.Module):
         # rnn_last =
         spk_vec = self.fc1(rnn_out)
         spk_vec = self.relu(self.bn1(spk_vec))
+        spk_vec = spk_vec / torch.norm(spk_vec, p=2, dim=1, keepdim=True)
+
         spk_vec = self.dropout(spk_vec)
 
         logits = self.fc2(spk_vec)
