@@ -81,12 +81,11 @@ class TupleLoss(nn.Module):
         for indice_bash in range(self.batch_size):
             wi_enroll = w[indice_bash, 1:]  # shape:  (tuple_size-1, feature_size)
             wi_eval = w[indice_bash, 0]
-
             c_k = torch.mean(wi_enroll, dim=0)  # shape: (feature_size)
-            norm_c_k = c_k / torch.norm(c_k, p=2, keepdim=True)
+            # norm_c_k = c_k / torch.norm(c_k, p=2, keepdim=True)
             # normlize_ck = torch.norm(c_k, p=2, dim=0)
             # normlize_wi_eval = torch.norm(wi_eval, p=2, dim=0)
-            cos_similarity = self.sim(norm_c_k, wi_eval)
+            cos_similarity = self.sim(c_k, wi_eval)
             score = cos_similarity
 
             loss += torch.sigmoid(score) * labels[indice_bash] + \
