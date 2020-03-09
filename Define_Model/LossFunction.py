@@ -66,6 +66,7 @@ class TupleLoss(nn.Module):
         super(TupleLoss, self).__init__()
         self.batch_size = batch_size
         self.tuple_size = tuple_size
+        self.sim = nn.CosineSimilarity(dim=0, eps=1e-6)
 
     def forward(self, spk_representation, labels):
         """
@@ -83,11 +84,10 @@ class TupleLoss(nn.Module):
             normlize_wi_enroll = torch.norm(wi_enroll, p=2, dim=1)
 
             c_k = torch.mean(normlize_wi_enroll, dim=0)  # shape: (feature_size)
+            # normlize_ck = torch.norm(c_k, p=2, dim=0)
+            # normlize_wi_eval = torch.norm(wi_eval, p=2, dim=0)
 
-            normlize_ck = torch.norm(c_k, p=2, dim=0)
-            normlize_wi_eval = torch.norm(wi_eval, p=2, dim=0)
-
-            cos_similarity = torch.sum(normlize_ck * normlize_wi_eval)
+            cos_similarity = self.sim(c_k, wi_eval)
             score = cos_similarity
 
             loss += torch.sigmoid(score) * labels[indice_bash] + \
