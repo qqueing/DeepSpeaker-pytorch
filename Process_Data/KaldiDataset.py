@@ -134,7 +134,7 @@ class KaldiTrainDataset(data.Dataset):
         for idx, (utt_id, feat) in pbar:
             uid2feat[utt_id] = feat
 
-        print('==> There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        print('\tThere are {} utterances in Train Dataset.'.format(len(uid2feat)))
         valid_set = {}
         valid_uid2feat = {}
         valid_utt2spk_dict = {}
@@ -152,7 +152,7 @@ class KaldiTrainDataset(data.Dataset):
                     valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
                     valid_utt2spk_dict[utt] = utt2spk_dict[utt]
 
-        print('==> Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
+        print('\tSpliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
 
         self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
         self.speakers = speakers
@@ -254,12 +254,12 @@ class KaldiTestDataset(data.Dataset):
 
         speakers = [spk for spk in dataset.keys()]
         speakers.sort()
-        print('    There are {} speakers in Test Dataset.'.format(len(speakers)))
+        print('==> There are {} speakers in Test Dataset.'.format(len(speakers)))
 
         uid2feat = {}
         for utt_id, feat in kaldi_io.read_mat_scp(feat_scp):
             uid2feat[utt_id] = feat
-        print('    There are {} utterances in Test Dataset.'.format(len(uid2feat)))
+        print('\tThere are {} utterances in Test Dataset.'.format(len(uid2feat)))
 
         trials_pair = []
         with open(trials, 'r') as t:
@@ -273,7 +273,7 @@ class KaldiTestDataset(data.Dataset):
 
                 trials_pair.append((pair[0], pair[1], pair_true))
 
-        print('==>There are {} pairs in test Dataset.\n'.format(len(trials_pair)))
+        print('\tThere are {} pairs in test Dataset.\n'.format(len(trials_pair)))
 
         self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
         self.speakers = speakers
@@ -432,7 +432,7 @@ class KaldiTupleDataset(data.Dataset):
 
         speakers = [spk for spk in dataset.keys()]
         speakers.sort()
-        print('==>There are {} speakers in Dataset.'.format(len(speakers)))
+        print('==> There are {} speakers in Dataset.'.format(len(speakers)))
         spk_to_idx = {speakers[i]: i for i in range(len(speakers))}
         idx_to_spk = {i: speakers[i] for i in range(len(speakers))}
 
@@ -442,7 +442,7 @@ class KaldiTupleDataset(data.Dataset):
         for idx, (utt_id, feat) in pbar:
             uid2feat[utt_id] = feat
 
-        print('==>There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        print('\tThere are {} utterances in Train Dataset.'.format(len(uid2feat)))
         valid_set = {}
         valid_uid2feat = {}
         valid_utt2spk_dict = {}
@@ -460,7 +460,7 @@ class KaldiTupleDataset(data.Dataset):
                     valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
                     valid_utt2spk_dict[utt] = utt2spk_dict[utt]
 
-        print('==>Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
+        print('\tSpliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
 
         tuple_lst = []
         if not os.path.exists(train_trials):
@@ -514,7 +514,7 @@ class KaldiTupleDataset(data.Dataset):
 
         train_trials_f.close()
 
-        print('==>Generate {} tuples for training.\n'.format(len(tuple_lst)))
+        print('\tGenerate {} tuples for training.\n'.format(len(tuple_lst)))
 
 
         self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
