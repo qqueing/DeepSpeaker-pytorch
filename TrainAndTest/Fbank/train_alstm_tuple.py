@@ -33,7 +33,7 @@ from torch.optim.lr_scheduler import StepLR, MultiStepLR
 from tqdm import tqdm
 
 from Define_Model.TDNN import XVectorTDNN
-from TrainAndTest.common_func import create_optimizer
+from TrainAndTest.common_func import create_optimizer, AverageMeter
 from eval_metrics import evaluate_kaldi_eer
 from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, TrainDataset, \
     KaldiTupleDataset
@@ -92,7 +92,7 @@ parser.add_argument('--num-lstm', default=3, type=int, metavar='N', help='num of
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 
-parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=192, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -266,6 +266,8 @@ def train(train_loader, model, optimizer, criterion, epoch):
     correct = 0.
     total_datasize = 0.
     total_loss = 0.
+    ce_losses = AverageMeter()
+    tuple_losses = AverageMeter()
     output_softmax = nn.Softmax(dim=1)
 
     # print('\33\n[1;34m Current dropout is {:.4f}. '.format(model.dropout_p), end='')
@@ -302,6 +304,9 @@ def train(train_loader, model, optimizer, criterion, epoch):
         minibatch_acc = batch_correct / len(predicted_one_labels)
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
+
+        ce_losses.update(ce_loss.item(), len(data))
+        tuple_losses.update(tuple_loss.item(), len(data))
         total_loss += loss.item()
         # pdb.set_trace()
 
@@ -311,13 +316,16 @@ def train(train_loader, model, optimizer, criterion, epoch):
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] ' \
-                                 'Avg Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(epoch,
-                                                                                   batch_idx * args.batch_size,
-                                                                                   len(train_loader.dataset),
-                                                                                   100. * batch_idx / len(train_loader),
-                                                                                   total_loss / (batch_idx + 1),
-                                                                                   100. * minibatch_acc))
+            pbar.set_description('Train Epoch: {:3d} [{:7d}/{:7d} ({:3.0f}%)] ' \
+                                 'Avg Loss: {:.4f} CE Loss: {:.4f} ' \
+                                 'Tuple Loss: {:.4f} Batch Accuracy: {:.4f}%'.format(epoch,
+                                                                                     batch_idx * args.batch_size,
+                                                                                     len(train_loader.dataset),
+                                                                                     100. * batch_idx / len(train_loader),
+                                                                                     total_loss / (batch_idx + 1),
+                                                                                     ce_losses.avg,
+                                                                                     tuple_losses.avg,
+                                                                                     100. * minibatch_acc))
 
     # options for vox1
     check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
