@@ -62,10 +62,11 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft_192',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft/checkpoint_35.pth', type=str, metavar='PATH',
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft_192/checkpoint_35.pth', type=str,
+                    metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -84,7 +85,7 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--input-per-spks', type=int, default=160, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -103,7 +104,7 @@ parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
 parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
                     help='random seed (default: 0)')
 
-parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -150,7 +151,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='kaldi_192')
 
-kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
