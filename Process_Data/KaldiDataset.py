@@ -463,54 +463,47 @@ class KaldiTupleDataset(data.Dataset):
         print('\tSpliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
 
         tuple_lst = []
-        if not os.path.exists(train_trials):
+        train_trials_f = open(train_trials, 'w')
+        for i in range(len(speakers)):
+            spk = speakers[i]
+            for j in range(samples_per_spk):
+                eval_utts = dataset[spk].copy()
+                positive_eval_idx = np.random.randint(0, len(eval_utts))
+                eval_utt = eval_utts[positive_eval_idx]
+                eval_utts.pop(positive_eval_idx)
+                positive_enroll = np.random.choice(eval_utts, size=num_enroll)
 
-            train_trials_f = open(train_trials, 'w')
-            for i in range(len(speakers)):
-                spk = speakers[i]
-                for j in range(samples_per_spk):
-                    eval_utts = dataset[spk].copy()
-                    positive_eval_idx = np.random.randint(0, len(eval_utts))
-                    eval_utt = eval_utts[positive_eval_idx]
-                    eval_utts.pop(positive_eval_idx)
-                    positive_enroll = np.random.choice(eval_utts, size=num_enroll)
+                positive_trials = []
+                positive_trials.append(eval_utt)
+                for x in positive_enroll:
+                    positive_trials.append(x)
 
-                    positive_trials = []
-                    positive_trials.append(eval_utt)
-                    for x in positive_enroll:
-                        positive_trials.append(x)
-
-                    positive_trials.append('1')
+                positive_trials.append('1')
+                positive_trials.append(str(spk_to_idx[spk]))
+                for m in range(num_enroll):
                     positive_trials.append(str(spk_to_idx[spk]))
+
+                tuple_lst.append(positive_trials)
+                train_trials_f.write(' '.join(positive_trials) + '\n')
+
+                nagative_spks = speakers.copy()
+                nagative_spks.pop(i)
+
+                nagative_spks = np.random.choice(nagative_spks, size=nagative_pair, replace=False)
+                for nagative_spk in nagative_spks:
+                    negative_trials = []
+                    negative_trials.append(eval_utt)
+                    nagative_enroll = np.random.choice(dataset[nagative_spk], size=num_enroll)
+                    for x in nagative_enroll:
+                        negative_trials.append(x)
+
+                    negative_trials.append('0')
+                    negative_trials.append(str(spk_to_idx[spk]))
                     for m in range(num_enroll):
-                        positive_trials.append(str(spk_to_idx[spk]))
+                        negative_trials.append(str(spk_to_idx[nagative_spk]))
 
-                    tuple_lst.append(positive_trials)
-                    train_trials_f.write(' '.join(positive_trials) + '\n')
-
-
-                    nagative_spks = speakers.copy()
-                    nagative_spks.pop(i)
-
-                    nagative_spks = np.random.choice(nagative_spks, size=nagative_pair, replace=False)
-                    for nagative_spk in nagative_spks:
-                        negative_trials = []
-                        negative_trials.append(eval_utt)
-                        nagative_enroll = np.random.choice(dataset[nagative_spk], size=num_enroll)
-                        for x in nagative_enroll:
-                            negative_trials.append(x)
-
-                        negative_trials.append('0')
-                        negative_trials.append(str(spk_to_idx[spk]))
-                        for m in range(num_enroll):
-                            negative_trials.append(str(spk_to_idx[nagative_spk]))
-
-                        tuple_lst.append(negative_trials)
-                        train_trials_f.write(' '.join(negative_trials) + '\n')
-        else:
-            train_trials_f = open(train_trials, 'r')
-            for line in train_trials_f.readlines():
-                tuple_lst.append(line.split())
+                    tuple_lst.append(negative_trials)
+                    train_trials_f.write(' '.join(negative_trials) + '\n')
 
         train_trials_f.close()
 
