@@ -66,25 +66,27 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 
 # options for vox1
-parser.add_argument('--train-dir', type=str, default='/home/cca01/work2019/yangwenhao/NewAdded/kaldi/egs/voxceleb/v4/data/voxceleb1_train_no_sil',
+parser.add_argument('--train-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil',
                     help='path to dataset')
-parser.add_argument('--test-dir', type=str, default='/home/cca01/work2019/yangwenhao/NewAdded/kaldi/egs/voxceleb/v4/data/voxceleb1_test_no_sil',
+parser.add_argument('--test-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/kaldi_fix',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34/soft/kaldi_fix/checkpoint_1.pth',
+                    default='Data/checkpoint/SiResNet34/soft/kaldi/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=20, metavar='E',
+parser.add_argument('--epochs', type=int, default=22, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -98,9 +100,9 @@ parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
-parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=200, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 #parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -125,9 +127,9 @@ parser.add_argument('--optimizer', default='sgd', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='2', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
-parser.add_argument('--seed', type=int, default=3, metavar='S',
+parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
                     help='how many batches to wait before logging training status')
@@ -153,9 +155,11 @@ if args.cuda:
 # create logger
 
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(args.check_path, filename_suffix='kaldi_fix_len')
+writer = SummaryWriter(args.check_path, filename_suffix='kaldi_192')
 
 kwargs = {'num_workers': 0, 'pin_memory': True} if args.cuda else {}
+if not os.path.exists(args.check_path):
+    os.makedirs(args.check_path)
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
@@ -166,7 +170,7 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
-        concateinputfromMFB(), # num_frames=np.random.randint(low=300, high=500)),
+        concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
         totensor()
     ])
@@ -183,7 +187,7 @@ test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:4800]
+indices = indices[:6400]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -243,6 +247,12 @@ def main():
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
+    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()},
+               # 'criterion': criterion.state_dict()
+               check_path)
+
 
     for epoch in range(start, end):
         # pdb.set_trace()
@@ -305,16 +315,13 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
                 100. * minibatch_acc))
 
     # options for vox1
-    check_path = pathlib.Path('{}/checkpoint_{}.pth'.format(args.check_path, epoch))
-    if not check_path.parent.exists():
-        os.makedirs(str(check_path.parent))
-
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
     torch.save({'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict()},
-                #'criterion': criterion.state_dict()
-                str(check_path))
+               #'criterion': criterion.state_dict()
+               check_path)
 
     print('\n\33[91mFor Softmax Simple-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\n\33[0m'.format(100 * float(correct) / total_datasize, total_loss/len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
@@ -348,7 +355,6 @@ def test(test_loader, valid_loader, model, epoch):
         correct += batch_correct
         total_datasize += len(predicted_one_labels)
 
-
         if batch_idx % args.log_interval == 0:
             valid_pbar.set_description(
                 'Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
@@ -365,6 +371,10 @@ def test(test_loader, valid_loader, model, epoch):
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
+        vec_shape = data_a.shape
+        # pdb.set_trace()
+        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
@@ -375,6 +385,7 @@ def test(test_loader, valid_loader, model, epoch):
         out_p = model.pre_forward_norm(data_p)
 
         dists = l2_dist.forward(out_a, out_p)
+        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
@@ -389,7 +400,7 @@ def test(test_loader, valid_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/EER', eer, epoch)
+    writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
     print('\33[91mFor {}_distance, Test set ERR is {:.8f} when threshold is {:.8f}. Valid Accuracy is {}.\n\33[0m'.format( \
