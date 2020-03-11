@@ -256,8 +256,9 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        test(test_loader, valid_loader, model, epoch-1)
+
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
+        test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
         # break
