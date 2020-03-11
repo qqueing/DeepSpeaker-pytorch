@@ -62,10 +62,10 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft_192',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft_600',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft_192/checkpoint_35.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_asoft_600/checkpoint_35.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -410,7 +410,6 @@ def test(test_loader, valid_loader, model, epoch):
     print('\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
           'Accuracy is {:.2f}%.\n\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
                                                                   eer_threshold, valid_accuracy))
-
 
 # python TrainAndTest/Spectrogram/train_surescnn10_kaldi.py > Log/SuResCNN10/spect_161/
 
