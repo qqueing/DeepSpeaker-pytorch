@@ -128,21 +128,6 @@ def make_with_path(path):
     else:
         raise ValueError(str(wav_path) + ' doesn\'t exist.')
 
-
-# class MyThread(threading.Thread):
-#     def __init__(self, spk_ids, threadid):
-#         super(MyThread, self).__init__()  # 重构run函数必须要写
-#         self.spk_ids = spk_ids
-#         self.threadid = threadid
-#
-#     def run(self):
-#         global num_make
-#         for spk_id in self.spk_ids:
-#             make_feats_spks(spk_id)
-#             num_make += 1
-#             print('\t{:4d} of speakers making feats completed!'.format(num_make))
-
-
 class MakeFeatsProcess(Process):
     def __init__(self, item, proid, queue):
         super(MakeFeatsProcess, self).__init__()  # 重构run函数必须要写

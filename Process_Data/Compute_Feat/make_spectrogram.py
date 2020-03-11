@@ -11,7 +11,6 @@
 """
 
 from __future__ import print_function
-
 import argparse
 import os
 import pathlib
@@ -25,34 +24,13 @@ from kaldi_io import kaldi_io
 import Process_Data.constants as c
 from Process_Data.audio_processing import Make_Spect
 
-parser = argparse.ArgumentParser(description='Computing spectrogram!')
-
-parser.add_argument('--nj', type=int, default=16, metavar='E',
-                    help='number of jobs to make feats (default: 10)')
-parser.add_argument('--data-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev',
-                    help='number of jobs to make feats (default: 10)')
-parser.add_argument('--out-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
-                    help='number of jobs to make feats (default: 10)')
-
-parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
-                    help='number of epochs to train (default: 10)')
-
-parser.add_argument('--vad-proportion-threshold', type=float, default=0.12, metavar='E',
-                    help='number of epochs to train (default: 10)')
-parser.add_argument('--vad-frames-context', type=int, default=2, metavar='E',
-                    help='number of epochs to train (default: 10)')
-args = parser.parse_args()
-
-
 def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
     feat, duration = Make_Spect(wav_path=wav[1], windowsize=0.02, stride=0.01, duration=True)
     # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
     len_vec = len(feat.tobytes())
     key = wav[0]
-    kaldi_io.write_vec_flt(feat_ark, feat, key=key)
+    kaldi_io.write_mat(feat_ark, feat, key=key)
 
     feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
     utt2dur.write('%s %.6f' % (str(key), duration))
@@ -84,12 +62,31 @@ class MakeFeatsProcess(Process):
             compute_wav_path(pair, self.feat_scp, self.feat_ark, self.utt2dur, self.utt2num_frames)
             self.queue.put(pair[0])
             if self.queue.qsize() % 1000 == 0:
-                print('>> Process %s:' % str(self.proid) + str(self.queue.qsize()))
+                print('== Process %s:' % str(self.proid) + str(self.queue.qsize()))
 
         print('>> Process {} finished!'.format(self.proid))
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Computing spectrogram!')
+    parser.add_argument('--nj', type=int, default=16, metavar='E',
+                        help='number of jobs to make feats (default: 10)')
+    parser.add_argument('--data-dir', type=str,
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev',
+                        help='number of jobs to make feats (default: 10)')
+    parser.add_argument('--out-dir', type=str,
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
+                        help='number of jobs to make feats (default: 10)')
+
+    parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
+                        help='number of epochs to train (default: 10)')
+
+    parser.add_argument('--vad-proportion-threshold', type=float, default=0.12, metavar='E',
+                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--vad-frames-context', type=int, default=2, metavar='E',
+                        help='number of epochs to train (default: 10)')
+    args = parser.parse_args()
 
     nj = args.nj
     data_dir = args.data_dir
@@ -137,13 +134,15 @@ if __name__ == "__main__":
 
         for p in processpool:
             p.join()
+
+        print(' >> Computing Completed!')
     except:
         for p in processpool:
             p.terminate()
         sys.exit('Making Suspended!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
-    print('>>Splited Data root is %s. Cat all scripts together.' % str(Split_dir))
+    print(' >> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
 
     all_scp_path = [os.path.join(Split_dir, '%d/feat.%d.scp' % (i, i)) for i in range(nj)]
     feat_scp = os.path.join(out_dir, 'feats.scp')

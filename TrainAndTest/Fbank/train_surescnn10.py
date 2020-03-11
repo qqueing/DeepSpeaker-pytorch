@@ -144,18 +144,11 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
-if not os.path.exists(args.log_dir):
-    os.makedirs(args.log_dir)
-
 if args.cuda:
     cudnn.benchmark = True
-CKP_DIR = args.ckp_dir
-LOG_DIR = args.log_dir + '/run-test_{}-lr{}-wd{}-m{}-embeddings{}'\
-    .format(args.optimizer, args.lr, args.wd,
-            args.margin,args.embedding_size)
 
-# create logger
-logger = Logger(LOG_DIR)
+CKP_DIR = args.ckp_dir
+
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.ckp_dir, filename_suffix='ada_0.05')
 
