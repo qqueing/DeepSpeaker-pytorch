@@ -62,10 +62,10 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_nowd',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_nowd/checkpoint_35.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd/checkpoint_35.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -108,7 +108,7 @@ parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--weight-decay', default=0, type=float,
+parser.add_argument('--weight-decay', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
 parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
