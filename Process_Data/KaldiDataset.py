@@ -21,6 +21,11 @@ import torch.utils.data as data
 import torch
 from kaldi_io import read_mat
 
+
+def check_exist(path):
+    if not os.path.exists(path):
+        raise FileExistsError(path)
+
 def write_xvector_ark(uid, xvector, write_path, set):
     """
 
@@ -847,6 +852,101 @@ class ScriptTestDataset(data.Dataset):
 
     def __len__(self):
         return len(self.trials_pair)
+
+
+class SitwTestDataset(data.Dataset):
+    def __init__(self, sitw_dir, sitw_set, transform):
+        # sitw_set: dev, eval
+        # sitw_dev_enroll  sitw_dev_test
+
+        enroll_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
+        enroll_spk2utt = sitw_dir + '/sitw_%s_enroll/spk2utt' % sitw_set
+        test_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
+        test_utt2spk = sitw_dir + '/sitw_%s_enroll/utt2spk' % sitw_set
+        trials = sitw_dir + '/sitw_%s_test/trials/core-core.lst' % sitw_set
+
+        for p in enroll_feat_scp, enroll_spk2utt, test_feat_scp, test_utt2spk, trials:
+            check_exist(p)
+
+        enroll_spk2utt = {}
+        with open(enroll_spk2utt, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                spk_utt = line.split()
+                spk_name = spk_utt[0]
+                spk_utt = spk_utt[1]
+
+                enroll_spk2utt[spk_name] = spk_utt
+
+        test_utt2spk = {}
+        with open(test_utt2spk, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                spk_utt = line.split()
+                spk_name = spk_utt[1]
+                spk_utt = spk_utt[0]
+
+                test_utt2spk[spk_name] = spk_utt
+
+        enroll_speakers = [spk for spk in enroll_spk2utt.keys()]
+        enroll_speakers.sort()
+        test_utts = [spk for spk in test_utt2spk.keys()]
+        print('==> There are %d speakers in Enroll Dataset. ' \
+              'And %d utterances in sitw %s Dataset.' % (len(enroll_speakers), len(test_utts), sitw_set))
+
+        enroll_uid2feat = {}
+        with open(enroll_feat_scp, 'r') as t:
+            all_pairs = t.readlines()
+            for line in all_pairs:
+                # 12013 lpnns target
+                pair = line.split()
+                enroll_uid2feat[pair[0]] = pair[1]
+
+        test_uid2feat = {}
+        with open(test_feat_scp, 'r') as t:
+            all_pairs = t.readlines()
+            for line in all_pairs:
+                # 12013 lpnns target
+                pair = line.split()
+                test_uid2feat[pair[0]] = pair[1]
+
+        trials_pair = []
+        with open(trials, 'r') as t:
+            all_pairs = t.readlines()
+            for line in all_pairs:
+                # 12013 lpnns target
+                pair = line.split()
+                pair_true = False if pair[2] == 'nontarget' else True
+
+                trials_pair.append((enroll_spk2utt[pair[0]], pair[1], pair_true))
+
+        print('\tThere are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
+
+        self.feat_dim = read_mat(enroll_uid2feat[enroll_spk2utt[enroll_speakers[0]][0]]).shape[1]
+
+        self.speakers = enroll_speakers
+        self.enroll_uid2feat = enroll_uid2feat
+        self.test_uid2feat = test_uid2feat
+
+        self.trials_pair = trials_pair
+        self.num_spks = len(enroll_speakers)
+
+        self.transform = transform
+
+    def __getitem__(self, index):
+        uid_a, uid_b, label = self.trials_pair[index]
+
+        data_a = read_mat(self.uid2feat[uid_a])
+        data_b = read_mat(self.uid2feat[uid_b])
+
+        data_a = self.transform(data_a)
+        data_b = self.transform(data_b)
+
+        return data_a, data_b, label
+
+    def __len__(self):
+        return len(self.trials_pair)
+
 # uid = ['A.J._Buckley-1zcIwhmdeo4-0001.wav', 'A.J._Buckley-1zcIwhmdeo4-0002.wav', 'A.J._Buckley-1zcIwhmdeo4-0003.wav', 'A.J._Buckley-7gWzIy6yIIk-0001.wav']
 # xvector = np.random.randn(4, 512).astype(np.float32)
 #
