@@ -67,8 +67,8 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
 
         queue.put(pair[0])
 
-        if queue.qsize() % 1000 == 0:
-            print('\rProcessed [%6s]/[148642]' % str(queue.qsize()), end='')
+        if queue.qsize() % 100 == 0:
+            print('\rProcessed [%6s]' % str(queue.qsize()), end='')
 
     feat_scp.close()
     utt2dur.close()
@@ -80,13 +80,13 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=4, metavar='E',
+    parser.add_argument('--nj', type=int, default=8, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_wav/sitw_eval_test',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_wav/sitw_dev_enroll',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect/sitw_eval_test',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect/sitw_dev_enroll',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
