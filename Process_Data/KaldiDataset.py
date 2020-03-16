@@ -861,14 +861,15 @@ class SitwTestDataset(data.Dataset):
 
         enroll_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
         enroll_spk2utt = sitw_dir + '/sitw_%s_enroll/spk2utt' % sitw_set
-        test_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
-        test_utt2spk = sitw_dir + '/sitw_%s_enroll/utt2spk' % sitw_set
+
+        test_feat_scp = sitw_dir + '/sitw_%s_test/feats.scp' % sitw_set
+        test_utt2spk = sitw_dir + '/sitw_%s_test/utt2spk' % sitw_set
         trials = sitw_dir + '/sitw_%s_test/trials/core-core.lst' % sitw_set
 
         for p in enroll_feat_scp, enroll_spk2utt, test_feat_scp, test_utt2spk, trials:
             check_exist(p)
 
-        enroll_spk2utt = {}
+        enroll_spk2utt_dict = {}
         with open(enroll_spk2utt, 'r') as u:
             all_cls = u.readlines()
             for line in all_cls:
@@ -876,9 +877,9 @@ class SitwTestDataset(data.Dataset):
                 spk_name = spk_utt[0]
                 spk_utt = spk_utt[1]
 
-                enroll_spk2utt[spk_name] = spk_utt
+                enroll_spk2utt_dict[spk_name] = spk_utt
 
-        test_utt2spk = {}
+        test_utt2spk_dict = {}
         with open(test_utt2spk, 'r') as u:
             all_cls = u.readlines()
             for line in all_cls:
@@ -886,11 +887,11 @@ class SitwTestDataset(data.Dataset):
                 spk_name = spk_utt[1]
                 spk_utt = spk_utt[0]
 
-                test_utt2spk[spk_name] = spk_utt
+                test_utt2spk_dict[spk_name] = spk_utt
 
-        enroll_speakers = [spk for spk in enroll_spk2utt.keys()]
+        enroll_speakers = [spk for spk in enroll_spk2utt_dict.keys()]
         enroll_speakers.sort()
-        test_utts = [spk for spk in test_utt2spk.keys()]
+        test_utts = [spk for spk in test_utt2spk_dict.keys()]
         print('==> There are %d speakers in Enroll Dataset. ' \
               'And %d utterances in sitw %s Dataset.' % (len(enroll_speakers), len(test_utts), sitw_set))
 
@@ -918,11 +919,11 @@ class SitwTestDataset(data.Dataset):
                 pair = line.split()
                 pair_true = False if pair[2] == 'nontarget' else True
 
-                trials_pair.append((enroll_spk2utt[pair[0]], pair[1], pair_true))
+                trials_pair.append((enroll_spk2utt_dict[pair[0]], pair[1], pair_true))
 
         print('\tThere are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
 
-        self.feat_dim = read_mat(enroll_uid2feat[enroll_spk2utt[enroll_speakers[0]][0]]).shape[1]
+        self.feat_dim = read_mat(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]][0]]).shape[1]
 
         self.speakers = enroll_speakers
         self.enroll_uid2feat = enroll_uid2feat
