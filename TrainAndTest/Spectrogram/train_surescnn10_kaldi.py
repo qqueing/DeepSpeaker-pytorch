@@ -204,7 +204,7 @@ indices = indices[:6400]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
-indices = list(range(len(sitw_test_dir)))
+indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
 indices = indices[:6400]
 sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
