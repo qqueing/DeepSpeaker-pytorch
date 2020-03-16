@@ -203,6 +203,12 @@ random.shuffle(indices)
 indices = indices[:6400]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
+sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
+indices = list(range(len(sitw_test_dir)))
+random.shuffle(indices)
+indices = indices[:6400]
+sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
+
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform)
@@ -255,6 +261,9 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
                                                    **kwargs)
+    sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
+                                                  **kwargs)
+
 
 
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
@@ -272,8 +281,9 @@ def main():
     for epoch in range(start, end):
         # pdb.set_trace()
         # train(train_loader, model, ce, optimizer, scheduler, epoch)
-        test(test_loader, valid_loader, model, epoch)
+        # test(test_loader, valid_loader, model, epoch)
         sitw_test(sitw_test_loader, model, epoch)
+        sitw_test(sitw_dev_loader, model, epoch)
 
         # scheduler.step()
         exit(1)
@@ -467,7 +477,7 @@ def sitw_test(test_loader, model, epoch):
     writer.add_scalar('Test/SITW_EER', 100. * eer, epoch)
     writer.add_scalar('Test/SITW_Threshold', eer_threshold, epoch)
 
-    print('\33[91mFor Sitw Test ERR is {:.4f}%, Threshold is {}. Valid\n\33[0m'.format(100. * eer, eer_threshold))
+    print('\33[91mFor Sitw Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer, eer_threshold))
 
 # python TrainAndTest/Spectrogram/train_surescnn10_kaldi.py > Log/SuResCNN10/spect_161/
 
