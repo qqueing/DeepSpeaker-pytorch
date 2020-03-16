@@ -273,7 +273,7 @@ def main():
         # pdb.set_trace()
         # train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-        test(sitw_test_loader, model, epoch)
+        sitw_test(sitw_test_loader, model, epoch)
 
         # scheduler.step()
         exit(1)
@@ -426,7 +426,7 @@ def test(test_loader, valid_loader, model, epoch):
                                                                   eer_threshold, valid_accuracy))
 
 
-def test(test_loader, model, epoch):
+def sitw_test(test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
