@@ -200,13 +200,13 @@ test_part = torch.utils.data.Subset(test_dir, indices)
 sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
-indices = indices[:6400]
+indices = indices[:12800]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
-indices = indices[:6400]
+indices = indices[:12800]
 sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
