@@ -68,7 +68,7 @@ parser.add_argument('--sitw-dir', type=str,
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_5lwd/checkpoint_20.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd/checkpoint_20.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
