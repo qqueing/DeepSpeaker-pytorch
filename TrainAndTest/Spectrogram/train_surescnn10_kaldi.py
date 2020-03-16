@@ -468,7 +468,8 @@ def sitw_test(test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a), len(test_loader.dataset), 100. * batch_idx / len(test_loader)))
+                epoch, batch_idx * len(data_a) / vec_shape[1], len(test_loader.dataset),
+                       100. * batch_idx / len(test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
