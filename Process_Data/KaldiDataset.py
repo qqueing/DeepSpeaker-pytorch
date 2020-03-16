@@ -937,8 +937,8 @@ class SitwTestDataset(data.Dataset):
     def __getitem__(self, index):
         uid_a, uid_b, label = self.trials_pair[index]
 
-        data_a = np.load(self.uid2feat[uid_a])
-        data_b = np.load(self.uid2feat[uid_b])
+        data_a = np.load(self.enroll_uid2feat[uid_a])
+        data_b = np.load(self.test_uid2feat[uid_b])
 
         data_a = self.transform(data_a)
         data_b = self.transform(data_b)
