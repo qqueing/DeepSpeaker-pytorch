@@ -922,8 +922,8 @@ class SitwTestDataset(data.Dataset):
                 trials_pair.append((enroll_spk2utt_dict[pair[0]], pair[1], pair_true))
 
         print('\tThere are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
-        pdb.set_trace()
-        self.feat_dim = read_mat(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]]]).shape[1]
+        # pdb.set_trace()
+        self.feat_dim = np.load(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]]]).shape[1]
 
         self.speakers = enroll_speakers
         self.enroll_uid2feat = enroll_uid2feat
@@ -937,8 +937,8 @@ class SitwTestDataset(data.Dataset):
     def __getitem__(self, index):
         uid_a, uid_b, label = self.trials_pair[index]
 
-        data_a = read_mat(self.uid2feat[uid_a])
-        data_b = read_mat(self.uid2feat[uid_b])
+        data_a = np.load(self.uid2feat[uid_a])
+        data_b = np.load(self.uid2feat[uid_b])
 
         data_a = self.transform(data_a)
         data_b = self.transform(data_b)
