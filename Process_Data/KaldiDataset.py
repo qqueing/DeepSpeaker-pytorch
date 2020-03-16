@@ -923,7 +923,7 @@ class SitwTestDataset(data.Dataset):
 
         print('\tThere are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
 
-        self.feat_dim = read_mat(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]][0]]).shape[1]
+        self.feat_dim = read_mat(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]]]).shape[1]
 
         self.speakers = enroll_speakers
         self.enroll_uid2feat = enroll_uid2feat
