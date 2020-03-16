@@ -28,7 +28,7 @@ from tqdm import tqdm
 
 from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
@@ -61,11 +61,14 @@ parser.add_argument('--train-dir', type=str,
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--sitw-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
+                    help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_wd',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_wd/checkpoint_35.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_5lwd/checkpoint_20.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -108,7 +111,7 @@ parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--weight-decay', default=1e-3, type=float,
+parser.add_argument('--weight-decay', default=5e-4, type=float,
                     metavar='W', help='weight decay (default: 0.0)')
 parser.add_argument('--momentum', default=0.9, type=float,
                     metavar='W', help='momentum for sgd (default: 0.9)')
@@ -194,6 +197,12 @@ random.shuffle(indices)
 indices = indices[:6400]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
+sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='test', transform=transform_T)
+indices = list(range(len(sitw_test_dir)))
+random.shuffle(indices)
+indices = indices[:6400]
+sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
+
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform)
@@ -244,6 +253,9 @@ def main():
                                                # collate_fn=PadCollate(dim=2),
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
+                                                   **kwargs)
+
 
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
     # ce = nn.CrossEntropyLoss().cuda()
@@ -259,10 +271,12 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        train(train_loader, model, ce, optimizer, scheduler, epoch)
+        # train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-        scheduler.step()
-        # exit(1)
+        test(sitw_test_loader, model, epoch)
+
+        # scheduler.step()
+        exit(1)
 
     writer.close()
 
@@ -410,6 +424,50 @@ def test(test_loader, valid_loader, model, epoch):
     print('\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
           'Accuracy is {:.2f}%.\n\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
                                                                   eer_threshold, valid_accuracy))
+
+
+def test(test_loader, model, epoch):
+    # switch to evaluate mode
+    model.eval()
+
+    labels, distances = [], []
+    pbar = tqdm(enumerate(test_loader))
+    for batch_idx, (data_a, data_p, label) in pbar:
+
+        vec_shape = data_a.shape
+        # pdb.set_trace()
+        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+
+        if args.cuda:
+            data_a, data_p = data_a.cuda(), data_p.cuda()
+        data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
+
+        # compute output
+        _, out_a_ = model(data_a)
+        _, out_p_ = model(data_p)
+        out_a = out_a_
+        out_p = out_p_
+
+        dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+        dists = dists.data.cpu().numpy()
+
+        distances.append(dists)
+        labels.append(label.data.cpu().numpy())
+
+        if batch_idx % args.log_interval == 0:
+            pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                epoch, batch_idx * len(data_a), len(test_loader.dataset), 100. * batch_idx / len(test_loader)))
+
+    labels = np.array([sublabel for label in labels for sublabel in label])
+    distances = np.array([subdist for dist in distances for subdist in dist])
+
+    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
+    writer.add_scalar('Test/SITW_EER', 100. * eer, epoch)
+    writer.add_scalar('Test/SITW_Threshold', eer_threshold, epoch)
+
+    print('\33[91mFor Sitw Test ERR is {:.4f}%, Threshold is {}. Valid\n\33[0m'.format(100. * eer, eer_threshold))
 
 # python TrainAndTest/Spectrogram/train_surescnn10_kaldi.py > Log/SuResCNN10/spect_161/
 
