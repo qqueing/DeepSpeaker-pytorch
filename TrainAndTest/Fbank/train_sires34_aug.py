@@ -104,7 +104,7 @@ parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=64, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=24, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
