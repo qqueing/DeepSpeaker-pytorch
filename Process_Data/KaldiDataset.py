@@ -645,7 +645,7 @@ class KaldiExtractDataset(data.Dataset):
 
 
 class ScriptTrainDataset(data.Dataset):
-    def __init__(self, dir, samples_per_speaker, transform, num_valid=5):
+    def __init__(self, dir, samples_per_speaker, transform, num_valid=5, loader=np.load):
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
@@ -709,7 +709,6 @@ class ScriptTrainDataset(data.Dataset):
 
         print('==> Spliting {} utterances for Validation.'.format(len(valid_uid2feat)))
 
-        self.feat_dim = np.load(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers
         self.dataset = dataset
         self.valid_set = valid_set
@@ -719,6 +718,9 @@ class ScriptTrainDataset(data.Dataset):
         self.spk_to_idx = spk_to_idx
         self.idx_to_spk = idx_to_spk
         self.num_spks = len(speakers)
+
+        self.loader = loader
+        self.feat_dim = loader(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.transform = transform
         self.samples_per_speaker = samples_per_speaker
 
@@ -733,7 +735,7 @@ class ScriptTrainDataset(data.Dataset):
         while n_samples < frames:
 
             uid = random.randrange(0, len(utts))
-            feature = np.load(self.uid2feat[utts[uid]])
+            feature = self.loader(self.uid2feat[utts[uid]])
 
             # Get the index of feature
             if n_samples == 0:
@@ -754,7 +756,7 @@ class ScriptTrainDataset(data.Dataset):
 
 
 class ScriptValidDataset(data.Dataset):
-    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict, transform):
+    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict, transform, loader=np.load):
         speakers = [spk for spk in valid_set.keys()]
         speakers.sort()
         self.speakers = speakers
@@ -764,12 +766,14 @@ class ScriptValidDataset(data.Dataset):
         self.utt2spk_dict = valid_utt2spk_dict
         self.spk_to_idx = spk_to_idx
         self.num_spks = len(speakers)
+
+        self.loader = loader
         self.transform = transform
 
     def __getitem__(self, index):
         uid = list(self.uid2feat.keys())[index]
         spk = self.utt2spk_dict[uid]
-        y = np.load(self.uid2feat[uid])
+        y = self.loader(self.uid2feat[uid])
 
         feature = self.transform(y)
         label = self.spk_to_idx[spk]
@@ -781,7 +785,7 @@ class ScriptValidDataset(data.Dataset):
 
 
 class ScriptTestDataset(data.Dataset):
-    def __init__(self, dir, transform):
+    def __init__(self, dir, transform, loader=np.load):
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
@@ -830,11 +834,13 @@ class ScriptTestDataset(data.Dataset):
 
         print('==>There are {} pairs in test Dataset.'.format(len(trials_pair)))
 
-        self.feat_dim = np.load(uid2feat[dataset[speakers[0]][0]]).shape[1]
+        self.feat_dim = loader(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers
         self.uid2feat = uid2feat
         self.trials_pair = trials_pair
         self.num_spks = len(speakers)
+
+        self.loader = loader
         self.transform = transform
 
     def __getitem__(self, index):
@@ -842,8 +848,8 @@ class ScriptTestDataset(data.Dataset):
 
         feat_a = self.uid2feat[uid_a]
         feat_b = self.uid2feat[uid_b]
-        y_a = np.load(feat_a)
-        y_b = np.load(feat_b)
+        y_a = self.loader(feat_a)
+        y_b = self.loader(feat_b)
 
         data_a = self.transform(y_a)
         data_b = self.transform(y_b)
@@ -855,7 +861,7 @@ class ScriptTestDataset(data.Dataset):
 
 
 class SitwTestDataset(data.Dataset):
-    def __init__(self, sitw_dir, sitw_set, transform):
+    def __init__(self, sitw_dir, sitw_set, transform, loader=np.load):
         # sitw_set: dev, eval
         # sitw_dev_enroll  sitw_dev_test
 
@@ -932,13 +938,14 @@ class SitwTestDataset(data.Dataset):
         self.trials_pair = trials_pair
         self.num_spks = len(enroll_speakers)
 
+        self.loader = loader
         self.transform = transform
 
     def __getitem__(self, index):
         uid_a, uid_b, label = self.trials_pair[index]
 
-        data_a = np.load(self.enroll_uid2feat[uid_a])
-        data_b = np.load(self.test_uid2feat[uid_b])
+        data_a = self.loader(self.enroll_uid2feat[uid_a])
+        data_b = self.loader(self.test_uid2feat[uid_b])
 
         data_a = self.transform(data_a)
         data_b = self.transform(data_b)
