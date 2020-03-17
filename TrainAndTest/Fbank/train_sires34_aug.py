@@ -271,7 +271,8 @@ def main():
         # pdb.set_trace()
 
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
-        test(test_loader, valid_loader, model, epoch)
+        valid(valid_loader, model, epoch)
+        test(test_loader, model, epoch)
 
         scheduler.step()
         # break
@@ -345,7 +346,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
 
-def test(test_loader, valid_loader, model, epoch):
+def valid(valid_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
@@ -385,6 +386,12 @@ def test(test_loader, valid_loader, model, epoch):
 
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
+    print('\33[91m Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
+
+
+def test(test_loader, model, epoch):
+    # switch to evaluate mode
+    model.eval()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
@@ -416,14 +423,14 @@ def test(test_loader, valid_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print(
-        '\33[91mFor {}_distance, Test set ERR is {:.8f} when threshold is {:.8f}. Valid Accuracy is {}.\n\33[0m'.format( \
-            'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+    print('\33[91mFor {}_distance, Test ERR is {:.8f} Threshold is {:.8f}.\n\33[0m'.format(
+        'cos' if args.cos_sim else 'l2',
+        100. * eer,
+        eer_threshold))
 
 
 if __name__ == '__main__':
