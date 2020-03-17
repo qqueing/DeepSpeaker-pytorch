@@ -799,6 +799,7 @@ class AttentionLSTM(nn.Module):
         """
 
         out, (_, _) = self.lstm_layer(input, (self.h0, self.c0))
+        pdb.set_trace()
         rnn_out = self.attention_layer(out)
         # rnn_last =
         spk_vec = self.fc1(rnn_out)

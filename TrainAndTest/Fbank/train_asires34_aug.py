@@ -157,7 +157,7 @@ if args.cuda:
 # create logger
 
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(args.check_path, filename_suffix='aug_192')
+writer = SummaryWriter(args.check_path, filename_suffix='attention')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
