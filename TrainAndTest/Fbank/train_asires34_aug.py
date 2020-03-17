@@ -5,8 +5,8 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: train_sires34_aug.py
-@Time: 2020/3/17 7:05 PM
+@File: train_asires34_aug.py
+@Time: 2020/3/18 2:27 AM
 @Overview:
 """
 # from __future__ import print_function
@@ -33,17 +33,13 @@ import numpy as np
 from torch.optim.lr_scheduler import StepLR, MultiStepLR
 from tqdm import tqdm
 
-from Define_Model.ResNet import SimpleResNet
-from Define_Model.model import ResSpeakerModel, ResCNNSpeaker
-from Process_Data.VoxcelebTestset import VoxcelebTestset
-from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
+from Define_Model.ResNet import AttenSiResNet
+
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 
-from Process_Data.DeepSpeakerDataset_dynamic import ValidationDataset
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, ScriptTrainDataset, \
+from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
-from Process_Data.voxceleb_wav_reader import wav_list_reader, wav_duration_reader, dic_dataset
 
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
@@ -83,10 +79,10 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
+parser.add_argument('--check-path', default='Data/checkpoint/ASiResNet34/soft/aug',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34/soft/aug/checkpoint_1.pth',
+                    default='Data/checkpoint/ASiResNet34/soft/aug/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -205,7 +201,8 @@ indices = indices[:9600]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
-                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
+                               valid_uid2feat=train_dir.valid_uid2feat,
+                               valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform, loader=file_loader)
 
 
@@ -223,7 +220,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers))
+    model = AttenSiResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers))
 
     if args.cuda:
         model.cuda()
@@ -301,7 +298,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model.pre_forward_norm(data)
+        feats = model.att_forward_norm(data)
         classfier = model(feats)
 
         predicted_labels = output_softmax(classfier)
@@ -359,7 +356,7 @@ def test(test_loader, valid_loader, model, epoch):
         data = Variable(data.cuda())
         # compute output
         # pdb.set_trace()
-        out = model.pre_forward_norm(data)
+        out = model.att_forward_norm(data)
         cls = model(out)
 
         predicted_labels = cls
@@ -400,8 +397,8 @@ def test(test_loader, valid_loader, model, epoch):
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a = model.pre_forward_norm(data_a)
-        out_p = model.pre_forward_norm(data_p)
+        out_a = model.att_forward_norm(data_a)
+        out_p = model.att_forward_norm(data_p)
 
         dists = l2_dist.forward(out_a, out_p)
         dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
