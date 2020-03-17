@@ -201,7 +201,7 @@ test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, loader=fi
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:6400]
+indices = indices[:9600]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -256,7 +256,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
                                                # collate_fn=PadCollate(dim=2, fix_len=True),
                                                shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size,
                                                # collate_fn=PadCollate(dim=2, fix_len=True),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
@@ -272,9 +272,9 @@ def main():
         # pdb.set_trace()
         for param_group in optimizer.param_groups:
             print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
-        test(test_loader, model, epoch)
+
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
-        valid(valid_loader, model, epoch)
+        test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
         # break
@@ -346,7 +346,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
 
-def valid(valid_loader, model, epoch):
+def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
@@ -386,18 +386,12 @@ def valid(valid_loader, model, epoch):
 
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
-    print('\33[91m Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
-
-
-def test(test_loader, model, epoch):
-    # switch to evaluate mode
-    model.eval()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
         vec_shape = data_a.shape
-        pdb.set_trace()
+        # pdb.set_trace()
         data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
         data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
@@ -423,14 +417,13 @@ def test(test_loader, model, epoch):
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
+    # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\33[91mFor {}_distance, Test ERR is {:.8f} Threshold is {:.8f}.\n\33[0m'.format(
-        'cos' if args.cos_sim else 'l2',
-        100. * eer,
-        eer_threshold))
+    print('\33[91mFor %s_distance, Test ERR is %.4f %%. Threshold is %.4f . Valid Accuracy is %.4f %%.\n\33[0m' % ( \
+        'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
 
 
 if __name__ == '__main__':
