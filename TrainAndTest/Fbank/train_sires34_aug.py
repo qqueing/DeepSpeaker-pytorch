@@ -83,10 +83,10 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34/soft/kaldi/checkpoint_1.pth',
+                    default='Data/checkpoint/SiResNet34/soft/aug/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
