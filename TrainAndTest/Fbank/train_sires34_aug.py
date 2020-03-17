@@ -217,7 +217,7 @@ valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_d
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
     # print the experiment configuration
-    print('\33[91mCurrent time is {}\33[0m'.format(str(time.asctime())))
+    print('\nCurrent time is \33[91m{}\33[0m'.format(str(time.asctime())))
     print('Parsed options: {}'.format(vars(args)))
     print('Number of Classes: {}\n'.format(len(train_dir.speakers)))
 
@@ -260,6 +260,7 @@ def main():
                                                # collate_fn=PadCollate(dim=2, fix_len=True),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
     criterion = nn.CrossEntropyLoss().cuda()
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
     torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
@@ -269,10 +270,11 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-
+        for param_group in optimizer.param_groups:
+            print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
+        test(test_loader, model, epoch)
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
         valid(valid_loader, model, epoch)
-        test(test_loader, model, epoch)
 
         scheduler.step()
         # break
@@ -290,8 +292,6 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     output_softmax = nn.Softmax(dim=1)
 
     pbar = tqdm(enumerate(train_loader))
-    for param_group in optimizer.param_groups:
-        print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
     for batch_idx, (data, label) in pbar:
 
@@ -397,7 +397,7 @@ def test(test_loader, model, epoch):
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
         vec_shape = data_a.shape
-        # pdb.set_trace()
+        pdb.set_trace()
         data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
         data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
