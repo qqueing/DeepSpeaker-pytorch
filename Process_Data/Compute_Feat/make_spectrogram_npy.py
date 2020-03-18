@@ -37,7 +37,7 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
     utt2num_frames.write('%s %d\n' % (str(key), len(feat)))
 
 
-def MakeFeatsProcess(out_dir, item, proid, queue):
+def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
     feat_path = os.path.join(out_dir, 'feats.%d' % proid)
@@ -51,47 +51,51 @@ def MakeFeatsProcess(out_dir, item, proid, queue):
     utt2dur = open(utt2dur, 'w')
     utt2num_frames = open(utt2num_frames, 'w')
 
-    for wav in item:
+    while not t_queue.empty():
+        comm = task_queue.get()
         # print('111')
-        pair = wav.split()
+        pair = comm.split()
         key = pair[0]
-        feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
-        # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
+        try:
+            feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+            # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
-        save_path = os.path.join(feat_path, key + '.npy')
-        np.save(save_path, feat)
+            save_path = os.path.join(feat_path, key + '.npy')
+            np.save(save_path, feat)
 
-        feat_scp.write(str(key) + ' ' + save_path + '\n')
-        utt2dur.write('%s %.6f\n' % (str(key), duration))
-        utt2num_frames.write('%s %d\n' % (str(key), len(feat)))
+            feat_scp.write(str(key) + ' ' + save_path + '\n')
+            utt2dur.write('%s %.6f\n' % (str(key), duration))
+            utt2num_frames.write('%s %d\n' % (str(key), len(feat)))
+        except:
+            e_queue.put(key)
 
-        queue.put(pair[0])
-
-        if queue.qsize() % 100 == 0:
-            print('\rProcessed [%6s]' % str(queue.qsize()), end='')
+        if t_queue.qsize() % 100 == 0:
+            print('\rProcess [%3s] There are [%6s] utterances left, with [%6s] errors.' % (str(proid),
+                                                                                           str(t_queue.qsize()),
+                                                                                           str(e_queue.qsize())),
+                  end='')
 
     feat_scp.close()
     utt2dur.close()
     utt2num_frames.close()
 
-    print('>> Process {} finished!'.format(proid))
+    # print('>> Process {} finished!'.format(proid))
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=8, metavar='E',
+    parser.add_argument('--nj', type=int, default=12, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_wav/sitw_eval_enroll',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_fb64/dev_no_sil',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect/sitw_eval_enroll',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
                         help='number of epochs to train (default: 10)')
-
     parser.add_argument('--vad-proportion-threshold', type=float, default=0.12, metavar='E',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--vad-frames-context', type=int, default=2, metavar='E',
@@ -120,35 +124,39 @@ if __name__ == "__main__":
     assert os.path.exists(wav_scp_f)
 
     num_utt = len(wav_scp)
-    chunk = int(num_utt / nj)
     start_time = time.time()
-
 
     # completed_queue = Queue()
     manager = Manager()
-    completed_queue = manager.Queue()
+    task_queue = manager.Queue()
+    error_queue = manager.Queue()
+
+    for u in wav_scp:
+        task_queue.put(u)
     # processpool = []
-    print('Plan to make feats for %d utterances in %s.' % (num_utt, str(time.asctime())))
+    print('Plan to make feats for %d utterances in %s.' % (task_queue.qsize(), str(time.asctime())))
     # MakeFeatsProcess(out_dir, wav_scp, 0, completed_queue)
 
     pool = Pool(processes=nj)  # 创建nj个进程
     for i in range(0, nj):
-        j = (i + 1) * chunk
-        if i == (nj - 1):
-            j = num_utt
-
         write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
         if not os.path.exists(write_dir):
             os.makedirs(write_dir)
 
-        pool.apply_async(MakeFeatsProcess, args=(write_dir, wav_scp[i * chunk:j], i, completed_queue))
+        pool.apply_async(MakeFeatsProcess, args=(write_dir, i, task_queue, error_queue))
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
     pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
-    print(' >> Computing Completed!')
+    if error_queue.qsize() > 0:
+        print('\n>> Saving Completed with errors in: ')
+        while not error_queue.empty():
+            print(error_queue.get() + ' ', end='')
+        print('')
+    else:
+        print('\n>> Saving Completed without errors.!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
-    print(' >> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
+    print('\n>> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
 
     all_scp_path = [os.path.join(Split_dir, '%d/feat.%d.scp' % (i, i)) for i in range(nj)]
     feat_scp = os.path.join(out_dir, 'feats.scp')
