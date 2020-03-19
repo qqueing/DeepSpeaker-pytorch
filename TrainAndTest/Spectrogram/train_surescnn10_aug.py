@@ -283,12 +283,10 @@ def main():
         # pdb.set_trace()
         train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-        sitw_test(sitw_test_loader, model, epoch)
-        sitw_test(sitw_dev_loader, model, epoch)
+        sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch)
 
-        # scheduler.step()
+        scheduler.step()
         # exit(1)
-
     writer.close()
 
 
@@ -437,12 +435,11 @@ def test(test_loader, valid_loader, model, epoch):
                                                 eer_threshold, valid_accuracy))
 
 
-def sitw_test(test_loader, model, epoch):
+def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
-
     labels, distances = [], []
-    pbar = tqdm(enumerate(test_loader))
+    pbar = tqdm(enumerate(sitw_dev_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
         vec_shape = data_a.shape
@@ -469,17 +466,59 @@ def sitw_test(test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a) / vec_shape[1], len(test_loader.dataset),
-                       100. * batch_idx / len(test_loader)))
+                epoch, batch_idx * len(data_a) / vec_shape[1], len(sitw_dev_loader.dataset),
+                       100. * batch_idx / len(sitw_dev_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/SITW_EER', 100. * eer, epoch)
-    writer.add_scalar('Test/SITW_Threshold', eer_threshold, epoch)
+    eer_d, eer_threshold_d, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
 
-    print('\33[91mFor Sitw Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer, eer_threshold))
+    labels, distances = [], []
+    pbar = tqdm(enumerate(sitw_test_loader))
+    for batch_idx, (data_a, data_p, label) in pbar:
+
+        vec_shape = data_a.shape
+        # pdb.set_trace()
+        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+
+        if args.cuda:
+            data_a, data_p = data_a.cuda(), data_p.cuda()
+        data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
+
+        # compute output
+        _, out_a_ = model(data_a)
+        _, out_p_ = model(data_p)
+        out_a = out_a_
+        out_p = out_p_
+
+        dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+        dists = dists.data.cpu().numpy()
+
+        distances.append(dists)
+        labels.append(label.data.cpu().numpy())
+
+        if batch_idx % args.log_interval == 0:
+            pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                epoch, batch_idx * len(data_a) / vec_shape[1], len(sitw_test_loader.dataset),
+                       100. * batch_idx / len(sitw_test_loader)))
+
+    labels = np.array([sublabel for label in labels for sublabel in label])
+    distances = np.array([subdist for dist in distances for subdist in dist])
+
+    eer_t, eer_threshold_t, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
+    writer.add_scalars('Test/EER',
+                       {'sitw_dev': 100. * eer_d, 'sitw_test': 100. * eer_t},
+                       epoch)
+    writer.add_scalars('Test/Threshold',
+                       {'sitw_dev': eer_threshold_d, 'sitw_test': eer_threshold_t},
+                       epoch)
+
+    print('\33[91mFor Sitw Dev ERR is {:.4f}%, Threshold is {},' \
+          'Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer_d, eer_threshold_d, 100. * eer_t,
+                                                                 eer_threshold_t))
 
 
 # python TrainAndTest/Spectrogram/train_surescnn10_kaldi.py > Log/SuResCNN10/spect_161/
