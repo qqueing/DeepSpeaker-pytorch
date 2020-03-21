@@ -22,7 +22,7 @@ from Process_Data import constants as c
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
-import torch.utils.data.DataLoader as DataLoader
+from torch.utils.data import DataLoader
 import os
 import matplotlib.pyplot as plt
 
