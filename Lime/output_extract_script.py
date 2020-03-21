@@ -172,11 +172,9 @@ def train_extract(train_loader, model, epoch, set_name):
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
 
-    model_conv1 = model.conv1.weight.detach().numpy()
-    np.save(file_dir + '/model.conv1.npy', model_conv1)
-
     if args.cuda:
-        model.cuda()
+        model_conv1 = model.conv1.weight.cpu().detach().numpy()
+        np.save(file_dir + '/model.conv1.npy', model_conv1)
 
     utt_con = []
     pbar = tqdm(enumerate(train_loader))
@@ -301,6 +299,7 @@ def main():
         else:
             print('=> no checkpoint found at %s' % resume_path.format(e))
             continue
+        model.cuda()
 
         train_extract(train_loader, model, epoch, 'vox1_train')
         train_extract(valid_loader, model, epoch, 'vox1_valid')
