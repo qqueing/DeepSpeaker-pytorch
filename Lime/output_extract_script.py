@@ -209,7 +209,7 @@ def train_extract(train_loader, model, epoch, set_name):
             num = batch_idx // save_per_num if batch_idx + 1 % save_per_num == 0 else batch_idx // save_per_num + 1
             # checkpoint_dir / extract / < dataset > / < set >.*.bin
             filename = file_dir + '/%s.%d.bin' % (set_name, num)
-            print('Saving pairs in %s.' % filename)
+            print('\nSaving pairs in %s.' % filename)
 
             with open(filename, 'wb') as f:
                 pickle.dump(utt_con, f)
