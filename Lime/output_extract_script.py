@@ -65,7 +65,10 @@ parser.add_argument('--test-dir', type=str,
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
+
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
+                    help='folder to output model checkpoints')
+parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -168,7 +171,7 @@ def train_extract(train_loader, model, epoch, set_name):
     # switch to evaluate mode
     model.eval()
 
-    file_dir = args.check_path + '/extract/epoch_%d' % epoch
+    file_dir = args.extract_path + '/epoch_%d' % epoch
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
 
@@ -181,6 +184,7 @@ def train_extract(train_loader, model, epoch, set_name):
     save_per_num = 30
     for batch_idx, (data, label, uid) in pbar:
 
+        orig = data.detach().numpy().squeeze().astype(np.float32)
         data = Variable(data.cuda(), requires_grad=True)
 
         conv1 = model.conv1(data)
@@ -197,7 +201,7 @@ def train_extract(train_loader, model, epoch, set_name):
         cos_theta[0][label.long()].backward()
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
 
-        utt_con.append((uid, conv1, bn1, relu1, grad))
+        utt_con.append((uid, orig, conv1, bn1, relu1, grad))
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Saving output for {} : [{:8d}/{:8d} ({:3.0f}%)] '.format(
                 uid,
@@ -205,16 +209,17 @@ def train_extract(train_loader, model, epoch, set_name):
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader)))
 
-        if (batch_idx + 1) % save_per_num == 0 or (batch_idx + 1) == len(train_loader.dataset):
+        if (batch_idx + 1) % save_per_num == 0:
             num = batch_idx // save_per_num if batch_idx + 1 % save_per_num == 0 else batch_idx // save_per_num + 1
             # checkpoint_dir / extract / < dataset > / < set >.*.bin
             filename = file_dir + '/%s.%d.bin' % (set_name, num)
-            print('\nSaving pairs in %s.' % filename)
-
             with open(filename, 'wb') as f:
                 pickle.dump(utt_con, f)
 
             utt_con = []
+
+        elif (batch_idx + 1) == len(train_loader.dataset):
+            print('\nSaving pairs in %s.' % filename)
 
 
 # def test_extract(test_loader, model, epoch, set_name):
