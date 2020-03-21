@@ -799,6 +799,9 @@ class ScriptValidDataset(data.Dataset):
         feature = self.transform(y)
         label = self.spk_to_idx[spk]
 
+        if self.return_uid:
+            return feature, label, uid
+
         return feature, label
 
     def __len__(self):
