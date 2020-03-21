@@ -79,7 +79,8 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
-
+parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
+                    help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
