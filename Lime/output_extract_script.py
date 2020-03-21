@@ -218,8 +218,8 @@ def train_extract(train_loader, model, epoch, set_name):
                 pickle.dump(utt_con, f)
 
             utt_con = []
-            if (batch_idx + 1) == len(train_loader.dataset):
-                print('Saving pairs in %s.\n' % filename)
+
+    print('Saving pairs in %s.\n' % file_dir)
 
 
 # def test_extract(test_loader, model, epoch, set_name):
