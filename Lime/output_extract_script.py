@@ -198,8 +198,9 @@ def train_extract(train_loader, model, epoch, set_name):
 
         grad = np.array([]).reshape(0, data_shape[0], data_shape[2], data_shape[3])
         for l in label:
+            pdb.set_trace()
             cos_theta[0][l.long()].backward()
-            grad = np.concatenate((grad, data.grad.cpu().numpy().squeeze().astype(np.float32)), axis=0)
+            grad = np.concatenate((grad, data[l.long()].grad.cpu().numpy().squeeze().astype(np.float32)), axis=0)
 
         utt_con.append((uid, conv1, bn1, relu1, grad))
         if batch_idx % args.log_interval == 0:
