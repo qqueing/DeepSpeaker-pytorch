@@ -731,9 +731,9 @@ class ScriptTrainDataset(data.Dataset):
         utts = self.dataset[spk]
 
         if self.return_uid:
-            uid = random.randrange(0, len(utts))
+            uid = utts[random.randrange(0, len(utts))]
 
-            y = self.loader(self.uid2feat[utts[uid]])
+            y = self.loader(self.uid2feat[uid])
             feature = self.transform(y)
             label = sid
             return feature, label, uid
