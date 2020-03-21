@@ -57,7 +57,7 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev_org',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
