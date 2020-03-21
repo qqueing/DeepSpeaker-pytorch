@@ -725,18 +725,27 @@ class ScriptTrainDataset(data.Dataset):
         self.samples_per_speaker = samples_per_speaker
         self.return_uid = return_uid
 
+        if self.return_uid:
+            self.utt_dataset = []
+            for i in range(self.samples_per_speaker * self.num_spks):
+                sid = i % self.num_spks
+                spk = self.idx_to_spk[sid]
+                utts = self.dataset[spk]
+                uid = utts[random.randrange(0, len(utts))]
+                self.utt_dataset.append([uid, sid])
+
+
     def __getitem__(self, sid):
+
+        if self.return_uid:
+            uid, label = self.utt_dataset[sid]
+            y = self.loader(self.uid2feat[uid])
+            feature = self.transform(y)
+            return feature, label, uid
+
         sid %= self.num_spks
         spk = self.idx_to_spk[sid]
         utts = self.dataset[spk]
-
-        if self.return_uid:
-            uid = utts[random.randrange(0, len(utts))]
-
-            y = self.loader(self.uid2feat[uid])
-            feature = self.transform(y)
-            label = sid
-            return feature, label, uid
 
         n_samples = 0
         y = np.array([[]]).reshape(0, self.feat_dim)
@@ -790,8 +799,6 @@ class ScriptValidDataset(data.Dataset):
         feature = self.transform(y)
         label = self.spk_to_idx[spk]
 
-        if self.return_uid:
-            return feature, label, uid
         return feature, label
 
     def __len__(self):
