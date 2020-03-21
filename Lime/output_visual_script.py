@@ -56,10 +56,10 @@ def main():
     for i in epochs:
         save_path = pathlib.Path(args.extract_path + '/epoch_%d' % i)
         trains = list(save_path.glob('vox1_train.*.bin'))
-
-        utts_info = pickle.load(str(trains[0]))
-        for (uid, orig, conv1, bn1, relu1, grad) in utts_info:
-            print(uid)
+        with open(str(trains[0])) as f:
+            utts_info = pickle.load(f)
+            for (uid, orig, conv1, bn1, relu1, grad) in utts_info:
+                print(uid)
 
 
 if __name__ == '__main__':
