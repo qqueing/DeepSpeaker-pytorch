@@ -131,13 +131,13 @@ transform_T = transforms.Compose([
 file_loader = read_MFB
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
-                               return_uid=False)
+                               return_uid=True)
 indices = list(range(len(train_dir)))
 random.shuffle(indices)
 indices = indices[:args.sample_utt]
 train_part = torch.utils.data.Subset(train_dir, indices)
 
-test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, return_uid=False)
+test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, return_uid=True)
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
 indices = indices[:args.sample_utt]
@@ -145,7 +145,7 @@ test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                               transform=transform, return_uid=False)
+                               transform=transform, return_uid=True)
 indices = list(range(len(valid_dir)))
 random.shuffle(indices)
 indices = indices[:args.sample_utt]
