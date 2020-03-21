@@ -66,9 +66,9 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect/aug',
+parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -307,8 +307,8 @@ def main():
             continue
         model.cuda()
 
-        train_extract(train_loader, model, epoch, 'vox1_train')
-        train_extract(valid_loader, model, epoch, 'vox1_valid')
+        train_extract(train_loader, model, e, 'vox1_train')
+        train_extract(valid_loader, model, e, 'vox1_valid')
 
 
 if __name__ == '__main__':
