@@ -75,7 +75,7 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--sample-utt', type=int, default=100, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=1, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -183,7 +183,6 @@ def train_extract(train_loader, model, epoch, set_name):
     save_per_num = 20
     for batch_idx, (data, label, uid) in pbar:
 
-        data_shape = np.array(data.shape)
         data = Variable(data.cuda(), requires_grad=True)
 
         conv1 = model.conv1(data)
@@ -196,11 +195,8 @@ def train_extract(train_loader, model, epoch, set_name):
         bn1 = bn1.cpu().detach().numpy().squeeze().astype(np.float32)
         relu1 = relu1.cpu().detach().numpy().squeeze().astype(np.float32)
 
-        grad = np.array([]).reshape(0, data_shape[0], data_shape[2], data_shape[3])
-        for l in label:
-            pdb.set_trace()
-            cos_theta[0][l.long()].backward(retain_graph=True)
-            grad = np.concatenate((grad, data.grad.cpu().numpy().squeeze().astype(np.float32)[l.long()]), axis=0)
+        cos_theta[0].backward(retain_graph=True)
+        grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
 
         utt_con.append((uid, conv1, bn1, relu1, grad))
         if batch_idx % args.log_interval == 0:
