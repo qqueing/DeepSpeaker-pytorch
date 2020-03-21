@@ -195,8 +195,8 @@ def train_extract(train_loader, model, epoch, set_name):
         bn1 = bn1.cpu().detach().numpy().squeeze().astype(np.float32)
         relu1 = relu1.cpu().detach().numpy().squeeze().astype(np.float32)
 
-        pdb.set_trace()
-        cos_theta.backward()
+        # pdb.set_trace()
+        cos_theta[0][label.long()].backward()
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
 
         utt_con.append((uid, conv1, bn1, relu1, grad))
