@@ -67,10 +67,8 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd/checkpoint_{}.pth', type=str,
-                    metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
+                    help='folder to output model checkpoints')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -300,17 +298,18 @@ def main():
     sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
                                                   **kwargs)
     epochs = np.arange(1, 21)
-
+    resume_path = args.check_path + '/checkpoint_{}.pth'
     for epoch in epochs:
         # Load model from Checkpoint file
-        if os.path.isfile(args.resume.format(epoch)):
-            print('=> loading checkpoint {}'.format(args.resume.format(epoch)))
-            checkpoint = torch.load(args.resume.format(epoch))
+        if os.path.isfile(resume_path.format(epoch)):
+            print('=> loading checkpoint {}'.format(resume_path.format(epoch)))
+
+            checkpoint = torch.load(resume_path.format(epoch))
             start_epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
         else:
-            print('=> no checkpoint found at {}'.format(args.resume))
+            print('=> no checkpoint found at %s' % resume_path.format(epoch))
             continue
         # train_test(train_loader, model, epoch)
         sitw_test(sitw_dev_loader, sitw_test_loader, model, start_epoch)
