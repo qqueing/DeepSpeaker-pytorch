@@ -182,6 +182,8 @@ def train_extract(train_loader, model, epoch, set_name):
     pbar = tqdm(enumerate(train_loader))
     save_per_num = 20
     for batch_idx, (data, label, uid) in pbar:
+
+        data_shape = np.array(data.shape)
         data = Variable(data.cuda(), requires_grad=True)
 
         conv1 = model.conv1(data)
@@ -189,12 +191,15 @@ def train_extract(train_loader, model, epoch, set_name):
         relu1 = model.relu(bn1)
         logit, _ = model(data)
         cos_theta, phi_theta = logit
-        cos_theta[0][label.long()].backward()
 
-        grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
         conv1 = conv1.cpu().detach().numpy().squeeze().astype(np.float32)
         bn1 = bn1.cpu().detach().numpy().squeeze().astype(np.float32)
         relu1 = relu1.cpu().detach().numpy().squeeze().astype(np.float32)
+
+        grad = np.array([]).reshape(0, data_shape[0], data_shape[2], data_shape[3])
+        for l in label:
+            cos_theta[0][l.long()].backward()
+            grad = np.concatenate((grad, data.grad.cpu().numpy().squeeze().astype(np.float32)), axis=0)
 
         utt_con.append((uid, conv1, bn1, relu1, grad))
         if batch_idx % args.log_interval == 0:
