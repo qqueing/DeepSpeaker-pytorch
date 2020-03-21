@@ -689,7 +689,7 @@ class ScriptTrainDataset(data.Dataset):
                 uid, feat_offset = line.split()
                 uid2feat[uid] = feat_offset
 
-        print('==> There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        print('    There are {} utterances in Train Dataset.'.format(len(uid2feat)))
         valid_set = {}
         valid_uid2feat = {}
         valid_utt2spk_dict = {}
@@ -707,7 +707,7 @@ class ScriptTrainDataset(data.Dataset):
                     valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
                     valid_utt2spk_dict[utt] = utt2spk_dict[utt]
 
-        print('==> Spliting {} utterances for Validation.'.format(len(valid_uid2feat)))
+        print('    Spliting {} utterances for Validation.'.format(len(valid_uid2feat)))
 
         self.speakers = speakers
         self.dataset = dataset
@@ -944,7 +944,7 @@ class SitwTestDataset(data.Dataset):
 
                 trials_pair.append((enroll_spk2utt_dict[pair[0]], pair[1], pair_true))
 
-        print('\tThere are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
+        print('    There are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
         # pdb.set_trace()
         self.feat_dim = np.load(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]]]).shape[1]
 
