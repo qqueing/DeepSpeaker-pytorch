@@ -175,6 +175,9 @@ def train_extract(train_loader, model, epoch, set_name):
     model_conv1 = model.conv1.weight.detach().numpy()
     np.save(file_dir + '/model.conv1.npy', model_conv1)
 
+    if args.cuda:
+        model.cuda()
+
     utt_con = []
     pbar = tqdm(enumerate(train_loader))
     save_per_num = 20
