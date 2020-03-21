@@ -273,7 +273,6 @@ def train_extract(train_loader, model, epoch, set_name):
 #
 #             utt_con = []
 
-
 def main():
     class_to_idx = train_dir.spk_to_idx
     # class_to_idx = np.load('Data/dataset/voxceleb1/Fbank64_Norm/class2idx.npy').item()
@@ -293,11 +292,11 @@ def main():
 
     resume_path = args.check_path + '/checkpoint_{}.pth'
     epochs = np.arange(0, 21)
+
     for e in epochs:
         # Load model from Checkpoint file
         if os.path.isfile(resume_path.format(e)):
             print('=> loading checkpoint {}'.format(resume_path.format(e)))
-
             checkpoint = torch.load(resume_path.format(e))
             epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
