@@ -210,7 +210,7 @@ def train_extract(train_loader, model, epoch, set_name):
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader)))
 
-        if (batch_idx + 1) % save_per_num == 0:
+        if (batch_idx + 1) % save_per_num == 0 or (batch_idx + 1) == len(train_loader.dataset):
             num = batch_idx // save_per_num if batch_idx + 1 % save_per_num == 0 else batch_idx // save_per_num + 1
             # checkpoint_dir / extract / < dataset > / < set >.*.bin
             filename = file_dir + '/%s.%d.bin' % (set_name, num)
@@ -218,9 +218,8 @@ def train_extract(train_loader, model, epoch, set_name):
                 pickle.dump(utt_con, f)
 
             utt_con = []
-
-        elif (batch_idx + 1) == len(train_loader.dataset):
-            print('\nSaving pairs in %s.' % filename)
+            if (batch_idx + 1) == len(train_loader.dataset):
+                print('Saving pairs in %s.\n' % filename)
 
 
 # def test_extract(test_loader, model, epoch, set_name):
@@ -277,9 +276,9 @@ def train_extract(train_loader, model, epoch, set_name):
 def main():
     class_to_idx = train_dir.spk_to_idx
     # class_to_idx = np.load('Data/dataset/voxceleb1/Fbank64_Norm/class2idx.npy').item()
-    print('Number of Speakers: {}.\n'.format(len(class_to_idx)))
+    print('\nNumber of Speakers: {}.'.format(len(class_to_idx)))
     # print the experiment configuration
-    print('\nCurrent time is \33[91m{}\33[0m.'.format(str(time.asctime())))
+    print('Current time is \33[91m{}\33[0m.'.format(str(time.asctime())))
     print('Parsed options: {}'.format(vars(args)))
 
     # instantiate model and initialize weights
