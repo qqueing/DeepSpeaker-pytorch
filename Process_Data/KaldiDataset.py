@@ -645,7 +645,7 @@ class KaldiExtractDataset(data.Dataset):
 
 
 class ScriptTrainDataset(data.Dataset):
-    def __init__(self, dir, samples_per_speaker, transform, num_valid=5, loader=np.load):
+    def __init__(self, dir, samples_per_speaker, transform, num_valid=5, loader=np.load, return_uid=False):
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
@@ -723,11 +723,21 @@ class ScriptTrainDataset(data.Dataset):
         self.feat_dim = loader(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.transform = transform
         self.samples_per_speaker = samples_per_speaker
+        self.return_uid = return_uid
 
     def __getitem__(self, sid):
         sid %= self.num_spks
         spk = self.idx_to_spk[sid]
         utts = self.dataset[spk]
+
+        if self.return_uid:
+            uid = random.randrange(0, len(utts))
+
+            y = self.loader(self.uid2feat[utts[uid]])
+            feature = self.transform(y)
+            label = sid
+            return feature, label, uid
+
         n_samples = 0
         y = np.array([[]]).reshape(0, self.feat_dim)
 
@@ -756,7 +766,8 @@ class ScriptTrainDataset(data.Dataset):
 
 
 class ScriptValidDataset(data.Dataset):
-    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict, transform, loader=np.load):
+    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict, transform, loader=np.load,
+                 return_uid=False):
         speakers = [spk for spk in valid_set.keys()]
         speakers.sort()
         self.speakers = speakers
@@ -769,6 +780,7 @@ class ScriptValidDataset(data.Dataset):
 
         self.loader = loader
         self.transform = transform
+        self.return_uid = return_uid
 
     def __getitem__(self, index):
         uid = list(self.uid2feat.keys())[index]
@@ -778,6 +790,8 @@ class ScriptValidDataset(data.Dataset):
         feature = self.transform(y)
         label = self.spk_to_idx[spk]
 
+        if self.return_uid:
+            return feature, label, uid
         return feature, label
 
     def __len__(self):
@@ -785,7 +799,7 @@ class ScriptValidDataset(data.Dataset):
 
 
 class ScriptTestDataset(data.Dataset):
-    def __init__(self, dir, transform, loader=np.load):
+    def __init__(self, dir, transform, loader=np.load, return_uid=False):
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
@@ -842,6 +856,7 @@ class ScriptTestDataset(data.Dataset):
 
         self.loader = loader
         self.transform = transform
+        self.return_uid = return_uid
 
     def __getitem__(self, index):
         uid_a, uid_b, label = self.trials_pair[index]
@@ -853,6 +868,8 @@ class ScriptTestDataset(data.Dataset):
 
         data_a = self.transform(y_a)
         data_b = self.transform(y_b)
+        if self.return_uid:
+            data_a, data_b, label, uid_a, uid_b
 
         return data_a, data_b, label
 
@@ -861,7 +878,7 @@ class ScriptTestDataset(data.Dataset):
 
 
 class SitwTestDataset(data.Dataset):
-    def __init__(self, sitw_dir, sitw_set, transform, loader=np.load):
+    def __init__(self, sitw_dir, sitw_set, transform, loader=np.load, return_uid=False):
         # sitw_set: dev, eval
         # sitw_dev_enroll  sitw_dev_test
 
@@ -940,6 +957,7 @@ class SitwTestDataset(data.Dataset):
 
         self.loader = loader
         self.transform = transform
+        self.return_uid = return_uid
 
     def __getitem__(self, index):
         uid_a, uid_b, label = self.trials_pair[index]
@@ -949,6 +967,9 @@ class SitwTestDataset(data.Dataset):
 
         data_a = self.transform(data_a)
         data_b = self.transform(data_b)
+
+        if self.return_uid:
+            return data_a, data_b, label, uid_a, uid_b
 
         return data_a, data_b, label
 

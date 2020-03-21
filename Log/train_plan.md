@@ -39,3 +39,9 @@ sgd lr=0.05, epoch=[10, 15, 20], dropout=0.0, embedding_dim=1024
 
         lstm    32*5 with 160 repeat per speaker
         # alstm   32*5 with 192 repeat
+
+    => loading checkpoint Data/checkpoint/SuResCNN10/spect/kaldi_5wd/checkpoint_20.pth
+    start epoch is : 20
+    
+    For Sitw Test ERR is 14.6667%, Threshold is 0.24861189723014832.
+    For Sitw Test ERR is 13.5922%, Threshold is 0.2714540958404541.

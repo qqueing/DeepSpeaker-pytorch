@@ -149,7 +149,7 @@ if args.cuda:
 
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='only_sitw')
 
-kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 assert os.path.exists(args.check_path)
 
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
@@ -220,7 +220,7 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a) / vec_shape[1], len(sitw_dev_loader.dataset),
+                epoch, batch_idx * vec_shape[0], len(sitw_dev_loader.dataset),
                        100. * batch_idx / len(sitw_dev_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
@@ -256,7 +256,7 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a) / vec_shape[1], len(sitw_test_loader.dataset),
+                epoch, batch_idx * vec_shape[0], len(sitw_test_loader.dataset),
                        100. * batch_idx / len(sitw_test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
