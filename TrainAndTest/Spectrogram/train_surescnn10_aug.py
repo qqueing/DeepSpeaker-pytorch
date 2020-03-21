@@ -270,8 +270,8 @@ def main():
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
     # ce = nn.CrossEntropyLoss().cuda()
 
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
-    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
+    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict()},
                # 'criterion': criterion.state_dict()
                check_path)

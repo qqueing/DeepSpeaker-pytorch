@@ -73,7 +73,7 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--sample-utt', type=int, default=100, metavar='ES',
+parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=1, metavar='BS',
                     help='input batch size for training (default: 128)')
@@ -178,7 +178,7 @@ def train_extract(train_loader, model, epoch, set_name):
 
     utt_con = []
     pbar = tqdm(enumerate(train_loader))
-    save_per_num = 20
+    save_per_num = 30
     for batch_idx, (data, label, uid) in pbar:
 
         data = Variable(data.cuda(), requires_grad=True)
@@ -208,7 +208,7 @@ def train_extract(train_loader, model, epoch, set_name):
         if (batch_idx + 1) % save_per_num == 0 or (batch_idx + 1) == len(train_loader.dataset):
             num = batch_idx // save_per_num if batch_idx + 1 % save_per_num == 0 else batch_idx // save_per_num + 1
             # checkpoint_dir / extract / < dataset > / < set >.*.bin
-            filename = file_dir + '%s.%d.bin' % (set_name, num)
+            filename = file_dir + '/%s.%d.bin' % (set_name, num)
             print('Saving pairs in %s.' % filename)
 
             with open(filename, 'wb') as f:
@@ -286,7 +286,7 @@ def main():
     # sitw_dev_loader = DataLoader(sitw_dev_part, batch_size=args.batch_size, shuffle=False, **kwargs)
 
     resume_path = args.check_path + '/checkpoint_{}.pth'
-    epochs = np.arange(1, 2)
+    epochs = np.arange(0, 21)
     for e in epochs:
         # Load model from Checkpoint file
         if os.path.isfile(resume_path.format(e)):
