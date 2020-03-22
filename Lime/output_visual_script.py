@@ -142,8 +142,15 @@ def main():
 
     x = np.arange(161) / 161 * 8000
     y = grads
-    pdb.set_trace()
-    print(y.shape)
+    max_x = np.max(x)
+    min_x = np.min(x)
+    max_y = np.max(y)
+    min_y = np.min(y)
+    ax.set_xlim(min_x, max_x)
+    ax.set_ylim(min_y, max_y)
+
+    # pdb.set_trace()
+    # print(y.shape)
     dots = []
     for i in range(len(y[0])):
         dot, = ax.plot(x, y[0][i], color=cValue_1[i])
