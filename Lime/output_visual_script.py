@@ -75,8 +75,10 @@ def main():
     stds = np.std(conv1s, axis=(2, 3))
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    ax.set_xlabel('mean')
-    ax.set_ylabel('std')
+    plt.title('64个滤波器收敛 0-20 epochs!')
+
+    ax.set_xlabel('绝对值均值')
+    ax.set_ylabel('标准差')
 
     max_x = np.max(means)
     min_x = np.min(means)
