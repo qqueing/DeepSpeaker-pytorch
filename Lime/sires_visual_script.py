@@ -65,7 +65,7 @@ args = parser.parse_args()
 
 
 def main():
-    epochs = np.arange(0, 21)
+    epochs = np.arange(0, 31)
     conv1s = np.array([]).reshape((0, 16, 3, 3))
     grads = np.array([]).reshape((0, 2, 64))
 
