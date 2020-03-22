@@ -115,7 +115,7 @@ def main():
                 'coral', 'greenish', 'grape', 'azure', 'wine', 'cobalt', 'pinkish', 'vomit', 'moss', 'grass',
                 'chocolate', 'cornflower', 'charcoal', 'pumpkin', 'tangerine', 'raspberry', 'orchid', 'sky']
     dots = []
-    for i in range(len(means)):
+    for i in range(len(means[0])):
         dot, = ax.plot(means[0][i], stds[0][i], color=cValue_1[i], marker='o')
         dots.append(dot)
 
@@ -125,7 +125,7 @@ def main():
             yield newdot
 
     def update_dot(newd):
-        for i in range(len(means)):
+        for i in range(len(means[0])):
             dots[i].set_data(newd[0][i], newd[1][i])
             # dots[i].annotate
             # ax.annotate(str(i), (newd[0][i], newd[1][i]), fontsize=16)
