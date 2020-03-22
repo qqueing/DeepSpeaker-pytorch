@@ -149,7 +149,7 @@ def main():
         dots.append(dot)
 
     def gen_line():
-        for i in range(len(y)):
+        for i in range(1, len(y)):
             newdot = [x, y[i]]
             yield newdot
 
