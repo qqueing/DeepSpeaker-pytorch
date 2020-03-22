@@ -159,7 +159,7 @@ def main():
 
     ani = animation.FuncAnimation(fig, update_line, frames=gen_line, interval=800)
     ani.save(args.extract_path + "/grads.gif", writer='pillow', fps=4)
-    plt.show()
+    # plt.show()
 
 
 if __name__ == '__main__':
