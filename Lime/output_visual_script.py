@@ -142,6 +142,7 @@ def main():
 
     x = np.arange(161) / 161 * 8000
     y = grads
+    pdb.set_trace()
     print(y.shape)
     dots = []
     for i in range(len(y[0])):
