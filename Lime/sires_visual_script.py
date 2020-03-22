@@ -150,7 +150,7 @@ def main():
     ax.set_ylabel('Weight')
 
     x = np.arange(64) / 64 * 8000
-    y = grads
+    y = np.nan_to_num(grads)
     pdb.set_trace()
     max_x = np.max(x)
     min_x = np.min(x)
