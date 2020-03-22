@@ -98,6 +98,8 @@ def main():
     means = np.mean(np.abs(conv1s), axis=(2, 3))
     stds = np.std(conv1s, axis=(2, 3))
 
+    pdb.set_trace()
+
     plt.switch_backend('agg')
     fig, ax = plt.subplots(figsize=(8, 8))
     plt.title('Convergence of 64 Filters 0-20 Epochs')
