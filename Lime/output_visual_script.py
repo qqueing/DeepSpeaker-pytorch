@@ -13,6 +13,8 @@ import argparse
 import pickle
 import numpy as np
 import pathlib
+import matplotlib.pyplot as plt
+from matplotlib import animation
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
@@ -52,14 +54,56 @@ args = parser.parse_args()
 
 def main():
     epochs = np.arange(0, 21)
-
+    conv1s = np.array([]).reshape((0, 64, 5, 5))
     for i in epochs:
         save_path = pathlib.Path(args.extract_path + '/epoch_%d' % i)
         trains = list(save_path.glob('vox1_train.*.bin'))
-        with open(str(trains[0]), 'rb') as f:
-            utts_info = pickle.load(f)
-            for (uid, orig, conv1, bn1, relu1, grad) in utts_info:
-                print(uid)
+        # with open(str(trains[0]), 'rb') as f:
+        #     utts_info = pickle.load(f)
+        #     for (uid, orig, conv1, bn1, relu1, grad) in utts_info:
+        #         print(uid)
+
+        conv1s = list(save_path.glob('model.*.bin'))
+
+        conv1_epoch = np.load(str(conv1s[0]))
+        conv1_epoch = conv1_epoch[np.newaxis, :]
+        conv1s = np.concatenate((conv1s, conv1_epoch), axis=0)
+
+    means = np.mean(np.abs(conv1s), axis=(2, 3))
+    stds = np.std(conv1s, axis=(2, 3))
+
+    fig, ax = plt.subplots()
+
+    # fig, ax = plt.subplots()
+    cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
+                'violet', 'turquoise', 'lavender', 'tan', 'cyan', 'aqua', 'maroon', 'olive', 'salmon', 'beige', 'lilac',
+                'black', 'peach', 'lime', 'indigo', 'mustard', 'rose', 'aquamarine', 'navy', 'gold', 'plum', 'burgundy',
+                'khaki', 'taupe', 'chartreuse', 'mint', 'sand', 'puce', 'seafoam', 'goldenrod', 'slate', 'rust',
+                'cerulean', 'ochre', 'crimson', 'fuchsia', 'puke', 'eggplant', 'white', 'sage', 'brick', 'cream',
+                'coral', 'greenish', 'grape', 'azure', 'wine', 'cobalt', 'pinkish', 'vomit', 'moss', 'grass',
+                'chocolate', 'cornflower', 'charcoal', 'pumpkin', 'tangerine', 'raspberry', 'orchid', 'sky']
+    dots = []
+    for i in range(len(means)):
+        dot, = ax.plot(means[0][i], stds[0][i], color=cValue_1[i], marker='o')
+        dots.append(dot)
+
+    def gen_dot():
+        for i in range(len(means)):
+            newdot = [means[i], stds[i]]
+            yield newdot
+
+    def update_dot(newd):
+        # pdb.set_trace()
+        for i in range(len(means)):
+            dots[i].set_data(newd[0][i], newd[1][i])
+        ax.set_xlim(-2, 2)
+        ax.set_ylim(-2, 2)
+
+        return dot
+
+    ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=500)
+    ani.save("conv1s.gif", writer='pillow', fps=100)
+    plt.show()
 
 
 if __name__ == '__main__':
