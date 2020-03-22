@@ -151,7 +151,7 @@ def main():
 
     x = np.arange(64) / 64 * 8000
     y = np.nan_to_num(grads)
-    pdb.set_trace()
+    # pdb.set_trace()
     max_x = np.max(x)
     min_x = np.min(x)
     max_y = np.max(y)
