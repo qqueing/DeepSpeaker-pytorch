@@ -75,10 +75,15 @@ def main():
     stds = np.std(conv1s, axis=(2, 3))
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    plt.title('64个滤波器收敛 0-20 epochs!')
+    plt.title('Convergence of 64 Filters 0-20 Epochs')
 
-    ax.set_xlabel('绝对值均值')
-    ax.set_ylabel('标准差')
+    ax.set_xlabel('Mean of Abs')
+    ax.set_ylabel('Std')
+
+    # plt.title('64个滤波器收敛 0-20 epochs!')
+    #
+    # ax.set_xlabel('绝对值均值')
+    # ax.set_ylabel('标准差')
 
     max_x = np.max(means)
     min_x = np.min(means)
@@ -114,7 +119,7 @@ def main():
         return dot
 
     ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
-    ani.save("conv1s.gif", writer='pillow', fps=4)
+    ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=4)
     plt.show()
 
 
