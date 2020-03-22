@@ -75,11 +75,15 @@ def main():
     stds = np.std(conv1s, axis=(2, 3))
 
     fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_xlabel('mean')
+    ax.set_ylabel('std')
 
     max_x = np.max(means)
     min_x = np.min(means)
     max_y = np.max(stds)
     min_y = np.min(stds)
+    ax.set_xlim(min_x, max_x)
+    ax.set_ylim(min_y, max_y)
 
     # fig, ax = plt.subplots()
     cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
@@ -103,9 +107,7 @@ def main():
         # pdb.set_trace()
         for i in range(len(means)):
             dots[i].set_data(newd[0][i], newd[1][i])
-        ax.set_xlim(min_x, max_x)
-        ax.set_ylim(min_y, max_y)
-
+            ax.annotate(str(i), (newd[0][i], newd[1][i]), fontsize=16)
         return dot
 
     ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
