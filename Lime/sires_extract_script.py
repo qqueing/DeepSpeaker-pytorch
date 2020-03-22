@@ -11,16 +11,6 @@
 """
 # !/usr/bin/env python
 # encoding: utf-8
-from Define_Model.ResNet import SimpleResNet
-
-"""
-@Author: yangwenhao
-@Contact: 874681044@qq.com
-@Software: PyCharm
-@File: output_extract_script.py
-@Time: 2020/3/21 5:57 PM
-@Overview:
-"""
 from __future__ import print_function
 import argparse
 import pathlib
@@ -36,17 +26,14 @@ from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 import os
-import matplotlib.pyplot as plt
+from Define_Model.ResNet import SimpleResNet
 
 from kaldi_io import read_mat
 import numpy as np
 from tqdm import tqdm
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, ScriptTrainDataset, \
-    ScriptTestDataset, ScriptValidDataset, SitwTestDataset
-from Define_Model.model import PairwiseDistance, SuperficialResCNN
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
+from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, truncatedinputfromMFB, read_MFB, read_audio, \
-    mk_MFB
 # Version conflict
 
 import torch._utils
