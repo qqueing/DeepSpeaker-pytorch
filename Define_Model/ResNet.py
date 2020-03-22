@@ -161,7 +161,7 @@ class SimpleResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        pdb.set_trace()
+        # pdb.set_trace()
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
