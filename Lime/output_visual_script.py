@@ -142,13 +142,14 @@ def main():
 
     x = np.arange(161) / 161 * 8000
     y = grads
+    print(y.shape)
     dots = []
     for i in range(len(y[0])):
         dot, = ax.plot(x, y[0][i], color=cValue_1[i])
         dots.append(dot)
 
     def gen_line():
-        for i in range(1, len(y)):
+        for i in range(len(y)):
             newdot = [x, y[i]]
             yield newdot
 
