@@ -63,7 +63,7 @@ def main():
         #     for (uid, orig, conv1, bn1, relu1, grad) in utts_info:
         #         print(uid)
 
-        conv1s = list(save_path.glob('model.*.bin'))
+        conv1s = list(save_path.glob('model.conv1.npy'))
 
         conv1_epoch = np.load(str(conv1s[0]))
         conv1_epoch = conv1_epoch[np.newaxis, :]
