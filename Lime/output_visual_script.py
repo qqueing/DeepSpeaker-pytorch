@@ -74,7 +74,8 @@ def main():
                     grad_abs += np.mean(np.abs(grad), axis=0)
 
                 # plt.plot(np.arange(161) / 161 * 8000, grad_abs / len(sets))
-                grads_abs = np.concatenate((grads_abs, grad_abs / len(sets)), axis=0)
+
+                grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / len(sets)), axis=0)
 
         grads_abs = grads_abs[np.newaxis, :]
         grads = np.concatenate((grads, grads_abs), axis=0)
