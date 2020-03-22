@@ -107,11 +107,12 @@ def main():
         # pdb.set_trace()
         for i in range(len(means)):
             dots[i].set_data(newd[0][i], newd[1][i])
-            ax.annotate(str(i), (newd[0][i], newd[1][i]), fontsize=16)
+            # dots[i].annotate
+            # ax.annotate(str(i), (newd[0][i], newd[1][i]), fontsize=16)
         return dot
 
     ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
-    ani.save("conv1s.gif", writer='pillow', fps=5)
+    ani.save("conv1s.gif", writer='pillow', fps=4)
     plt.show()
 
 
