@@ -74,7 +74,12 @@ def main():
     means = np.mean(np.abs(conv1s), axis=(2, 3))
     stds = np.std(conv1s, axis=(2, 3))
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    max_x = np.max(means)
+    min_x = np.min(means)
+    max_y = np.max(stds)
+    min_y = np.min(stds)
 
     # fig, ax = plt.subplots()
     cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
@@ -98,13 +103,13 @@ def main():
         # pdb.set_trace()
         for i in range(len(means)):
             dots[i].set_data(newd[0][i], newd[1][i])
-        ax.set_xlim(-2, 2)
-        ax.set_ylim(-2, 2)
+        ax.set_xlim(min_x, max_x)
+        ax.set_ylim(min_y, max_y)
 
         return dot
 
-    ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=500)
-    ani.save("conv1s.gif", writer='pillow', fps=100)
+    ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
+    ani.save("conv1s.gif", writer='pillow', fps=5)
     plt.show()
 
 
