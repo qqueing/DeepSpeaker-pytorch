@@ -10,6 +10,7 @@
 @Overview:
 """
 import argparse
+import pdb
 import pickle
 import numpy as np
 import pathlib
@@ -67,6 +68,7 @@ def main():
 
         conv1_epoch = np.load(str(conv1s[0]))
         conv1_epoch = conv1_epoch[np.newaxis, :]
+        pdb.set_trace()
         conv1s = np.concatenate((conv1s, conv1_epoch), axis=0)
 
     means = np.mean(np.abs(conv1s), axis=(2, 3))
