@@ -68,7 +68,7 @@ def main():
 
         conv1_epoch = np.load(str(conv1s[0])).squeeze()
         conv1_epoch = conv1_epoch[np.newaxis, :]
-        # pdb.set_trace()
+        pdb.set_trace()
         conv1s = np.concatenate((conv1s, conv1_epoch), axis=0)
 
     means = np.mean(np.abs(conv1s), axis=(2, 3))
