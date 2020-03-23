@@ -84,10 +84,11 @@ def main():
         extract_paths = os.path.join(args.extract_path, model)
         conv1s = np.array([]).reshape((0, 16, 3, 3))
         grads = np.array([]).reshape((0, 2, 64))
-        print('Processing data in %s.' % extract_paths)
+        print('\nProcessing data in %s.' % extract_paths)
 
         for i in epochs:
             save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
+            print('\r' + str(save_path), end='')
             if not save_path.exists():
                 continue
             grads_abs = np.array([]).reshape((0, 64))
