@@ -76,14 +76,16 @@ def main():
         for name in ['train', 'valid']:
 
             sets_files = list(save_path.glob('vox1_%s.*.bin' % name))
-            with open(str(sets_files[0]), 'rb') as f:
-                sets = pickle.load(f)
-
-                grad_abs = np.zeros((64))
-                for (uid, orig, conv1, bn1, relu1, grad) in sets:
-                    # pdb.set_trace()
-                    grad_abs += np.mean(np.abs(grad), axis=0)
-                grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / len(sets)), axis=0)
+            grad_abs = np.zeros((64))
+            num_utt = 0
+            for f in sets_files:
+                with open(str(f), 'rb') as f:
+                    sets = pickle.load(f)
+                    for (uid, orig, conv1, bn1, relu1, grad) in sets:
+                        # pdb.set_trace()
+                        grad_abs += np.mean(np.abs(grad), axis=0)
+                        num_utt += 1
+            grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / num_utt), axis=0)
 
         grads_abs = grads_abs[np.newaxis, :]
         grads = np.concatenate((grads, grads_abs), axis=0)
@@ -99,22 +101,19 @@ def main():
     stds = np.std(conv1s, axis=(2, 3))
 
     # pdb.set_trace()
-    plt.switch_backend('agg')
-    fig, ax = plt.subplots(figsize=(8, 8))
-    plt.title('Convergence of 64 Filters 0-20 Epochs')
-    ax.set_xlabel('Mean of Abs')
-    ax.set_ylabel('Std')
+    fig = plt.figure(figsize=(8, 8))
+    plt.title('Convergence of 16 Filters')
 
-    # plt.title('64个滤波器收敛 0-20 epochs!')
-    #
-    # ax.set_xlabel('绝对值均值')
-    # ax.set_ylabel('标准差')
     max_x = np.max(means)
     min_x = np.min(means)
     max_y = np.max(stds)
     min_y = np.min(stds)
-    ax.set_xlim(min_x, max_x)
-    ax.set_ylim(min_y, max_y)
+
+    plt.xlim(min_x - 0.1 * np.abs(max_x), max_x + 0.1 * np.abs(max_x))
+    plt.ylim(min_y - 0.1 * np.abs(max_y), max_y + 0.1 * np.abs(max_y))
+    plt.xlabel('Means of Abs')
+    plt.ylabel('Std')
+
     # fig, ax = plt.subplots()
     cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
                 'violet', 'turquoise', 'lavender', 'tan', 'cyan', 'aqua', 'maroon', 'olive', 'salmon', 'beige', 'lilac',
@@ -124,30 +123,34 @@ def main():
                 'coral', 'greenish', 'grape', 'azure', 'wine', 'cobalt', 'pinkish', 'vomit', 'moss', 'grass',
                 'chocolate', 'cornflower', 'charcoal', 'pumpkin', 'tangerine', 'raspberry', 'orchid', 'sky']
     dots = []
-    for i in range(len(means[0])):
-        dot, = ax.plot(means[0][i], stds[0][i], color=cValue_1[i], marker='o')
-        dots.append(dot)
+    text_e = plt.text(max_x, max_y, 'Epoch 0')
+    for i in range(len(means)):
+        dot, = plt.plot(means[0][i], stds[0][i], color=cValue_1[i], marker='o')
+        text_p = plt.text(means[0][i], stds[0][i], '%d' % i)
+        dots.append([dot, text_p])
 
     def gen_dot():
-        for i in range(1, len(means)):
+        for i in range(len(means)):
+            text_e.set_text('Epoch %2s' % str(i))
             newdot = [means[i], stds[i]]
             yield newdot
 
     def update_dot(newd):
-        for i in range(len(means[0])):
-            dots[i].set_data(newd[0][i], newd[1][i])
-            # dots[i].annotate
-            # ax.annotate(str(i), (newd[0][i], newd[1][i]), fontsize=16)
+        # pdb.set_trace()
+        for i in range(len(means)):
+            dot, text_p = dots[i]
+            dot.set_data(newd[0][i], newd[1][i])
+            text_p.set_position((newd[0][i], newd[1][i]))
+
         return dots
 
     ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
-    ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=4)
+    ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=2)
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-    plt.legend(['Train_set', 'Valid set'], loc='upper right')
+    fig = plt.figure(figsize=(8, 8))
     plt.title('Filting over 8000Hz, 0-20 Epochs')
-    ax.set_xlabel('Frequency')
-    ax.set_ylabel('Weight')
+    plt.xlabel('Frequency')
+    plt.ylabel('Weight')
 
     x = np.arange(64) / 64 * 8000
     y = np.nan_to_num(grads)
@@ -156,19 +159,22 @@ def main():
     min_x = np.min(x)
     max_y = np.max(y)
     min_y = np.min(y)
-    ax.set_xlim(min_x, max_x)
-    ax.set_ylim(min_y, max_y)
-
+    plt.xlim(min_x - 0.1 * np.abs(max_x), max_x + 0.1 * np.abs(max_x))
+    plt.ylim(min_y - 0.1 * np.abs(max_y), max_y + 0.1 * np.abs(max_y))
     # pdb.set_trace()
     # print(y.shape)
+    text_e = plt.text(min_x, max_y, 'Epoch 0')
+
     dots = []
     for i in range(len(y[0])):
-        dot, = ax.plot(x, y[0][i], color=cValue_1[i])
+        dot, = plt.plot(x, y[0][i], color=cValue_1[i])
         dots.append(dot)
+    plt.legend(['Train_set', 'Valid set'], loc='upper right')
 
     def gen_line():
         for i in range(1, len(y)):
             newdot = [x, y[i]]
+            text_e.set_text('Epoch %2s' % str(i))
             yield newdot
 
     def update_line(newd):
@@ -177,7 +183,7 @@ def main():
         return dots
 
     ani = animation.FuncAnimation(fig, update_line, frames=gen_line, interval=800)
-    ani.save(args.extract_path + "/grads.gif", writer='pillow', fps=4)
+    ani.save(args.extract_path + "/grads.gif", writer='pillow', fps=2)
     # plt.show()
 
 
