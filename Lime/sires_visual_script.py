@@ -88,7 +88,7 @@ def main():
 
         for i in epochs:
             save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
-            print('\r' + str(save_path), end='')
+            print('\rReading: ' + str(save_path), end='')
             if not save_path.exists():
                 continue
             grads_abs = np.array([]).reshape((0, 64))
