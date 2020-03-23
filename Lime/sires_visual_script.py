@@ -124,7 +124,7 @@ def main():
                 'chocolate', 'cornflower', 'charcoal', 'pumpkin', 'tangerine', 'raspberry', 'orchid', 'sky']
     dots = []
     text_e = plt.text(max_x, max_y, 'Epoch 0')
-    for i in range(len(means)):
+    for i in range(len(means[0])):
         dot, = plt.plot(means[0][i], stds[0][i], color=cValue_1[i], marker='o')
         text_p = plt.text(means[0][i], stds[0][i], '%d' % i)
         dots.append([dot, text_p])
@@ -137,7 +137,7 @@ def main():
 
     def update_dot(newd):
         # pdb.set_trace()
-        for i in range(len(means)):
+        for i in range(len(means[0])):
             dot, text_p = dots[i]
             dot.set_data(newd[0][i], newd[1][i])
             text_p.set_position((newd[0][i], newd[1][i]))
