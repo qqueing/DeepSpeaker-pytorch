@@ -42,7 +42,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/aug',
+parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
 
 # Training options
