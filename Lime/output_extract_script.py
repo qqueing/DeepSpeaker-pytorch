@@ -66,7 +66,7 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
 parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
@@ -291,7 +291,7 @@ def main():
     # sitw_dev_loader = DataLoader(sitw_dev_part, batch_size=args.batch_size, shuffle=False, **kwargs)
 
     resume_path = args.check_path + '/checkpoint_{}.pth'
-    epochs = np.arange(0, 26)
+    epochs = np.arange(0, 31)
 
     for e in epochs:
         # Load model from Checkpoint file
