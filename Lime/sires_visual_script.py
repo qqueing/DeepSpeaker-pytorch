@@ -153,7 +153,7 @@ def main():
     plt.ylabel('Weight')
 
     mel_high = 2595 * np.log10(1 + 8000 / 700)
-    mel_cen = [mel_high / 64 * i for i in range(1, 65)]
+    mel_cen = [mel_high / 65 * i for i in range(1, 65)]
     mel_cen = np.array(mel_cen)
     x = 700 * (10 ** (mel_cen / 2595) - 1)
 
