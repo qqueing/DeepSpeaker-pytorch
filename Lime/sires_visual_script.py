@@ -42,7 +42,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/kaldi',
+parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/aug',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -152,7 +152,11 @@ def main():
     plt.xlabel('Frequency')
     plt.ylabel('Weight')
 
-    x = np.arange(64) / 64 * 8000
+    mel_high = 2595 * np.log10(1 + 8000 / 700)
+    mel_cen = [mel_high / 64 * i for i in range(1, 65)]
+    mel_cen = np.array(mel_cen)
+    x = 700 * (10 ** (mel_cen / 2595) - 1)
+
     y = np.nan_to_num(grads)
     # pdb.set_trace()
     max_x = np.max(x)
