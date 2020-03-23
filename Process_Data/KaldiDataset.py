@@ -783,6 +783,11 @@ class ScriptValidDataset(data.Dataset):
         self.dataset = valid_set
         self.valid_set = valid_set
         self.uid2feat = valid_uid2feat
+
+        uids = list(valid_uid2feat.keys())
+        uids.sort()
+        print(uids[:10])
+        self.uids = uids
         self.utt2spk_dict = valid_utt2spk_dict
         self.spk_to_idx = spk_to_idx
         self.num_spks = len(speakers)
@@ -792,7 +797,7 @@ class ScriptValidDataset(data.Dataset):
         self.return_uid = return_uid
 
     def __getitem__(self, index):
-        uid = list(self.uid2feat.keys())[index]
+        uid = self.uids[index]
         spk = self.utt2spk_dict[uid]
         y = self.loader(self.uid2feat[uid])
 
@@ -805,7 +810,7 @@ class ScriptValidDataset(data.Dataset):
         return feature, label
 
     def __len__(self):
-        return len(self.uid2feat)
+        return len(self.uids)
 
 
 class ScriptTestDataset(data.Dataset):
