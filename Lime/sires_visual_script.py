@@ -42,7 +42,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_5wd',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/aug',
+parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -69,8 +69,12 @@ def main():
     conv1s = np.array([]).reshape((0, 16, 3, 3))
     grads = np.array([]).reshape((0, 2, 64))
 
+    print('Data root is %s.\n' % args.extract_path)
+
     for i in epochs:
         save_path = pathlib.Path(args.extract_path + '/epoch_%d' % i)
+        if not save_path.exists():
+            continue
         grads_abs = np.array([]).reshape((0, 64))
 
         for name in ['train', 'valid']:
@@ -146,6 +150,7 @@ def main():
 
     ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
     ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=2)
+    print('Saving %s' % args.extract_path + "/conv1s.gif")
 
     fig = plt.figure(figsize=(8, 8))
     plt.title('Filting over 8000Hz, 0-20 Epochs')
