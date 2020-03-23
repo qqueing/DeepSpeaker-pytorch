@@ -67,9 +67,9 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/kaldi',
+parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/aug',
                     help='folder to output model checkpoints')
 
 # Training options
