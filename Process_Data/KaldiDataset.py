@@ -896,12 +896,19 @@ class SitwTestDataset(data.Dataset):
     def __init__(self, sitw_dir, sitw_set, transform, loader=np.load, return_uid=False):
         # sitw_set: dev, eval
         # sitw_dev_enroll  sitw_dev_test
+        if os.path.exists(sitw_dir + '/sitw_%s_enroll_no_sil/feats.scp' % sitw_set):
+            enroll_feat_scp = sitw_dir + '/sitw_%s_enroll_no_sil/feats.scp' % sitw_set
+            enroll_spk2utt = sitw_dir + '/sitw_%s_enroll_no_sil/spk2utt' % sitw_set
 
-        enroll_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
-        enroll_spk2utt = sitw_dir + '/sitw_%s_enroll/spk2utt' % sitw_set
+            test_feat_scp = sitw_dir + '/sitw_%s_test_no_sil/feats.scp' % sitw_set
+            test_utt2spk = sitw_dir + '/sitw_%s_test_no_sil/utt2spk' % sitw_set
+        else:
+            enroll_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
+            enroll_spk2utt = sitw_dir + '/sitw_%s_enroll/spk2utt' % sitw_set
 
-        test_feat_scp = sitw_dir + '/sitw_%s_test/feats.scp' % sitw_set
-        test_utt2spk = sitw_dir + '/sitw_%s_test/utt2spk' % sitw_set
+            test_feat_scp = sitw_dir + '/sitw_%s_test/feats.scp' % sitw_set
+            test_utt2spk = sitw_dir + '/sitw_%s_test/utt2spk' % sitw_set
+
         trials = sitw_dir + '/sitw_%s_test/trials/core-core.lst' % sitw_set
 
         for p in enroll_feat_scp, enroll_spk2utt, test_feat_scp, test_utt2spk, trials:
