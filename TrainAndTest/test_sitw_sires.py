@@ -310,7 +310,7 @@ def main():
             print('=> no checkpoint found at %s' % resume_path.format(epoch))
             continue
         # train_test(train_loader, model, epoch)
-        sitw_test(sitw_dev_loader, sitw_test_loader, model, start_epoch)
+        sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch)
 
     writer.close()
 
