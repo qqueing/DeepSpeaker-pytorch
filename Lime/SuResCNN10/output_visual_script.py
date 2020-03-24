@@ -86,6 +86,7 @@ def main():
                 save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
 
                 if not save_path.exists():
+                    print(str(save_path) + ' ERROR!')
                     continue
 
                 print('\rReading: ' + str(save_path), end='')
