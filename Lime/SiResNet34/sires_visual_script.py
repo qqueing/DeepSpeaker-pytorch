@@ -9,18 +9,8 @@
 @Time: 2020/3/23 12:59 AM
 @Overview:
 """
-# !/usr/bin/env python
-# encoding: utf-8
-import os
 
-"""
-@Author: yangwenhao
-@Contact: 874681044@qq.com
-@Software: PyCharm
-@File: output_visual_script.py
-@Time: 2020/3/21 10:43 PM
-@Overview:
-"""
+import os
 import argparse
 import pdb
 import pickle
@@ -148,13 +138,16 @@ def main():
 
 
     # plotting filters distributions
+    plt.rc('font', family='Times New Roman')
     fig = plt.figure(figsize=(10, 10))
     plt.title('Convergence of 16 Filters')
 
-    max_x = max(np.max(conv1s_means[0][1]), np.max(conv1s_means[1][1]))
-    min_x = min(np.min(conv1s_means[0][1]), np.min(conv1s_means[1][1]))
-    max_y = max(np.max(conv1s_std[0][1]), np.max(conv1s_std[1][1]))
-    min_y = min(np.min(conv1s_std[0][1]), np.min(conv1s_std[1][1]))
+    # x(mean): [2, 2, 30, 16] [model, aug/kaldi, epoch, filters]
+    # y(std): ~
+    max_x = np.max(conv1s_means)
+    min_x = np.min(conv1s_means)
+    max_y = np.max(conv1s_std)
+    min_y = np.min(conv1s_std)
 
     plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
     plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))

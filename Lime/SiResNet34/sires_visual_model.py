@@ -177,7 +177,7 @@ def main():
     #
     # plt.legend(['kaldi', 'aug'], loc='upper right')
     # plt.savefig(args.extract_path + "/fc1.png")
-    print('Saving %s' % args.extract_path + "/fc1.png")
+    print('Saving %s' % args.extract_path + "/fc1.gif")
 
 
 if __name__ == '__main__':
