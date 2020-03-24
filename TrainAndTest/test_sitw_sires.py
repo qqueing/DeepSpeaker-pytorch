@@ -157,12 +157,12 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
-        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, remove_vad=False),
+        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file, remove_vad=False),
+        concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
@@ -177,14 +177,14 @@ else:
 # pdb.set_trace()
 
 sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, loader=read_mat,
-                                return_uid=True)
+                                return_uid=False)
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
 indices = indices[:12800]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T, loader=read_mat,
-                               return_uid=True)
+                               return_uid=False)
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
 indices = indices[:12800]
@@ -295,7 +295,7 @@ def main():
                                                    **kwargs)
     sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
                                                   **kwargs)
-    epochs = np.arange(1, 31)
+    epochs = np.arange(0, 31)
     resume_path = args.check_path + '/checkpoint_{}.pth'
     for epoch in epochs:
         # Load model from Checkpoint file
