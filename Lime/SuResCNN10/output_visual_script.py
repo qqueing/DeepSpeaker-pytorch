@@ -86,7 +86,7 @@ def main():
                 save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
 
                 if not save_path.exists():
-                    pdb.set_trace()
+                    # pdb.set_trace()
                     print(str(save_path) + ' ERROR!')
                     continue
 
