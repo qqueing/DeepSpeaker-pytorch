@@ -65,9 +65,9 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/aug',
+parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -134,26 +134,6 @@ transform_T = transforms.Compose([
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
                                return_uid=True, loader=read_mat)
-indices = list(range(len(train_dir)))
-random.shuffle(indices)
-indices = indices[:args.sample_utt]
-train_part = torch.utils.data.Subset(train_dir, indices)
-
-# test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, return_uid=True)
-# indices = list(range(len(test_dir)))
-# random.shuffle(indices)
-# indices = indices[:args.sample_utt]
-# test_part = torch.utils.data.Subset(test_dir, indices)
-
-valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
-                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                               transform=transform, return_uid=True, loader=read_mat)
-indices = list(range(len(valid_dir)))
-random.shuffle(indices)
-indices = indices[:args.sample_utt]
-valid_part = torch.utils.data.Subset(valid_dir, indices)
-
-
 # sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, return_uid=False)
 # indices = list(range(len(sitw_test_dir)))
 # random.shuffle(indices)
