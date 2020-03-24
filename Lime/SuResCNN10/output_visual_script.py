@@ -53,7 +53,7 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
 
 args = parser.parse_args()
 cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
-            'violet', 'turquoise', 'lavender', 'tan', 'cyan', 'aqua', 'maroon', 'olive', 'salmon', 'beige', 'lilac',
+            'violet', 'turquoise', 'lavender', 'tan', 'cyan', 'aqua', 'maroon', 'olive', 'salmon', 'beige',
             'black', 'peach', 'lime', 'indigo', 'mustard', 'rose', 'aquamarine', 'navy', 'gold', 'plum', 'burgundy',
             'khaki', 'taupe', 'chartreuse', 'mint', 'sand', 'puce', 'seafoam', 'goldenrod', 'slate', 'rust',
             'cerulean', 'ochre', 'crimson', 'fuchsia', 'puke', 'eggplant', 'white', 'sage', 'brick', 'cream',
@@ -143,7 +143,7 @@ def main():
     # plotting filters distributions
     fig = plt.figure(figsize=(10, 10))
     plt.title('Convergence of 16 Filters')
-    pdb.set_trace()
+    # pdb.set_trace()
 
     max_x = max(np.max(conv1s_means[0][1]), np.max(conv1s_means[1][1]))
     min_x = min(np.min(conv1s_means[0][1]), np.min(conv1s_means[1][1]))
