@@ -139,6 +139,7 @@ def main():
     # plotting filters distributions
     fig = plt.figure(figsize=(10, 10))
     plt.title('Convergence of 16 Filters')
+    pdb.set_trace()
 
     max_x = max(np.max(conv1s_means[0][1]), np.max(conv1s_means[1][1]))
     min_x = min(np.min(conv1s_means[0][1]), np.min(conv1s_means[1][1]))
@@ -198,8 +199,8 @@ def main():
     plt.xlabel('Frequency')
     plt.ylabel('Weight')
 
-    x = np.arange(121) * 8000 / 121
-    y = np.nan_to_num(input_grads)
+    x = np.arange(121) * 8000 / 121  # [0-8000]
+    y = np.nan_to_num(input_grads)  # 2,
     # pdb.set_trace()
     max_x = np.max(x)
     min_x = np.min(x)
