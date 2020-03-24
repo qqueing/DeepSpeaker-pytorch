@@ -84,9 +84,12 @@ def main():
 
             for i in epochs:
                 save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
-                print('\rReading: ' + str(save_path), end='')
+
                 if not save_path.exists():
                     continue
+
+                print('\rReading: ' + str(save_path), end='')
+                pdb.set_trace()
                 grads_abs = np.array([]).reshape((0, 161))
 
                 for name in ['train', 'valid']:
@@ -97,7 +100,6 @@ def main():
                         with open(str(f), 'rb') as f:
                             sets = pickle.load(f)
                             for (uid, orig, conv1, bn1, relu1, grad) in sets:
-                                pdb.set_trace()
                                 grad_abs += np.mean(np.abs(grad), axis=0)
                                 num_utt += 1
                     grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / num_utt), axis=0)
