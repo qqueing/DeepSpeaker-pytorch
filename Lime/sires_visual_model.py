@@ -82,7 +82,7 @@ def main():
             for i in epochs:
                 save_path = os.path.join(extract_paths, 'epoch_%d' % i)
                 print('\rReading: ' + str(save_path), end='')
-                if not save_path.exists():
+                if not os.path.exists(save_path):
                     continue
 
                 fc_weight_path = os.path.join(save_path, 'model.fc1.weight.npy')
