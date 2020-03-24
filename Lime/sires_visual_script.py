@@ -129,9 +129,14 @@ def main():
             conv1s_std.append(stds)
             input_grads.append(grads)
 
-        for x in conv1s_means, conv1s_std, input_grads:
-            while x[0].shape[1] < x[1].shape[1]:
-                x[0] = np.concatenate((x[0], x[0][:, -1, :].reshape(x[0].shape[0], 1, x[0].shape[2])), axis=1)
+        for x in conv1s_means, conv1s_std:
+            while x[0].shape[0] < x[1].shape[0]:
+                x[0] = np.concatenate((x[0], x[0][-1, :].reshape(1, x[0].shape[1])), axis=0)
+
+        while input_grads[0].shape[0] < input_grads[1].shape[0]:
+            input_grads[0] = np.concatenate(
+                (input_grads[0], input_grads[0][-1, :, :].reshape(1, input_grads[0].shape[1], input_grads[0].shape[2])),
+                axis=0)
 
         conv1s_means = np.array(conv1s_means)  # [[2,21,16]; [2,30,16]]
         conv1s_std = np.array(conv1s_std)  # 2,21,16
