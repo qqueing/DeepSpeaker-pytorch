@@ -111,8 +111,8 @@ def main():
 
             model_fc1.append(this_fc1)
 
-            while model_fc1[0].shape[1] < model_fc1[1].shape[1]:
-                model_fc1[0] = np.concatenate((model_fc1[0], model_fc1[0][-1, :].reshape(model_fc1[0].shape[0], 1)),
+        while model_fc1[0].shape[1] < model_fc1[1].shape[1]:
+            model_fc1[0] = np.concatenate((model_fc1[0], model_fc1[0][-1, :].reshape(model_fc1[0].shape[0], 1)),
                                               axis=1)
 
         model_fc1 = np.array(model_fc1)  # [2, 4, 31]
