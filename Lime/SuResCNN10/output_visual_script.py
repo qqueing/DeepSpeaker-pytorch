@@ -97,7 +97,7 @@ def main():
                         with open(str(f), 'rb') as f:
                             sets = pickle.load(f)
                             for (uid, orig, conv1, bn1, relu1, grad) in sets:
-                                # pdb.set_trace()
+                                pdb.set_trace()
                                 grad_abs += np.mean(np.abs(grad), axis=0)
                                 num_utt += 1
                     grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / num_utt), axis=0)
@@ -128,8 +128,8 @@ def main():
                 (input_grads[0], input_grads[0][-1, :, :].reshape(1, input_grads[0].shape[1], input_grads[0].shape[2])),
                 axis=0)
 
-        conv1s_means = np.array(conv1s_means)  # [[2,21,16]; [2,30,16]]
-        conv1s_std = np.array(conv1s_std)  # 2,21,16
+        conv1s_means = np.array(conv1s_means)  # [[2,21,64]; [2,30,64]]
+        conv1s_std = np.array(conv1s_std)  # 2,21,64
         input_grads = np.array(input_grads)  # 2,21,64
 
         np.save(args.extract_path + '/conv1s_means.npy', conv1s_means)
