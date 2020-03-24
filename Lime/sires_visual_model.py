@@ -74,8 +74,8 @@ def main():
 
         for model in model_set:
             extract_paths = os.path.join(args.extract_path, model)
-            fc1_weights = np.array([]).reshape((0, 1024, 128))
-            fc1_bias = np.array([]).reshape((0, 1024))
+            fc1_weights = np.array([]).reshape((0, 128, 128))
+            fc1_bias = np.array([]).reshape((0, 128))
 
             print('\nProcessing data in %s.' % extract_paths)
 
