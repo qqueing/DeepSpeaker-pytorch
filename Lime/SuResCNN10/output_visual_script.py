@@ -64,7 +64,7 @@ marker = ['o', 'x']
 def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
     # grads = np.array([]).reshape((0, 2, 161))
-    model_set = ['kaldi', 'aug']
+    model_set = ['kaldi_5wd', 'aug']
     epochs = np.arange(0, 31)
 
     if os.path.exists(args.extract_path + '/conv1s_means.npy'):
