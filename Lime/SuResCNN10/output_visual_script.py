@@ -76,8 +76,8 @@ def main():
         conv1s_std = []
         input_grads = []
 
-        for model in model_set:
-            extract_paths = os.path.join(args.extract_path, model)
+        for m in model_set:
+            extract_paths = os.path.join(args.extract_path, m)
             conv1s = np.array([]).reshape((0, 64, 5, 5))
             grads = np.array([]).reshape((0, 2, 161))
             print('\nProcessing data in %s.' % extract_paths)
