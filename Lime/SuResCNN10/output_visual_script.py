@@ -91,7 +91,7 @@ def main():
                     continue
 
                 print('\rReading: ' + str(save_path), end='')
-                pdb.set_trace()
+                # pdb.set_trace()
                 grads_abs = np.array([]).reshape((0, 161))
 
                 for name in ['train', 'valid']:
