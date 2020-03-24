@@ -76,60 +76,71 @@ marker = ['o', 'x']
 def main():
     model_set = ['kaldi', 'aug']
     epochs = np.arange(0, 31)
-    conv1s_means = []
-    conv1s_std = []
-    input_grads = []
 
-    for model in model_set:
-        extract_paths = os.path.join(args.extract_path, model)
-        conv1s = np.array([]).reshape((0, 16, 3, 3))
-        grads = np.array([]).reshape((0, 2, 64))
-        print('\nProcessing data in %s.' % extract_paths)
+    if os.path.exists(args.extract_path + '/conv1s_means.npy'):
+        conv1s_means = np.load(args.extract_path + '/conv1s_means.npy')
+        conv1s_std = np.load(args.extract_path + '/conv1s_std.npy')
+        input_grads = np.load(args.extract_path + '/input_grads.npy')
+    else:
+        conv1s_means = []
+        conv1s_std = []
+        input_grads = []
 
-        for i in epochs:
-            save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
-            print('\rReading: ' + str(save_path), end='')
-            if not save_path.exists():
-                continue
-            grads_abs = np.array([]).reshape((0, 64))
+        for model in model_set:
+            extract_paths = os.path.join(args.extract_path, model)
+            conv1s = np.array([]).reshape((0, 16, 3, 3))
+            grads = np.array([]).reshape((0, 2, 64))
+            print('\nProcessing data in %s.' % extract_paths)
 
-            for name in ['train', 'valid']:
-                sets_files = list(save_path.glob('vox1_%s.*.bin' % name))
-                grad_abs = np.zeros((64))
-                num_utt = 0
-                for f in sets_files:
-                    with open(str(f), 'rb') as f:
-                        sets = pickle.load(f)
-                        for (uid, orig, conv1, bn1, relu1, grad) in sets:
-                            # pdb.set_trace()
-                            grad_abs += np.mean(np.abs(grad), axis=0)
-                            num_utt += 1
-                grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / num_utt), axis=0)
+            for i in epochs:
+                save_path = pathlib.Path(extract_paths + '/epoch_%d' % i)
+                print('\rReading: ' + str(save_path), end='')
+                if not save_path.exists():
+                    continue
+                grads_abs = np.array([]).reshape((0, 64))
 
-            grads_abs = grads_abs[np.newaxis, :]
-            grads = np.concatenate((grads, grads_abs), axis=0)
+                for name in ['train', 'valid']:
+                    sets_files = list(save_path.glob('vox1_%s.*.bin' % name))
+                    grad_abs = np.zeros((64))
+                    num_utt = 0
+                    for f in sets_files:
+                        with open(str(f), 'rb') as f:
+                            sets = pickle.load(f)
+                            for (uid, orig, conv1, bn1, relu1, grad) in sets:
+                                # pdb.set_trace()
+                                grad_abs += np.mean(np.abs(grad), axis=0)
+                                num_utt += 1
+                    grads_abs = np.concatenate((grads_abs, grad_abs[np.newaxis, :] / num_utt), axis=0)
 
-            cs = list(save_path.glob('model.conv1.npy'))
+                grads_abs = grads_abs[np.newaxis, :]
+                grads = np.concatenate((grads, grads_abs), axis=0)
 
-            conv1_epoch = np.load(str(cs[0])).squeeze()
-            conv1_epoch = conv1_epoch[np.newaxis, :]
-            # pdb.set_trace()
-            conv1s = np.concatenate((conv1s, conv1_epoch), axis=0)
+                cs = list(save_path.glob('model.conv1.npy'))
 
-        means = np.mean(np.abs(conv1s), axis=(2, 3))
-        stds = np.std(conv1s, axis=(2, 3))
+                conv1_epoch = np.load(str(cs[0])).squeeze()
+                conv1_epoch = conv1_epoch[np.newaxis, :]
+                # pdb.set_trace()
+                conv1s = np.concatenate((conv1s, conv1_epoch), axis=0)
 
-        conv1s_means.append(means)
-        conv1s_std.append(stds)
-        input_grads.append(grads)
+            means = np.mean(np.abs(conv1s), axis=(2, 3))
+            stds = np.std(conv1s, axis=(2, 3))
 
-    for x in conv1s_means, conv1s_std, input_grads:
-        while x[0].shape[1] < x[1].shape[1]:
-            x[0] = np.concatenate((x[0], x[0][:, -1, :].reshape(x[0].shape[0], 1, x[0].shape[2])), axis=1)
+            conv1s_means.append(means)
+            conv1s_std.append(stds)
+            input_grads.append(grads)
 
-    conv1s_means = np.array(conv1s_means)  # [[2,21,16]; [2,30,16]]
-    conv1s_std = np.array(conv1s_std)  # 2,21,16
-    input_grads = np.array(input_grads)  # 2,21,64
+        for x in conv1s_means, conv1s_std, input_grads:
+            while x[0].shape[1] < x[1].shape[1]:
+                x[0] = np.concatenate((x[0], x[0][:, -1, :].reshape(x[0].shape[0], 1, x[0].shape[2])), axis=1)
+
+        conv1s_means = np.array(conv1s_means)  # [[2,21,16]; [2,30,16]]
+        conv1s_std = np.array(conv1s_std)  # 2,21,16
+        input_grads = np.array(input_grads)  # 2,21,64
+
+        np.save(args.extract_path + '/conv1s_means.npy', conv1s_means)
+        np.save(args.extract_path + '/conv1s_std.npy', conv1s_std)
+        np.save(args.extract_path + '/input_grads.npy', input_grads)
+
 
     # plotting filters distributions
     fig = plt.figure(figsize=(10, 10))
