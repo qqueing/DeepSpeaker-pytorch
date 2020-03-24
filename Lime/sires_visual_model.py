@@ -132,8 +132,44 @@ def main():
 
     # fig, ax = plt.subplots()
     fc1_dis_shape = model_fc1.shape  # 2, 4, 31
+    # dots = []
+    # for i in range(fc1_dis_shape[0]):  # aug, kaldi
+    #     dot_x = model_fc1[i][0][0]
+    #     dot_y = model_fc1[i][1][i]
+    #
+    #     dot, = plt.plot(dot_x, dot_y, color=cValue_1[j], marker=marker[i])
+    #     text_p = plt.text(dot_x, dot_y, '%d' % j)
+    #     dots.append([dot, text_p])
+    #
+    #     dots.append(dots)
+    #
+    # plt.legend([set_dots[0][0][0], set_dots[1][0][0]], ['aug', 'kaldi'], loc='lower right', scatterpoints=1)
+    #
+    # def gen_dot():
+    #     for i in range(means_shape[1]):
+    #         text_e.set_text('Epoch %2s' % str(i))
+    #         newdot = [conv1s_means[:, i], conv1s_std[:, i]]
+    #         yield newdot
+    #
+    # def update_dot(newd):
+    #     # pdb.set_trace()
+    #     for i in range(means_shape[0]):
+    #         dots = set_dots[i]
+    #         for j in range(means_shape[2]):
+    #             dot, text_p = dots[j]
+    #
+    #             dot_x = newd[0][i][j]
+    #             dot_y = newd[1][i][j]
+    #
+    #             dot.set_data(dot_x, dot_y)
+    #             text_p.set_position((dot_x, dot_y))
+    #
+    #     return set_dots
+    #
+    # ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
+    # ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=2)
 
-    for i in range(2):
+    for i in range(fc1_dis_shape[0]):
         x = model_fc1[i][i * 2]
         y = model_fc1[i][i * 2 + 1]
         plt.plot(x, y, marker=marker[i])
