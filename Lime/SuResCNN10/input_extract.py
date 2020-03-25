@@ -123,7 +123,7 @@ marker = ['o', 'x']
 def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
     # grads = np.array([]).reshape((0, 2, 161))
-    model_set = ['kaldi_5wd', 'aug']
+    # model_set = ['kaldi_5wd', 'aug']
 
     if os.path.exists(args.extract_path + '/inputs_uid.json'):
         # conv1s_means = np.load(args.extract_path + '/conv1s_means.npy')
@@ -131,40 +131,36 @@ def main():
         with open(args.extract_path + '/inputs.json', 'r') as f:
             inputs = json.load(f)
     else:
-        inputs = []
+        extract_paths = args.extract_path
+        print('\nProcessing data in %s.' % extract_paths)
 
-        for m in model_set:
-            extract_paths = os.path.join(args.extract_path, m)
-            print('\nProcessing data in %s.' % extract_paths)
+        save_path = pathlib.Path(extract_paths + '/epoch_%d' % 0)
 
-            save_path = pathlib.Path(extract_paths + '/epoch_%d' % 0)
-
-            if not save_path.exists():
-                # pdb.set_trace()
-                raise FileExistsError(str(save_path))
-
-            print('\rReading: ' + str(save_path), end='')
+        if not save_path.exists():
             # pdb.set_trace()
-            input_uids = []
+            raise FileExistsError(str(save_path))
 
-            for name in ['train', 'valid']:
-                sets_files = list(save_path.glob('vox1_%s.*.bin' % name))
-                uids = []
-                num_utt = 0
-                for f in sets_files:
-                    with open(str(f), 'rb') as f:
-                        sets = pickle.load(f)
-                        for (uid, orig, conv1, bn1, relu1, grad) in sets:
-                            uids.append(uid)
-                            # in_mean += np.mean(orig, axis=0)
-                            # num_utt += 1
-                input_uids.append(uids)
+        print('\rReading: ' + str(save_path), end='')
+        # pdb.set_trace()
+        input_uids = []
 
-            inputs.append(input_uids)
+        for name in ['train', 'valid']:
+            sets_files = list(save_path.glob('vox1_%s.*.bin' % name))
+            uids = []
+            for f in sets_files:
+                with open(str(f), 'rb') as f:
+                    sets = pickle.load(f)
+                    for (uid, orig, conv1, bn1, relu1, grad) in sets:
+                        uids.append(uid)
+                        # in_mean += np.mean(orig, axis=0)
+                        # num_utt += 1
+            input_uids.append(uids)
+
+        # inputs.append(input_uids)
 
         # inputs: [aug/kaldi, train/valid, 161]
         with open(args.extract_path + '/inputs.json', 'w') as f:
-            json.dump(inputs, f)
+            json.dump(input_uids, f)
     pdb.set_trace()
     # plotting filters distributions
     fig = plt.figure(figsize=(10, 8))
