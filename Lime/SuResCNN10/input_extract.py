@@ -43,7 +43,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Lime/SuResCNN10',
+parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect/aug',
                     help='folder to output model checkpoints')
 
 # Training options
