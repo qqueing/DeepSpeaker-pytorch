@@ -148,6 +148,7 @@ def main():
 
         if not os.path.exists(feat_scp):
             raise FileExistsError(feat_scp)
+
         uid2feat_dict = {}
         with open(feat_scp, 'r') as u:
             all_cls = u.readlines()
@@ -165,6 +166,7 @@ def main():
             for i in range(len(input_uids)):
                 train_valid = []
                 for u in input_uids[i]:
+                    pdb.set_trace()
                     uid = u if s == 'orignal' else '-'.join((u, s))
                     feats = file_loader(uid2feat_dict[uid])
                     train_valid.append(np.mean(feats, axis=0))
