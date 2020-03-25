@@ -9,25 +9,25 @@
 @Time: 2020/3/25 5:30 PM
 @Overview:
 """
-# !/usr/bin/env python
-# encoding: utf-8
-
-"""
-@Author: yangwenhao
-@Contact: 874681044@qq.com
-@Software: PyCharm
-@File: output_visual_script.py
-@Time: 2020/3/21 10:43 PM
-@Overview:
-"""
 import argparse
 import os
 import pdb
 import pickle
+import random
+import torch
+
 import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
+from Process_Data import constants as c
 from matplotlib import animation
+from scipy import interpolate
+from torch import nn
+from torchaudio import transforms
+import json
+
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset
+from Process_Data.audio_processing import concateinputfromMFB, to2tensor
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
@@ -43,7 +43,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect',
+parser.add_argument('--extract-path', default='Lime/SuResCNN10',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -61,27 +61,75 @@ parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
+parser.add_argument('--seed', type=int, default=123456, metavar='S',
+                    help='random seed (default: 0)')
 
 args = parser.parse_args()
-cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
-            'violet', 'turquoise', 'lavender', 'tan', 'cyan', 'aqua', 'maroon', 'olive', 'salmon', 'beige',
-            'black', 'peach', 'lime', 'indigo', 'mustard', 'rose', 'aquamarine', 'navy', 'gold', 'plum', 'burgundy',
-            'khaki', 'taupe', 'chartreuse', 'mint', 'sand', 'puce', 'seafoam', 'goldenrod', 'slate', 'rust',
-            'cerulean', 'ochre', 'crimson', 'fuchsia', 'puke', 'eggplant', 'white', 'sage', 'brick', 'cream',
-            'coral', 'greenish', 'grape', 'azure', 'wine', 'cobalt', 'pinkish', 'vomit', 'moss', 'grass',
-            'chocolate', 'cornflower', 'charcoal', 'pumpkin', 'tangerine', 'raspberry', 'orchid', 'sky']
-marker = ['o', 'x']
 
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+
+# Define visulaize SummaryWriter instance
+kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+transform = transforms.Compose([
+    concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, remove_vad=False),
+    # varLengthFeat(),
+    to2tensor()
+])
+transform_T = transforms.Compose([
+    concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file, remove_vad=False),
+    # varLengthFeat(),
+    to2tensor()
+])
+
+train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
+                               return_uid=True)
+indices = list(range(len(train_dir)))
+random.shuffle(indices)
+indices = indices[:args.sample_utt]
+train_part = torch.utils.data.Subset(train_dir, indices)
+
+valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
+                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
+                               transform=transform, return_uid=True)
+indices = list(range(len(valid_dir)))
+random.shuffle(indices)
+indices = indices[:args.sample_utt]
+valid_part = torch.utils.data.Subset(valid_dir, indices)
+
+cValue_1 = ['#7e1e9c', '#15b01a', '#0343df', '#ff81c0', '#653700', '#e50000', '#95d0fc', '#029386', '#f97306',
+            '#96f97b', '#c20078', '#ffff14', '#75bbfd', '#929591', '#89fe05', '#bf77f6', '#9a0eea', '#033500',
+            '#06c2ac', '#c79fef', '#00035b', '#d1b26f', '#00ffff', '#13eac9', '#06470c', '#ae7181', '#35063e',
+            '#01ff07', '#650021',
+            '#6e750e', '#ff796c', '#e6daa6', '#0504aa', '#001146', '#cea2fd', '#000000', '#ff028d', '#ad8150',
+            '#c7fdb5', '#ffb07c', '#677a04', '#cb416b', '#8e82fe', '#53fca1', '#aaff32', '#380282', '#ceb301',
+            '#ffd1df', '#cf6275', '#0165fc', '#0cff0c', '#c04e01', '#04d8b2', '#01153e', '#3f9b0b', '#d0fefe',
+            '#840000', '#be03fd', '#c0fb2d', '#a2cffe', '#dbb40c', '#8fff9f', '#580f41', '#4b006e', '#8f1402',
+            '#014d4e', '#610023', '#aaa662', '#137e6d', '#7af9ab', '#02ab2e', '#9aae07', '#8eab12', '#b9a281',
+            '#341c02', '#36013f', '#c1f80a', '#fe01b1', '#fdaa48', '#9ffeb0', '#b0ff9d', '#e2ca76', '#c65102',
+            '#a9f971', '#a57e52', '#80f9ad', '#6b8ba4', '#4b5d16', '#363737', '#d5b60a', '#fac205', '#516572',
+            '#90e4c1', '#a83c09', '#040273', '#ffcfdc', '#0485d1', '#ff474c', '#d2bd0a', '#bf9005', '#ffff84',
+            '#8c000f', '#ed0dd9', '#0b4008', '#607c8e', '#5b7c99', '#b790d4', '#047495', '#d648d7', '#a5a502',
+            '#d8dcd6', '#5ca904', '#fffe7a', '#380835', '#5a7d9a', '#658b38', '#98eff9', '#ffffff', '#789b73',
+            '#87ae73', '#a03623', '#b04e0f', '#7f2b0a', '#ffffc2', '#fc5a50', '#03719c', '#40a368', '#960056',
+            '#fd3c06', '#703be7', '#020035', '#d6b4fc', '#c0737a', '#2c6fbb', '#cdfd02', '#b0dd16', '#601ef9',
+            '#5e819d', '#6c3461', '#acbf69', '#5170d7', '#f10c45', '#ff000d', '#069af3', '#5729ce', '#045c5a',
+            '#0652ff', '#ffffe4', '#b1d1fc', '#80013f', '#74a662', '#76cd26', '#7ef4cc', '#bc13fe', '#1e488f',
+            '#d46a7e', '#6f7632', '#0a888a', '#632de9', '#34013f', '#856798', '#154406', '#a2a415', '#ffa756',
+            '#0b8b87', '#af884a', '#06b48b', '#10a674']
+marker = ['o', 'x']
 
 def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
     # grads = np.array([]).reshape((0, 2, 161))
     model_set = ['kaldi_5wd', 'aug']
 
-    if os.path.exists(args.extract_path + '/inputs.npy'):
+    if os.path.exists(args.extract_path + '/inputs_uid.json'):
         # conv1s_means = np.load(args.extract_path + '/conv1s_means.npy')
         # conv1s_std = np.load(args.extract_path + '/conv1s_std.npy')
-        inputs = np.load(args.extract_path + '/inputs.npy')
+        with open(args.extract_path + '/inputs.json', 'r') as f:
+            inputs = json.load(f)
     else:
         inputs = []
 
@@ -97,26 +145,27 @@ def main():
 
             print('\rReading: ' + str(save_path), end='')
             # pdb.set_trace()
-            input_means = np.array([]).reshape((0, 161))
+            input_uids = []
 
             for name in ['train', 'valid']:
                 sets_files = list(save_path.glob('vox1_%s.*.bin' % name))
-                in_mean = np.zeros((161))
+                uids = []
                 num_utt = 0
                 for f in sets_files:
                     with open(str(f), 'rb') as f:
                         sets = pickle.load(f)
                         for (uid, orig, conv1, bn1, relu1, grad) in sets:
-                            in_mean += np.mean(orig, axis=0)
-                            num_utt += 1
-                input_means = np.concatenate((input_means, in_mean[np.newaxis, :] / num_utt), axis=0)
+                            uids.append(uid)
+                            # in_mean += np.mean(orig, axis=0)
+                            # num_utt += 1
+                input_uids.append(uids)
 
-            inputs.append(input_means)
+            inputs.append(input_uids)
 
         # inputs: [aug/kaldi, train/valid, 161]
-        inputs = np.array(inputs)  # 2,21,161
-        np.save(args.extract_path + '/inputs.npy', inputs)
-
+        with open(args.extract_path + '/inputs.json', 'w') as f:
+            json.dump(inputs, f)
+    pdb.set_trace()
     # plotting filters distributions
     fig = plt.figure(figsize=(10, 8))
     plt.title('Distribution of Data')
@@ -130,18 +179,54 @@ def main():
     min_x = np.min(x)
     max_y = np.max(y)
     min_y = np.min(y)
-    plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
-    plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
+    # plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
+    # plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
     # pdb.set_trace()
     # print(y.shape)
     y_shape = y.shape  # 2, 2, 161
 
+    lines = []
+    al_data_label = ['Augment train', 'Augment valid', 'Original train', 'Original valid']
+
+    i = 0
     for j in range(y_shape[0]):  # aug and kaldi
-        for h in range(y_shape[2]):  # train and valid
-            plt.plot(x, y[j][h], color=cValue_1[j + h * 4])
 
-    plt.savefig(args.extract_path + "/inputs.png")
+        y2 = y[j][0]
+        # y2 = (y2 - np.mean(y2)) / (np.std(y2) + 2e-12)
 
+        f = interpolate.interp1d(x, y2)
+        xnew = np.arange(np.min(x), np.max(x), 100)
+        ynew = f(xnew)
+
+        l = plt.plot(xnew, ynew, color=cValue_1[i])
+        i += 1
+        lines.append(l)
+
+    plt.legend(al_data_label[:2], loc='upper right', fontsize=15)
+    plt.savefig(args.extract_path + "/inputs_1.png")
+    plt.show()
+
+    fig = plt.figure(figsize=(10, 8))
+    plt.title('Distribution of Data')
+    plt.xlabel('Frequency')
+    plt.ylabel('Power Energy')
+    # plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
+    # plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
+    for h in range(y_shape[0]):  # aug and kaldi
+        y2 = y[h][1]
+        # y2 = (y2 - np.mean(y2)) / (np.std(y2) + 2e-12)
+
+        f = interpolate.interp1d(x, y2)
+        xnew = np.arange(np.min(x), np.max(x), 100)
+        ynew = f(xnew)
+
+        l = plt.plot(xnew, ynew, color=cValue_1[i])
+        i += 1
+        lines.append(l)
+
+    plt.legend(al_data_label[2:], loc='upper right', fontsize=15)
+    plt.savefig(args.extract_path + "/inputs_2.png")
+    plt.show()
 
 if __name__ == '__main__':
     main()
