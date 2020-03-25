@@ -72,31 +72,6 @@ torch.manual_seed(args.seed)
 
 # Define visulaize SummaryWriter instance
 kwargs = {}
-transform = transforms.Compose([
-    concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, remove_vad=False),
-    # varLengthFeat(),
-    to2tensor()
-])
-transform_T = transforms.Compose([
-    concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, input_per_file=args.test_input_per_file, remove_vad=False),
-    # varLengthFeat(),
-    to2tensor()
-])
-
-train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
-                               return_uid=True)
-indices = list(range(len(train_dir)))
-random.shuffle(indices)
-indices = indices[:args.sample_utt]
-train_part = torch.utils.data.Subset(train_dir, indices)
-
-valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
-                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                               transform=transform, return_uid=True)
-indices = list(range(len(valid_dir)))
-random.shuffle(indices)
-indices = indices[:args.sample_utt]
-valid_part = torch.utils.data.Subset(valid_dir, indices)
 
 cValue_1 = ['#7e1e9c', '#15b01a', '#0343df', '#ff81c0', '#653700', '#e50000', '#95d0fc', '#029386', '#f97306',
             '#96f97b', '#c20078', '#ffff14', '#75bbfd', '#929591', '#89fe05', '#bf77f6', '#9a0eea', '#033500',
@@ -124,7 +99,9 @@ def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
     # grads = np.array([]).reshape((0, 2, 161))
     # model_set = ['kaldi_5wd', 'aug']
+    file_loader = np.load
 
+    #
     if os.path.exists(args.extract_path + '/inputs_uid.json'):
         # conv1s_means = np.load(args.extract_path + '/conv1s_means.npy')
         # conv1s_std = np.load(args.extract_path + '/conv1s_std.npy')
@@ -158,9 +135,45 @@ def main():
 
         # inputs.append(input_uids)
 
-        # inputs: [aug/kaldi, train/valid, 161]
+        # inputs: [train/valid, 161]
         with open(args.extract_path + '/inputs.json', 'w') as f:
             json.dump(input_uids, f)
+
+    # input_uids [train/valid, uids]
+    #
+    if os.path.exists(args.extract_path + '/inputs.npy'):
+        all_data = np.load(args.extract_path + '/inputs.npy')
+    else:
+        feat_scp = os.path.join(args.train_dir, 'feats.scp')
+
+        if not os.path.exists(feat_scp):
+            raise FileExistsError(feat_scp)
+        uid2feat_dict = {}
+        with open(feat_scp, 'r') as u:
+            all_cls = u.readlines()
+            for line in all_cls:
+                uid_feat = line.split()
+                u = uid_feat[0]
+                if u not in uid2feat_dict.keys():
+                    uid2feat_dict[u] = uid_feat[1]
+
+        subsets = ['orignal', 'babble', 'noise', 'speech', 'reverb']
+
+        all_data = []
+        for s in subsets:
+            aug_sets = []
+            for i in range(len(input_uids)):
+                train_valid = []
+                for u in input_uids[i]:
+                    uid = u if s == 'orignal' else '-'.join((u, s))
+                    feats = file_loader(uid2feat_dict[uid])
+                    train_valid.append(np.mean(feats, axis=0))
+                aug_sets.append(train_valid)
+            all_data.append(aug_sets)
+
+        all_data = np.array(all_data)
+        np.save(args.extract_path + '/inputs.npy', all_data)
+
     pdb.set_trace()
     # plotting filters distributions
     fig = plt.figure(figsize=(10, 8))
