@@ -158,7 +158,7 @@ def main():
                 if u not in uid2feat_dict.keys():
                     uid2feat_dict[u] = uid_feat[1]
 
-        subsets = ['orignal', 'babble', 'noise', 'speech', 'reverb']
+        subsets = ['orignal', 'babble', 'noise', 'music', 'reverb']
 
         all_data = []
         for s in subsets:
