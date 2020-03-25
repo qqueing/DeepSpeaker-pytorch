@@ -71,7 +71,7 @@ np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 # Define visulaize SummaryWriter instance
-kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+kwargs = {}
 transform = transforms.Compose([
     concateinputfromMFB(num_frames=c.MINIMUIN_LENGTH, remove_vad=False),
     # varLengthFeat(),
