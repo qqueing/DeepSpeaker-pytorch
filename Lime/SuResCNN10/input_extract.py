@@ -23,7 +23,7 @@ from Process_Data import constants as c
 from matplotlib import animation
 from scipy import interpolate
 from torch import nn
-from torchaudio import transforms
+import torchvision.transforms as transforms
 import json
 
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset
