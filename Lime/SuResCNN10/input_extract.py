@@ -166,8 +166,7 @@ def main():
             for i in range(len(input_uids)):
                 train_valid = []
                 for u in input_uids[i]:
-                    pdb.set_trace()
-                    uid = u if s == 'orignal' else '-'.join((u, s))
+                    uid = u[0] if s == 'orignal' else '-'.join((u[0], s))
                     feats = file_loader(uid2feat_dict[uid])
                     train_valid.append(np.mean(feats, axis=0))
                 aug_sets.append(train_valid)
