@@ -32,7 +32,7 @@ from Process_Data.audio_processing import concateinputfromMFB, to2tensor
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev_org',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/test',
@@ -159,7 +159,7 @@ def main():
                     uid2feat_dict[u] = uid_feat[1]
 
         subsets = ['orignal', 'babble', 'noise', 'speech', 'reverb']
-        pdb.set_trace()
+
         all_data = []
         for s in subsets:
             aug_sets = []
@@ -174,6 +174,7 @@ def main():
 
         all_data = np.array(all_data)
         np.save(args.extract_path + '/inputs.npy', all_data)
+        print('Saving inputs in %s' % args.extract_path)
 
     pdb.set_trace()
     # plotting filters distributions
