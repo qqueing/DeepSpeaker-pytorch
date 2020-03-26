@@ -122,7 +122,7 @@ def main():
     plt.xlabel('Frequency')
     plt.ylabel('Weight')
 
-    x = np.arange(121) * 8000 / 121  # [0-8000]
+    x = np.arange(161) * 8000 / 161  # [0-8000]
     y = np.nan_to_num(input_grads)  # 2,
     # pdb.set_trace()
     max_x = np.max(x)
