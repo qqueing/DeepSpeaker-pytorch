@@ -110,7 +110,7 @@ def main():
         # conv1s_means = np.load(args.extract_path + '/conv1s_means.npy')
         # conv1s_std = np.load(args.extract_path + '/conv1s_std.npy')
         with open(args.extract_path + '/inputs.json', 'r') as f:
-            inputs = json.load(f)
+            input_uids = json.load(f)
     else:
         extract_paths = args.extract_path
         print('\nProcessing data in %s.' % extract_paths)
