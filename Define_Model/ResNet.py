@@ -291,7 +291,7 @@ class ExporingResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        # pdb.set_trace()
+        print(x.shape)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
