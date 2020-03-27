@@ -139,7 +139,7 @@ def main():
 
     # plotting filters distributions
     plt.rc('font', family='Times New Roman')
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(8, 8))
     plt.title('Convergence of 16 Filters')
 
     # x(mean): [2, 2, 30, 16] [model, aug/kaldi, epoch, filters]

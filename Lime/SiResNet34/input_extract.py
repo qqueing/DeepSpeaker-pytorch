@@ -45,7 +45,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SiResNet34/soft',
+parser.add_argument('--extract-path', default='Lime/SiResNet34',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -194,8 +194,8 @@ def main():
     y = np.sum(all_data, axis=2)  # [5,2,162]
     y = np.mean(y, axis=1)
 
-    y1 = y[0]
-    y2 = np.mean(y[1:], axis=0)
+    y1 = y[0][1:]
+    y2 = np.mean(y[1:], axis=0)[1:]
 
     # pdb.set_trace()
     # max_x = np.max(x)

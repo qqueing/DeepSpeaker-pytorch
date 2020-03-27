@@ -43,7 +43,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect/aug',
+parser.add_argument('--extract-path', default='Lime/SuResCNN10',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -99,10 +99,11 @@ def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
     # grads = np.array([]).reshape((0, 2, 161))
     # model_set = ['kaldi_5wd', 'aug']
+    subsets = ['orignal', 'babble', 'noise', 'music', 'reverb']
     file_loader = np.load
 
     #
-    if os.path.exists(args.extract_path + '/inputs_uid.json'):
+    if os.path.exists(args.extract_path + '/inputs.json'):
         # conv1s_means = np.load(args.extract_path + '/conv1s_means.npy')
         # conv1s_std = np.load(args.extract_path + '/conv1s_std.npy')
         with open(args.extract_path + '/inputs.json', 'r') as f:
@@ -158,8 +159,6 @@ def main():
                 if u not in uid2feat_dict.keys():
                     uid2feat_dict[u] = uid_feat[1]
 
-        subsets = ['orignal', 'babble', 'noise', 'music', 'reverb']
-
         all_data = []
         for s in subsets:
             aug_sets = []
@@ -176,68 +175,79 @@ def main():
         np.save(args.extract_path + '/inputs.npy', all_data)
         print('Saving inputs in %s' % args.extract_path)
 
-    pdb.set_trace()
+    # all_data [5, 2, 120, 161]
+    # pdb.set_trace()
     # plotting filters distributions
-    fig = plt.figure(figsize=(10, 8))
-    plt.title('Distribution of Data')
-    plt.xlabel('Frequency')
-    plt.ylabel('Power Energy')
+    plt.figure(figsize=(10, 8))
+    plt.title('SuResCNN 10', fontsize=25)
+    plt.xlabel('Frequency', fontsize=18)
+    plt.ylabel('Power Energy', fontsize=18)
 
     x = np.arange(161) * 8000 / 161  # [0-8000]
-    y = np.nan_to_num(inputs)  # 2,
+    y = np.sum(all_data, axis=2)  # [5,2,162]
+    y = np.mean(y, axis=1)
+
+    y1 = y[0]
+    y2 = np.mean(y[1:], axis=0)
+
     # pdb.set_trace()
-    max_x = np.max(x)
-    min_x = np.min(x)
-    max_y = np.max(y)
-    min_y = np.min(y)
+    # max_x = np.max(x)
+    # min_x = np.min(x)
+    # max_y = np.max(y)
+    # min_y = np.min(y)
     # plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
     # plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
     # pdb.set_trace()
     # print(y.shape)
-    y_shape = y.shape  # 2, 2, 161
+    y_shape = y.shape  # 5, 161
 
     lines = []
-    al_data_label = ['Augment train', 'Augment valid', 'Original train', 'Original valid']
+    al_data_label = subsets
 
     i = 0
-    for j in range(y_shape[0]):  # aug and kaldi
+    # for j in range(y_shape[0]):  # aug and kaldi
 
-        y2 = y[j][0]
-        # y2 = (y2 - np.mean(y2)) / (np.std(y2) + 2e-12)
+    # y2 = (y2 - np.mean(y2)) / (np.std(y2) + 2e-12)
 
-        f = interpolate.interp1d(x, y2)
-        xnew = np.arange(np.min(x), np.max(x), 100)
-        ynew = f(xnew)
+    f = interpolate.interp1d(x, y1)
+    xnew = np.arange(np.min(x), np.max(x), 500)
+    ynew = f(xnew)
 
-        l = plt.plot(xnew, ynew, color=cValue_1[i])
-        i += 1
-        lines.append(l)
+    plt.plot(xnew, ynew, color=cValue_1[i])
 
-    plt.legend(al_data_label[:2], loc='upper right', fontsize=15)
+    f = interpolate.interp1d(x, y2)
+    xnew = np.arange(np.min(x), np.max(x), 500)
+    ynew = f(xnew)
+
+    plt.plot(xnew, ynew, color=cValue_1[i + 1])
+    # i += 1
+    # lines.append(l)
+
+    plt.legend(['Original data', 'Augmentation data'], loc='upper right', fontsize=18)
     plt.savefig(args.extract_path + "/inputs_1.png")
     plt.show()
 
-    fig = plt.figure(figsize=(10, 8))
-    plt.title('Distribution of Data')
-    plt.xlabel('Frequency')
-    plt.ylabel('Power Energy')
-    # plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
-    # plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
-    for h in range(y_shape[0]):  # aug and kaldi
-        y2 = y[h][1]
-        # y2 = (y2 - np.mean(y2)) / (np.std(y2) + 2e-12)
-
-        f = interpolate.interp1d(x, y2)
-        xnew = np.arange(np.min(x), np.max(x), 100)
-        ynew = f(xnew)
-
-        l = plt.plot(xnew, ynew, color=cValue_1[i])
-        i += 1
-        lines.append(l)
-
-    plt.legend(al_data_label[2:], loc='upper right', fontsize=15)
-    plt.savefig(args.extract_path + "/inputs_2.png")
-    plt.show()
+    # plt.figure(figsize=(10, 8))
+    # plt.title('Distribution of Data')
+    # plt.xlabel('Frequency')
+    # plt.ylabel('Power Energy')
+    # # plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
+    # # plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
+    # for h in range(y_shape[0]):  # aug and kaldi
+    #     y2 = y[h]
+    #     # y2 = (y2 - np.mean(y2)) / (np.std(y2) + 2e-12)
+    #
+    #     f = interpolate.interp1d(x, y2)
+    #     xnew = np.arange(np.min(x), np.max(x), 500)
+    #     ynew = f(xnew)
+    #
+    #     l = plt.plot(xnew, ynew, color=cValue_1[i])
+    #     i += 1
+    #     lines.append(l)
+    #
+    # plt.legend(al_data_label[2:], loc='upper right', fontsize=15)
+    # plt.savefig(args.extract_path + "/inputs_2.png")
+    # plt.show()
 
 if __name__ == '__main__':
     main()
