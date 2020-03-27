@@ -4,3 +4,7 @@ misc
 TrainAndTest/data
 __init__.py
 *.npy
+*.ark
+*.pth
+*.bundle
+
