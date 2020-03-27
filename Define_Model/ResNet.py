@@ -225,9 +225,10 @@ class ExporingResNet(nn.Module):
         self.layer3 = self._make_layer(block, num_filter[2], layers[2], stride=2)
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
-        self.avgpool = nn.AdaptiveAvgPool2d((None, 1))
+        # [64, 128, 8, 37]
+        self.avgpool = nn.AdaptiveAvgPool2d((1, None))
         # 300 is the length of features
-        self.fc1 = nn.Linear(128 * int(np.ceil(input_frames / 8)), embedding_size)
+        self.fc1 = nn.Linear(128 * int(input_frames / 8), embedding_size)
         # self.norm = self.l2_norm(num_filter[3])
         self.alpha = 12
         self.fc2 = nn.Linear(embedding_size, num_classes)
@@ -291,8 +292,7 @@ class ExporingResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        print(x.shape)
-
+        # print(x.shape)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
