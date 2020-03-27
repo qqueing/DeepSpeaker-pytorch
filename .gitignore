@@ -3,3 +3,4 @@ __pycache__
 misc
 TrainAndTest/data
 __init__.py
+*.npy
