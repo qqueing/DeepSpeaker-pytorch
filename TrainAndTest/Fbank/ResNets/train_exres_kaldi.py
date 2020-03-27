@@ -5,8 +5,8 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: train_sires34_aug.py
-@Time: 2020/3/17 7:05 PM
+@File: train_exres_kaldi.py
+@Time: 2020/3/27 10:46 AM
 @Overview:
 """
 # from __future__ import print_function
@@ -22,7 +22,6 @@ from tensorboardX import SummaryWriter
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torchvision.transforms as transforms
 
 from torch.autograd import Variable
@@ -30,24 +29,15 @@ import torch.backends.cudnn as cudnn
 import os
 
 import numpy as np
-from torch.optim.lr_scheduler import StepLR, MultiStepLR
+from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
-from Define_Model.ResNet import SimpleResNet
-from Define_Model.model import ResSpeakerModel, ResCNNSpeaker
-from Process_Data.VoxcelebTestset import VoxcelebTestset
-from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
+from Define_Model.ResNet import ExporingResNet
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-
-from Process_Data.DeepSpeakerDataset_dynamic import ValidationDataset
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset, ScriptTrainDataset, \
-    ScriptTestDataset, ScriptValidDataset
-from Process_Data.voxceleb_wav_reader import wav_list_reader, wav_duration_reader, dic_dataset
-
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -73,7 +63,7 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 
 # options for vox1
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_fb64/dev_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil',
@@ -83,10 +73,10 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/aug',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34/soft/aug/checkpoint_1.pth',
+                    default='Data/checkpoint/ExResNet34/soft/aug/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -104,7 +94,7 @@ parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=8, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -161,7 +151,7 @@ if args.cuda:
 # create logger
 
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(args.check_path, filename_suffix='aug_192')
+writer = SummaryWriter(args.check_path, filename_suffix='exploring')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -223,7 +213,7 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers))
+    model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers))
 
     if args.cuda:
         model.cuda()
@@ -254,16 +244,14 @@ def main():
 
     # pdb.set_trace()
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
-                                               # collate_fn=PadCollate(dim=2, fix_len=True),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size,
-                                               # collate_fn=PadCollate(dim=2, fix_len=True),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
-    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
+    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict()},
                # 'criterion': criterion.state_dict()
                check_path)
