@@ -292,6 +292,7 @@ class ExporingResNet(nn.Module):
         x = self.layer4(x)
 
         print(x.shape)
+
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
