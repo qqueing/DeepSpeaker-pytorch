@@ -329,7 +329,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
                # 'criterion': criterion.state_dict()
                check_path)
 
-    print('\n\33[91mFor Softmax Simple-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\n\33[0m'.format(
+    print('\n\33[91mFor Softmax Simple-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m'.format(
         100 * float(correct) / total_datasize, total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
@@ -364,8 +364,7 @@ def test(test_loader, valid_loader, model, epoch):
         total_datasize += len(predicted_one_labels)
 
         if batch_idx % args.log_interval == 0:
-            valid_pbar.set_description(
-                'Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
+            valid_pbar.set_description('Valid Epoch: {:2d} [{:8d}/{:8d} ({:3.0f}%)] Batch Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
                     len(valid_loader.dataset),
@@ -411,7 +410,7 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\33[91mFor %s_distance, Test ERR is %.4f %%. Threshold is %.4f . Valid Accuracy is %.4f %%.\33[0m' % ( \
+    print('\n\33[91mFor %s_distance, Test ERR is %.4f %%. Threshold is %.4f . Valid Accuracy is %.4f %%.\33[0m' % ( \
         'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
 
 
