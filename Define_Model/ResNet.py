@@ -304,7 +304,6 @@ class ExporingResNet(nn.Module):
 
     def _forward(self, x):
         x = self.fc2(x)
-
         return x
 
     # Allow for accessing forward method in a inherited class
