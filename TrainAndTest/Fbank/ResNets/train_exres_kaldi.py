@@ -16,10 +16,8 @@ import pdb
 import random
 import time
 from Process_Data import constants as c
-
 from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
-
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
@@ -27,7 +25,6 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
-
 import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
@@ -59,8 +56,6 @@ except AttributeError:
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
-# Model options
-
 # options for vox1
 parser.add_argument('--train-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil',
@@ -152,7 +147,6 @@ if args.cuda:
     cudnn.benchmark = True
 
 # create logger
-
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='exploring')
 
@@ -201,12 +195,6 @@ valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_d
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform, loader=file_loader)
 
-
-# train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
-# test_dir = VoxcelebTestset(dir=args.test_dataroot, pairs_path=args.test_pairs_path, loader=file_loader, transform=transform_T)
-# del voxceleb2
-# del voxceleb2_dev
-
 def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
     # print the experiment configuration
@@ -239,8 +227,8 @@ def main():
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
-            # scheduler.load_state_dict(checkpoint['scheduler'])
+            optimizer.load_state_dict(checkpoint['optimizer'])
+            scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -255,10 +243,7 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    # if start==1:
-    #     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
-    #     torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-    #                 'scheduler': scheduler.state_dict()}, check_path)
+
     for epoch in range(start, end):
         # pdb.set_trace()
         for param_group in optimizer.param_groups:
