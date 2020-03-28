@@ -76,13 +76,13 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxcele
 parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ExResNet34/soft/kaldi/checkpoint_1.pth',
+                    default='Data/checkpoint/ExResNet34/soft/kaldi/checkpoint_30.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=30, metavar='E',
+parser.add_argument('--epochs', type=int, default=34, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -192,7 +192,7 @@ test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, loader=fi
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:9600]
+indices = indices[:25600]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -220,7 +220,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[18, 24], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[18, 24, 30], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
@@ -329,7 +329,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
                # 'criterion': criterion.state_dict()
                check_path)
 
-    print('\n\33[91mFor Softmax Simple-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m'.format(
+    print('\n\33[91mFor Softmax Exporing-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m'.format(
         100 * float(correct) / total_datasize, total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
