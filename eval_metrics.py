@@ -4,7 +4,7 @@ For l2 distacne: when the distance is less than the theshold, it should be true;
 For cosine distance: when the distance is greater than the theshold, it's true.
 """
 import pdb
-
+from operator import itemgetter
 import numpy as np
 from scipy import interpolate
 
@@ -19,76 +19,6 @@ def evaluate(distances, labels):
         labels, 1e-3)
 
     return tpr, fpr, accuracy, val,  far
-
-def evaluate_eer(distances, labels):
-    # Calculate evaluation metrics
-    # max_threshold = np.max(distances)
-    thresholds = np.arange(0, 30, 0.01)
-    tpr, fpr, best_accuracy = calculate_roc(thresholds, distances, labels)
-    err, accuracy = calculate_eer(thresholds, distances, labels)
-    # thresholds = np.arange(0, 30, 0.001)
-    # val,  far = calculate_val(thresholds, distances,
-    #     labels, 1e-3)
-    return err, best_accuracy
-
-def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
-    """
-    The distance score should be larger when two samples are more similar.
-    :param distances:
-    :param labels:
-    :param cos:
-    :return:
-    """
-    # split the target and non-target distance array
-    target = []
-    non_target = []
-    new_distances = []
-
-    for (distance, label) in zip(distances, labels):
-        if not cos:
-            distance = -distance
-
-        new_distances.append(-distance)
-        if label:
-            target.append(distance)
-        else:
-            non_target.append(distance)
-
-    new_distances = np.array(new_distances)
-    target = np.sort(target)
-    non_target = np.sort(non_target)
-
-    target_size = target.size
-    nontarget_size = non_target.size
-    # pdb.set_trace()
-    target_position = 0
-    while target_position+1<target_size:
-    # for target_position in range(target_size):
-        nontarget_n = nontarget_size * target_position * 1.0 / target_size
-        nontarget_position = int(nontarget_size - 1 - nontarget_n)
-
-        if (nontarget_position < 0):
-            nontarget_position = 0
-        # The exceptions from non targets are samples where cosine score is > the target score
-        # if (non_target[nontarget_position] <= target[target_position]):
-        #     break
-        if (non_target[nontarget_position] < target[target_position]):
-            # print('target[{}]={} is < non_target[{}]={}.'.format(target_position, target[target_position], nontarget_position, non_target[nontarget_position]))
-            break
-        target_position += 1
-
-    eer_threshold = target[target_position]
-    eer = target_position * 1.0 / target_size
-
-    # max_threshold = np.max(distances)
-    # thresholds = np.arange(0, max_threshold, 0.001)
-    thresholds = np.sort(np.unique(target))
-    tpr, fpr, best_accuracy = calculate_roc(thresholds, new_distances, labels)
-
-    # return eer threshold.
-    if re_thre:
-        return eer, eer_threshold, best_accuracy
-    return eer, best_accuracy
 
 def calculate_roc(thresholds, distances, labels):
 
@@ -109,7 +39,6 @@ def calculate_roc(thresholds, distances, labels):
     best_threshold_index = np.argmax(acc_train)
 
     return tprs[best_threshold_index], fprs[best_threshold_index], acc_train[best_threshold_index]
-
 
 def calculate_accuracy(threshold, dist, actual_issame):
     predict_issame = np.less(dist, threshold)
@@ -151,7 +80,6 @@ def calculate_eer(thresholds, distances, labels):
     #print("Threshold for the eer is {}.".format(thresholds[eer_index]))
     return  fnrs[eer_index], acc_train[eer_index]
 
-
 def calculate_eer_accuracy(threshold, dist, actual_issame):
     predict_issame = np.greater(dist, threshold)
     tp = np.sum(np.logical_and(predict_issame, actual_issame))
@@ -188,7 +116,6 @@ def calculate_val(thresholds, distances, labels, far_target=0.1):
 
     return val, far
 
-
 def calculate_val_far(threshold, dist, actual_issame):
     predict_issame = np.less(dist, threshold)
     true_accept = np.sum(np.logical_and(predict_issame, actual_issame))
@@ -202,3 +129,147 @@ def calculate_val_far(threshold, dist, actual_issame):
     val = float(true_accept) / float(n_same)
     far = float(false_accept) / float(n_diff)
     return val, far
+
+
+def evaluate_kaldi_eer(distances, labels, cos=True, re_thre=False):
+    """
+    The distance score should be larger when two samples are more similar.
+    :param distances:
+    :param labels:
+    :param cos:
+    :return:
+    """
+    # split the target and non-target distance array
+    target = []
+    non_target = []
+    new_distances = []
+
+    for (distance, label) in zip(distances, labels):
+        if not cos:
+            distance = -distance
+
+        new_distances.append(-distance)
+        if label:
+            target.append(distance)
+        else:
+            non_target.append(distance)
+
+    new_distances = np.array(new_distances)
+    target = np.sort(target)
+    non_target = np.sort(non_target)
+
+    target_size = target.size
+    nontarget_size = non_target.size
+    # pdb.set_trace()
+    target_position = 0
+    while target_position + 1 < target_size:
+        # for target_position in range(target_size):
+        nontarget_n = nontarget_size * target_position * 1.0 / target_size
+        nontarget_position = int(nontarget_size - 1 - nontarget_n)
+
+        if (nontarget_position < 0):
+            nontarget_position = 0
+        # The exceptions from non targets are samples where cosine score is > the target score
+        # if (non_target[nontarget_position] <= target[target_position]):
+        #     break
+        if (non_target[nontarget_position] < target[target_position]):
+            # print('target[{}]={} is < non_target[{}]={}.'.format(target_position, target[target_position], nontarget_position, non_target[nontarget_position]))
+            break
+        target_position += 1
+
+    eer_threshold = target[target_position]
+    eer = target_position * 1.0 / target_size
+
+    # max_threshold = np.max(distances)
+    # thresholds = np.arange(0, max_threshold, 0.001)
+    thresholds = np.sort(np.unique(target))
+    tpr, fpr, best_accuracy = calculate_roc(thresholds, new_distances, labels)
+
+    # return eer threshold.
+    if re_thre:
+        return eer, eer_threshold, best_accuracy
+    return eer, best_accuracy
+
+
+# Creates a list of false-negative rates, a list of false-positive rates
+# and a list of decision thresholds that give those error-rates.
+def ComputeErrorRates(scores, labels):
+    # Sort the scores from smallest to largest, and also get the corresponding
+    # indexes of the sorted scores.  We will treat the sorted scores as the
+    # thresholds at which the the error-rates are evaluated.
+    sorted_indexes, thresholds = zip(*sorted([(index, threshold) for index, threshold in enumerate(scores)],
+                                             key=itemgetter(1)))
+    sorted_labels = []
+    labels = [labels[i] for i in sorted_indexes]
+    fnrs = []  # 小于阈值的正例数目
+    fprs = []  # 小于阈值的反例数目
+
+    # At the end of this loop, fnrs[i] is the number of errors made by
+    # incorrectly rejecting scores less than thresholds[i]. And, fprs[i]
+    # is the total number of times that we have correctly accepted scores
+    # greater than thresholds[i].
+    for i in range(0, len(labels)):
+        if i == 0:
+            fnrs.append(labels[i])
+            fprs.append(1 - labels[i])
+        else:
+            fnrs.append(fnrs[i - 1] + labels[i])
+            fprs.append(fprs[i - 1] + 1 - labels[i])
+
+    fnrs_norm = sum(labels)  # 样本中的正例数目
+    fprs_norm = len(labels) - fnrs_norm  # 样本中的反例数目
+
+    # Now divide by the total number of false negative errors to obtain the false positive rates across all thresholds.
+    # 小于阈值而被认为是反例的正例在所有正例的样本比重
+    fnrs = [x / float(fnrs_norm) for x in fnrs]
+
+    # Divide by the total number of corret positives to get the true positive rate.
+    # Subtract these quantities from 1 to get the false positive rates.
+    # 大于阈值而被认为是正例的反例在所有反例中的样本比重
+
+    fprs = [1 - x / float(fprs_norm) for x in fprs]
+
+    return fnrs, fprs, thresholds
+
+
+# Computes the minimum of the detection cost function.  The comments refer to
+# equations in Section 3 of the NIST 2016 Speaker Recognition Evaluation Plan.
+def ComputeMinDcf(fnrs, fprs, thresholds, p_target, c_miss, c_fa):
+    """
+    :param fnrs: 正例的错误拒绝率
+    :param fprs: 反例的错误接受率
+    :param thresholds: 判断的阈值
+    :param p_target: a priori probability of the specified target speaker
+    :param c_miss: cost of a missed detection 遗漏正例的损失值
+    :param c_fa: cost of a spurious detection 错误接受的损失值
+    :return:
+    """
+    min_c_det = float("inf")
+    min_c_det_threshold = thresholds[0]
+    for i in range(0, len(fnrs)):
+        # See Equation (2).  it is a weighted sum of false negative
+        # and false positive errors.
+        c_det = c_miss * fnrs[i] * p_target + c_fa * fprs[i] * (1 - p_target)
+        if c_det < min_c_det:
+            # 找到最小的det值
+            min_c_det = c_det
+            min_c_det_threshold = thresholds[i]
+    # See Equations (3) and (4).  Now we normalize the cost.
+    c_def = min(c_miss * p_target, c_fa * (1 - p_target))
+    min_dcf = min_c_det / c_def
+    return min_dcf, min_c_det_threshold
+
+
+def evaluate_kaldi_mindcf(scores, labels):
+    c_miss = 1
+    c_fa = 1
+
+    fnrs, fprs, thresholds = ComputeErrorRates(scores, labels)
+
+    p_target = 0.01
+    mindcf_01, threshold_01 = ComputeMinDcf(fnrs, fprs, thresholds, p_target, c_miss, c_fa)
+
+    p_target = 0.001
+    mindcf_001, threshold_001 = ComputeMinDcf(fnrs, fprs, thresholds, p_target, c_miss, c_fa)
+
+    return (mindcf_01, threshold_01, mindcf_001, threshold_001)
