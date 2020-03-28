@@ -129,7 +129,7 @@ parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=100, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--mfb', action='store_true', default=True,
