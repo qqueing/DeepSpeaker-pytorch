@@ -50,11 +50,10 @@ sgd lr=0.05, epoch=[10, 15, 20], dropout=0.0, embedding_dim=1024
 
 #####ExResNet34: Fbank 64
 
+
 sgd lr=0.05, epoch=[15, 24, 32], dropout=0.0, embedding_dim=128
 
 - [x] Cross Entropy:
         
         Voxceleb 1
         Voxceleb 1 Augmented
-
-
