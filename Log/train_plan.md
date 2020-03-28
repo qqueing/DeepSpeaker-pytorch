@@ -1,5 +1,5 @@
     
-###20200228:
+###2020.02.28:
 
 #####TDNN: Fbank40
 
@@ -10,7 +10,7 @@ sgd lr=0.001, epoch=[30, 45], dropout=0.2, embedding_dim=512
         tdnn    64 with 256 repeat per speaker
 
 
-###20200306:
+###2020.03.06:
 
 #####LSTM: Fbank 40
 
@@ -45,3 +45,16 @@ sgd lr=0.05, epoch=[10, 15, 20], dropout=0.0, embedding_dim=1024
     
     For Sitw Test ERR is 14.6667%, Threshold is 0.24861189723014832.
     For Sitw Test ERR is 13.5922%, Threshold is 0.2714540958404541.
+    
+###2020.03.28:
+
+#####ExResNet34: Fbank 64
+
+sgd lr=0.05, epoch=[15, 24, 32], dropout=0.0, embedding_dim=128
+
+- [x] Cross Entropy:
+        
+        Voxceleb 1
+        Voxceleb 1 Augmented
+
+
