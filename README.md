@@ -17,8 +17,6 @@ This project was stared from the [qqueing/DeepSpeaker-pytorch](https://github.co
 > Librispeech
 > TIMIT
 
-
-
 ## Implemented Verification Systems
 
 ### TDNN
