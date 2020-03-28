@@ -19,12 +19,6 @@ import torch.nn.utils.rnn as rnn_utils
 import pdb
 from Define_Model.SoftmaxLoss import AngleLinear
 
-
-def get_parameter_number(net):
-    total_num = sum(p.numel() for p in net.parameters())
-    trainable_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    return {'Total': total_num, 'Trainable': trainable_num}
-
 class PairwiseDistance(Function):
     def __init__(self, p):
         super(PairwiseDistance, self).__init__()
@@ -751,7 +745,6 @@ class LSTM_End(nn.Module):
         logits = self.fc2(spk_vec)
 
         return spk_vec, logits
-
 
 class AttentionLSTM(nn.Module):
     def __init__(self, input_dim, num_class, batch_size,
