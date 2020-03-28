@@ -52,27 +52,11 @@ Work accomplished so far:
 | | ResNet-34    |1:8  |Triplet | 8.0285:0.0301 | 0.8360/0.8302  |
 |2| ...          |..:..|        |
 
-
-The following is part of the original description:
-
->This is a slightly modified pytorch implementation of the model(modified Resnet + triplet loss) presented by Baidu Research in [Deep Speaker: an End-to-End Neural Speaker Embedding System](https://arxiv.org/pdf/1705.02304.pdf).
->This code was tested using Voxceleb database. [Voxceleb database paper](https://www.robots.ox.ac.uk/~vgg/publications/2017/Nagrani17/nagrani17.pdf) shows shows 7.8% EER using CNN. But in my code can't reach that point.
-This code contained a lot of editable point such as preprocessing, model, scoring(length nomalization and file processing) and etc.
->I hope this code helps researcher reach higher score.
->Also, use the part of code:
-> - [liorshk's git repository](https://github.com/liorshk/facenet_pytorch)
->   - Baseline code - Facenet pytorch implimetation
-> - [hbredin's git repository](https://github.com/hbredin/pyannote-db-voxceleb)
->   - Voxceleb Database reader
+### Reference:  
+> [1] Cai, Weicheng, Jinkun Chen, and Ming Li. "Analysis of Length Normalization in End-to-End Speaker Verification System.." conference of the international speech communication association (2018): 3618-3622.
 >
-> ### Features
-> - In test, length normalization
-> - This means extracting many input from single wave and averaging. This makes the results slightly better.
-> - In training, except pandas and preloading list. 
-> - This makes different training accuracy each epoch, but it does not matter.
->
-> ### Authors
-> qqueing@gmail.com( or kindsinu@naver.com)
+> [2] ...
+
 
 
 
