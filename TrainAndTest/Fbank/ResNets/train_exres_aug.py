@@ -16,14 +16,12 @@ import pdb
 import random
 import time
 from Process_Data import constants as c
-
 from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
 
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import os
@@ -41,7 +39,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 # Version conflict
-
 import torch._utils
 
 try:
@@ -62,7 +59,7 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 
 # options for vox1
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_fb64/test_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_fb64/dev_no_sil',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil',
@@ -74,8 +71,7 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxcele
 
 parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--save-init', action='store_true', default=True,
-                    help='using Cosine similarity')
+parser.add_argument('--save-init', action='store_true', default=True, help='using Cosine similarity')
 parser.add_argument('--resume',
                     default='Data/checkpoint/ExResNet34/soft/aug/checkpoint_36.pth',
                     type=str, metavar='PATH',
