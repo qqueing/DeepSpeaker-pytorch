@@ -75,14 +75,16 @@ parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxcele
 
 parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
+parser.add_argument('--save-init', action='store_true', default=True,
+                    help='using Cosine similarity')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ExResNet34/soft/kaldi/checkpoint_30.pth',
+                    default='Data/checkpoint/ExResNet34/soft/kaldi/checkpoint_36.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=34, metavar='E',
+parser.add_argument('--epochs', type=int, default=10, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -107,7 +109,7 @@ parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -220,10 +222,14 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[18, 24, 30], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[7], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
+    if args.save_init:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
+        torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                    'scheduler': scheduler.state_dict()}, check_path)
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -233,8 +239,8 @@ def main():
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -244,19 +250,15 @@ def main():
     end = start + args.epochs
 
     # pdb.set_trace()
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
-                                               shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size,
-                                               shuffle=False, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     criterion = nn.CrossEntropyLoss().cuda()
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
-    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict()},
-               # 'criterion': criterion.state_dict()
-               check_path)
-
+    # if start==1:
+    #     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
+    #     torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+    #                 'scheduler': scheduler.state_dict()}, check_path)
     for epoch in range(start, end):
         # pdb.set_trace()
         for param_group in optimizer.param_groups:
