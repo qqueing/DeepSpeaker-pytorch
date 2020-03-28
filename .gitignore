@@ -3,9 +3,12 @@ __pycache__
 misc
 TrainAndTest/data
 __init__.py
+Log/
+Data/
 *.npy
 *.ark
 *.pth
 *.bundle
 *.json
 *.wav
+
