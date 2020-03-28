@@ -7,4 +7,5 @@ __init__.py
 *.ark
 *.pth
 *.bundle
-
+*.json
+*.wav
