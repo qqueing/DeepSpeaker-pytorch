@@ -22,13 +22,12 @@ def GetArgs():
         "E.g., sid/compute_min_dcf.py --p-target 0.01 --c-miss 1 --c-fa 1 "
         "exp/scores/trials data/test/trials",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--p-target', type=float, dest = "p_target",
-        default = 0.01,
-        help='The prior probability of the target speaker in a trial.')
-    parser.add_argument('--c-miss', type=float, dest = "c_miss", default = 1,
-        help='Cost of a missed detection.  This is usually not changed.')
-    parser.add_argument('--c-fa', type=float, dest = "c_fa", default = 1,
-        help='Cost of a spurious detection.  This is usually not changed.')
+    parser.add_argument('--p-target', type=float, dest="p_target", default=0.01,
+                        help='The prior probability of the target speaker in a trial.')
+    parser.add_argument('--c-miss', type=float, dest="c_miss", default=1,
+                        help='Cost of a missed detection.  This is usually not changed.')
+    parser.add_argument('--c-fa', type=float, dest="c_fa", default=1,
+                        help='Cost of a spurious detection.  This is usually not changed.')
     parser.add_argument("scores_filename",
         help="Input scores file, with columns of the form "
         "<utt1> <utt2> <score>")
@@ -151,11 +150,11 @@ def main():
                 + " " + args.scores_filename)
 
     fnrs, fprs, thresholds = ComputeErrorRates(scores, labels)
-    mindcf, threshold = ComputeMinDcf(fnrs, fprs, thresholds, p_target,
-         c_miss, c_fa)
+    mindcf, threshold = ComputeMinDcf(fnrs, fprs, thresholds, p_target, c_miss, c_fa)  # p_target
+
     sys.stdout.write("{0:.4f}\n".format(mindcf))
     sys.stderr.write("minDCF is {0:.4f} at threshold {1:.4f} (p-target={2}, c-miss={3},"
-        "c-fa={4})\n".format(mindcf, threshold, p_target,c_miss, c_fa))
+                     "c-fa={4})\n".format(mindcf, threshold, p_target, c_miss, c_fa))
 
 if __name__ == "__main__":
   main()
