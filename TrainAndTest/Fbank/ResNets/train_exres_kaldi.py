@@ -144,6 +144,7 @@ random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 if args.cuda:
+    torch.cuda.manual_seed_all(args.seed)
     cudnn.benchmark = True
 
 # create logger
@@ -192,7 +193,8 @@ indices = indices[:25600]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
-                               valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
+                               valid_uid2feat=train_dir.valid_uid2feat,
+                               valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform, loader=file_loader)
 
 def main():
@@ -321,6 +323,9 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
+    del data, label
+    torch.cuda.empty_cache()
+
 
 def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
@@ -362,6 +367,9 @@ def test(test_loader, valid_loader, model, epoch):
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
 
+    del data, label
+    torch.cuda.empty_cache()
+
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
@@ -399,6 +407,9 @@ def test(test_loader, valid_loader, model, epoch):
 
     print('\n\33[91mFor %s_distance, Test ERR is %.4f %%. Threshold is %.4f . Valid Accuracy is %.4f %%.\33[0m' % ( \
         'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+
+    del data_a, data_p, label
+    torch.cuda.empty_cache()
 
 
 if __name__ == '__main__':
