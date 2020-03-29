@@ -901,7 +901,7 @@ class SitwTestDataset(data.Dataset):
 
         test_feat_scp = sitw_dir + '/sitw_%s_test_%s/feats.scp' % (sitw_set, set_suffix)
         test_utt2spk = sitw_dir + '/sitw_%s_test_%s/utt2spk' % (sitw_set, set_suffix)
-        trials = sitw_dir + '/sitw_%s_test/trials/core-core.lst' % (sitw_set, set_suffix)
+        trials = sitw_dir + '/sitw_%s_test/trials/core-core.lst' % sitw_set
 
         # else:
         #     enroll_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
