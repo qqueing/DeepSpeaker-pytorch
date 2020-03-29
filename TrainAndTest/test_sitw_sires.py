@@ -148,7 +148,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     cudnn.benchmark = True
 
-writer = SummaryWriter(logdir=args.check_path, filename_suffix='sires_sitw')
+writer = SummaryWriter(logdir=args.check_path, filename_suffix='_sitw')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 assert os.path.exists(args.check_path)
@@ -180,14 +180,14 @@ sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transfo
                                 return_uid=False)
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
-indices = indices[:12800]
+indices = indices[:64000]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T, loader=read_mat,
                                return_uid=False)
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
-indices = indices[:12800]
+indices = indices[:64000]
 sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 
