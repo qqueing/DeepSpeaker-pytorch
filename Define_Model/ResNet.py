@@ -226,23 +226,24 @@ class ExporingResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
         # [64, 128, 8, 37]
-        self.avgpool = nn.AdaptiveAvgPool2d((1, None))
+        time_dim = int(np.ceil(input_frames / 8))
+        self.avgpool = nn.AdaptiveAvgPool2d((1, time_dim))
         # 300 is the length of features
-        self.fc1 = nn.Linear(128 * int(np.ceil(input_frames / 8)), embedding_size)
+        self.fc1 = nn.Linear(128 * time_dim, embedding_size)
         # self.norm = self.l2_norm(num_filter[3])
         self.alpha = 12
         self.fc2 = nn.Linear(embedding_size, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                nn.init.normal(m.weight, mean=0., std=1.)
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                # \nn.init.normal(m.weight, mean=0., std=1.)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant(m.weight, 1)
                 nn.init.constant(m.bias, 0)
 
-        # Zero-initialize the last BN in each residual branch,
-        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        # Zero-initialize the last BN in each residual branch, so that the residual branch
+        # starts with zeros, and each residual block behaves like an identity.
         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
@@ -286,12 +287,10 @@ class ExporingResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
         # print(x.shape)
-
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-
         # print(x.shape)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
