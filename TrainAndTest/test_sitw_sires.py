@@ -301,7 +301,7 @@ def main():
                                                    **kwargs)
     sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
                                                   **kwargs)
-    epochs = np.arange(0, 31)
+    epochs = np.arange(0, args.epochs + 1)
     resume_path = args.check_path + '/checkpoint_{}.pth'
     for epoch in epochs:
         # Load model from Checkpoint file
@@ -309,13 +309,12 @@ def main():
             print('=> loading checkpoint {}'.format(resume_path.format(epoch)))
 
             checkpoint = torch.load(resume_path.format(epoch))
-            start_epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
         else:
             print('=> no checkpoint found at %s' % resume_path.format(epoch))
             continue
-        # train_test(train_loader, model, epoch)
+
         sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch)
 
     writer.close()
