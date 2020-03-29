@@ -87,9 +87,9 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
 parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
-parser.add_argument('--test-input-per-file', type=int, default=6, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=8, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=16, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
