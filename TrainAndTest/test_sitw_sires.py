@@ -67,20 +67,22 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_fb64',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
+# parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
+#                     help='folder to output model checkpoints')
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=25, metavar='E',
+parser.add_argument('--epochs', type=int, default=40, metavar='E',
                     help='number of epochs to train (default: 10)')
 
 # Training options
-parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
+parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
@@ -148,7 +150,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     cudnn.benchmark = True
 
-writer = SummaryWriter(logdir=args.check_path, filename_suffix='_sitw')
+writer = SummaryWriter(logdir=args.check_path, filename_suffix='_exres_sitw')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 assert os.path.exists(args.check_path)
@@ -179,14 +181,14 @@ else:
 # There are 338226 pairs in sitw dev Dataset.
 
 sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, loader=read_mat,
-                                return_uid=False)
+                                return_uid=False, set_suffix='no_cmvn')
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
 indices = indices[:51200]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T, loader=read_mat,
-                               return_uid=False)
+                               return_uid=False, set_suffix='no_cmvn')
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
 indices = indices[:51200]
@@ -288,8 +290,8 @@ def main():
     # instantiate model and initialize weights
     # model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size,
     #                           n_classes=num_spks, m=args.margin)
-    model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=1211)
-    # model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=1211)
+    # model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=1211)
+    model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=1211)
 
     if args.cuda:
         model.cuda()
