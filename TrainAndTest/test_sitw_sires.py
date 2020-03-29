@@ -28,7 +28,7 @@ import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
-from Define_Model.ResNet import SimpleResNet
+from Define_Model.ResNet import SimpleResNet, ExporingResNet
 from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
@@ -175,19 +175,21 @@ else:
     ])
     file_loader = read_audio
 # pdb.set_trace()
+# There are 721788 pairs in sitw eval Dataset.
+# There are 338226 pairs in sitw dev Dataset.
 
 sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, loader=read_mat,
                                 return_uid=False)
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
-indices = indices[:64000]
+indices = indices[:51200]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T, loader=read_mat,
                                return_uid=False)
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
-indices = indices[:64000]
+indices = indices[:51200]
 sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 
@@ -287,6 +289,8 @@ def main():
     # model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size,
     #                           n_classes=num_spks, m=args.margin)
     model = SimpleResNet(layers=[3, 4, 6, 3], num_classes=1211)
+    # model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=1211)
+
     if args.cuda:
         model.cuda()
 
