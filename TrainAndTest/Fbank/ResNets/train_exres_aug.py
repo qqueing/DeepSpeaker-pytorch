@@ -148,7 +148,7 @@ if args.cuda:
 
 # create logger
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(args.check_path, filename_suffix='aug')
+writer = SummaryWriter(args.check_path, filename_suffix='_aug_cmvn')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -330,6 +330,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
+    torch.cuda.empty_cache()
 
 def test(test_loader, valid_loader, model, epoch):
     # switch to evaluate mode
@@ -371,6 +372,8 @@ def test(test_loader, valid_loader, model, epoch):
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
 
+    torch.cuda.empty_cache()
+
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
@@ -409,6 +412,7 @@ def test(test_loader, valid_loader, model, epoch):
     print('\n\33[91mFor %s_distance, Test ERR is %.4f %%. Threshold is %.4f . Valid Accuracy is %.4f %%.\33[0m' % ( \
         'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
 
+    torch.cuda.empty_cache()
 
 if __name__ == '__main__':
     main()
