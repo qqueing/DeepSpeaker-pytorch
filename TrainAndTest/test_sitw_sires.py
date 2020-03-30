@@ -69,7 +69,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 # parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
 #                     help='folder to output model checkpoints')
-parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80',
                     help='folder to output model checkpoints')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -89,22 +89,23 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
 parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
+parser.add_argument('--test-pairs', type=int, default=38400, metavar='IPFT',
+                    help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-batch-size', type=int, default=12, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
-                    help='the margin value for the angualr softmax loss function (default: 3.0')
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
-                    help='the ratio softmax loss - triplet loss (default: 2.0')
-
+# parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
+#                     help='the margin value for the angualr softmax loss function (default: 3.0')
+# parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
+#                     help='the ratio softmax loss - triplet loss (default: 2.0')
 # args for a-softmax
-parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
-                    help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
-                    help='random seed (default: 0)')
+# parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
+#                     help='random seed (default: 0)')
+# parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
+#                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
@@ -150,7 +151,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     cudnn.benchmark = True
 
-writer = SummaryWriter(logdir=args.check_path, filename_suffix='_exres_sitw')
+writer = SummaryWriter(logdir=args.check_path, filename_suffix='_cmvn_sitw')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 assert os.path.exists(args.check_path)
@@ -181,17 +182,17 @@ else:
 # There are 338226 pairs in sitw dev Dataset.
 
 sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, loader=read_mat,
-                                return_uid=False, set_suffix='no_cmvn')
+                                return_uid=False, set_suffix='cmvn')
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
-indices = indices[:25600]
+indices = indices[:args.test_pairs]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T, loader=read_mat,
-                               return_uid=False, set_suffix='no_cmvn')
+                               return_uid=False, set_suffix='cmvn')
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
-indices = indices[:25600]
+indices = indices[:args.test_pairs]
 sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 
@@ -232,6 +233,7 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
     distances = np.nan_to_num(distances)
 
     eer_d, eer_threshold_d, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
+    torch.cuda.empty_cache()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(sitw_test_loader))
@@ -280,9 +282,6 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
 
 
 def main():
-    # Views the training images and displays the distance on anchor-negative and anchor-positive
-    test_display_triplet_distance = False
-
     # print the experiment configuration
     num_spks = 1211
     print('\nCurrent time is \33[91m{}\33[0m.'.format(str(time.asctime())))
@@ -309,7 +308,6 @@ def main():
         # Load model from Checkpoint file
         if os.path.isfile(resume_path.format(epoch)):
             print('=> loading checkpoint {}'.format(resume_path.format(epoch)))
-
             checkpoint = torch.load(resume_path.format(epoch))
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)

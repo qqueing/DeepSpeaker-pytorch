@@ -72,7 +72,7 @@ parser.add_argument('--libri-test-dir', type=str,
 
 # parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
 #                     help='folder to output model checkpoints')
-parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80',
                     help='folder to output model checkpoints')
 parser.add_argument('--epochs', type=int, default=40, metavar='E',
                     help='number of epochs to train (default: 10)')
@@ -148,7 +148,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     cudnn.benchmark = True
 
-writer = SummaryWriter(logdir=args.check_path, filename_suffix='_exres_librispeech')
+writer = SummaryWriter(logdir=args.check_path, filename_suffix='_librispeech')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 assert os.path.exists(args.check_path)
@@ -218,6 +218,7 @@ def dev_test(sitw_dev_loader, sitw_test_loader, model, epoch):
     distances = np.nan_to_num(distances)
 
     eer_d, eer_threshold_d, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
+    torch.cuda.empty_cache()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(sitw_test_loader))
