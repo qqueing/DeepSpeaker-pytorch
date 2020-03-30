@@ -261,10 +261,10 @@ def dev_test(sitw_dev_loader, sitw_test_loader, model, epoch):
                        {'libirispeech_dev': eer_threshold_d, 'libirispeech_test': eer_threshold_t},
                        epoch)
 
-    print('\33[91mFor libirispeech Dev ERR is {:.4f}%, Threshold is {},' \
+    print('\n\33[91mFor libirispeech Dev ERR is {:.4f}%, Threshold is {},' \
           'Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer_d, eer_threshold_d, 100. * eer_t,
                                                                  eer_threshold_t))
-
+    torch.cuda.empty_cache()
 
 def main():
     # print the experiment configuration
@@ -306,7 +306,6 @@ def main():
         # Load model from Checkpoint file
         if os.path.isfile(resume_path.format(epoch)):
             print('=> loading checkpoint {}'.format(resume_path.format(epoch)))
-
             checkpoint = torch.load(resume_path.format(epoch))
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)

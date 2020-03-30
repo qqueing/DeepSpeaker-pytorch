@@ -276,10 +276,10 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
                        {'sitw_dev': eer_threshold_d, 'sitw_test': eer_threshold_t},
                        epoch)
 
-    print('\33[91mFor Sitw Dev ERR is {:.4f}%, Threshold is {},' \
+    print('\n\33[91mFor Sitw Dev ERR is {:.4f}%, Threshold is {},' \
           'Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer_d, eer_threshold_d, 100. * eer_t,
                                                                  eer_threshold_t))
-
+    torch.cuda.empty_cache()
 
 def main():
     # print the experiment configuration
