@@ -15,7 +15,6 @@ import pathlib
 import pdb
 import random
 import time
-from Process_Data import constants as c
 from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
 import torch
@@ -68,12 +67,12 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn/checkpoint_36.pth',
+                    default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80/checkpoint_36.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -89,13 +88,13 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=80, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=8, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=240, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -270,7 +269,6 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     output_softmax = nn.Softmax(dim=1)
 
     pbar = tqdm(enumerate(train_loader))
-
     for batch_idx, (data, label) in pbar:
 
         if args.cuda:
