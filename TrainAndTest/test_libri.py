@@ -173,7 +173,8 @@ else:
         totensor(),
         # tonormal()
     ])
-    file_loader = read_audio
+
+file_loader = read_mat
 
 
 # pdb.set_trace()
