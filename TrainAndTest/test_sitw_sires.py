@@ -184,14 +184,14 @@ sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transfo
                                 return_uid=False, set_suffix='no_cmvn')
 indices = list(range(len(sitw_test_dir)))
 random.shuffle(indices)
-indices = indices[:51200]
+indices = indices[:25600]
 sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 
 sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T, loader=read_mat,
                                return_uid=False, set_suffix='no_cmvn')
 indices = list(range(len(sitw_dev_dir)))
 random.shuffle(indices)
-indices = indices[:51200]
+indices = indices[:25600]
 sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 
@@ -229,6 +229,7 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
+    distances = np.nan_to_num(distances)
 
     eer_d, eer_threshold_d, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
 
@@ -263,6 +264,7 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
+    distances = np.nan_to_num(distances)
 
     eer_t, eer_threshold_t, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
     writer.add_scalars('Test/EER',
