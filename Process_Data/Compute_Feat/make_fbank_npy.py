@@ -57,7 +57,8 @@ def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
         pair = comm.split()
         key = pair[0]
         try:
-            feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+            # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+            feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
             # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
             save_path = os.path.join(feat_path, key + '.npy')
