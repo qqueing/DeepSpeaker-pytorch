@@ -2,7 +2,7 @@
 # encoding: utf-8
 import numpy as np
 from python_speech_features import fbank, delta
-from speechpy.processing import cmvn,cmvnw
+from speechpy.processing import cmvn, cmvnw
 from Process_Data import constants as c
 import torch
 import librosa
@@ -19,6 +19,7 @@ import pdb
 import torch.nn.utils.rnn as rnn_utils
 
 from Process_Data.Compute_Feat.compute_vad import ComputeVadEnergy
+from Process_Data.xfcc.common import local_fbank
 
 
 def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE, use_logscale=c.USE_LOGSCALE):
@@ -230,26 +231,29 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, duration=False):
 
 def Make_Fbank(filename,
                # sample_rate=c.SAMPLE_RATE,
+               filtertype='dnn',
                use_delta=c.USE_DELTA,
                use_scale=c.USE_SCALE,
                nfilt=c.FILTER_BANK,
                use_logscale=c.USE_LOGSCALE,
                use_energy=c.USE_ENERGY,
-               normalize=c.NORMALIZE):
+               normalize=c.NORMALIZE,
+               duration=False):
 
     if not os.path.exists(filename):
         raise ValueError('wav file does not exist.')
 
-    # sample_rate, audio = wavfile.read(filename)
+    sample_rate, audio = wavfile.read(filename)
     # audio, sample_rate = sf.read(filename)
-    audio, sample_rate = librosa.load(filename, sr=None)
+    # audio, sample_rate = librosa.load(filename, sr=None)
     #audio = audio.flatten()
 
-    filter_banks, energies = fbank(audio,
-                                   samplerate=sample_rate,
-                                   nfilt=nfilt,
-                                   winlen=0.025,
-                                   winfunc=np.hamming)
+    filter_banks, energies = local_fbank(audio,
+                                         samplerate=sample_rate,
+                                         nfilt=nfilt,
+                                         winlen=0.025,
+                                         filtertype=filtertype,
+                                         winfunc=np.hamming)
 
     if use_energy:
         energies = energies.reshape(energies.shape[0], 1)
@@ -274,6 +278,9 @@ def Make_Fbank(filename,
         filter_banks = normalize_frames(filter_banks, Scale=use_scale)
 
     frames_features = filter_banks
+
+    if duration:
+        return frames_features, len(audio) / sample_rate
 
     # np.save(filename.replace('.wav', '.npy'), frames_features)
     return frames_features
