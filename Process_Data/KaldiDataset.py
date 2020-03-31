@@ -850,18 +850,20 @@ class ScriptTestDataset(data.Dataset):
         print('    There are {} utterances in Test Dataset.'.format(len(uid2feat)))
 
         trials_pair = []
+        positive_pairs = 0
         with open(trials, 'r') as t:
             all_pairs = t.readlines()
             for line in all_pairs:
-                pair = line.split(' ')
-                if pair[2] == 'nontarget\n':
+                pair = line.split()
+                if pair[2] == 'nontarget':
                     pair_true = False
                 else:
                     pair_true = True
+                    positive_pairs += 1
 
                 trials_pair.append((pair[0], pair[1], pair_true))
 
-        print('==>There are {} pairs in test Dataset.'.format(len(trials_pair)))
+        print('==>There are {} pairs in test Dataset with {} positive pairs'.format(len(trials_pair), positive_pairs))
 
         self.feat_dim = loader(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.speakers = speakers
