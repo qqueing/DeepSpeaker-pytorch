@@ -208,8 +208,7 @@ def main():
     # model and initialize weights
     model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=1211)
 
-    if args.cuda:
-        model.cuda()
+
 
     assert os.path.isfile(args.resume)
     print('=> loading checkpoint {}'.format(args.resume))
@@ -220,6 +219,8 @@ def main():
     model.fc2 = nn.Linear(args.embedding_size, len(train_dir.speakers))
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
+    if args.cuda:
+        model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     # optimizer2 = create_optimizer(model.fc2.parameters(), args.optimizer, **opt_kwargs)
