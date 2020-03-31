@@ -72,7 +72,7 @@ parser.add_argument('--libri-test-dir', type=str,
 
 # parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
 #                     help='folder to output model checkpoints')
-parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/aug_cmvn',
                     help='folder to output model checkpoints')
 parser.add_argument('--epochs', type=int, default=40, metavar='E',
                     help='number of epochs to train (default: 10)')
