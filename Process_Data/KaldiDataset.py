@@ -855,7 +855,7 @@ class ScriptTestDataset(data.Dataset):
             all_pairs = t.readlines()
             for line in all_pairs:
                 pair = line.split()
-                if pair[2] == 'nontarget':
+                if pair[2] == 'nontarget' or pair[2] == '0':
                     pair_true = False
                 else:
                     pair_true = True
