@@ -222,7 +222,12 @@ def main():
     if args.cuda:
         model.cuda()
 
-    optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
+    fc2_params = list(map(id, model.fc2.parameters()))
+    base_params = filter(lambda p: id(p) not in fc2_params, model.parameters())
+
+    optimizer = create_optimizer([{'params': base_params}, {'params': model.fc2.parameters(), 'lr': args.lr * 10}],
+                                 args.optimizer, **opt_kwargs)
+
     # optimizer2 = create_optimizer(model.fc2.parameters(), args.optimizer, **opt_kwargs)
     scheduler = MultiStepLR(optimizer, milestones=[8], gamma=0.1)
 
