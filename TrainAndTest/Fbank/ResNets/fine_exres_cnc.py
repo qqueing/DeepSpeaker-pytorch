@@ -225,8 +225,10 @@ def main():
     fc2_params = list(map(id, model.fc2.parameters()))
     base_params = filter(lambda p: id(p) not in fc2_params, model.parameters())
 
-    optimizer = create_optimizer([{'params': base_params}, {'params': model.fc2.parameters(), 'lr': args.lr * 10}],
-                                 args.optimizer, **opt_kwargs)
+    optimizer = torch.optim.SGD([{'params': base_params}, {'params': model.fc2.parameters(), 'lr': args.lr * 10}],
+                                lr=args.lr,
+                                momentum=args.momentum,
+                                )
 
     # optimizer2 = create_optimizer(model.fc2.parameters(), args.optimizer, **opt_kwargs)
     scheduler = MultiStepLR(optimizer, milestones=[8], gamma=0.1)
