@@ -67,10 +67,10 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug_160',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/aug/checkpoint_20.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/aug_160/checkpoint_20.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -88,13 +88,13 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=160, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=240, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-input-per-file', type=int, default=6, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=8, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -154,7 +154,7 @@ if args.cuda:
 
 # create logger
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(logdir=args.check_path, filename_suffix='aug_sitw')
+writer = SummaryWriter(logdir=args.check_path, filename_suffix='_aug_160')
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -196,20 +196,20 @@ test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:6400]
+indices = indices[:9600]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
-sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
-indices = list(range(len(sitw_test_dir)))
-random.shuffle(indices)
-indices = indices[:12800]
-sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
-
-sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
-indices = list(range(len(sitw_dev_dir)))
-random.shuffle(indices)
-indices = indices[:12800]
-sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
+# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
+# indices = list(range(len(sitw_test_dir)))
+# random.shuffle(indices)
+# indices = indices[:12800]
+# sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
+#
+# sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
+# indices = list(range(len(sitw_dev_dir)))
+# random.shuffle(indices)
+# indices = indices[:12800]
+# sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -255,17 +255,15 @@ def main():
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True,
-                                               # collate_fn=PadCollate(dim=2),
                                                **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False,
-                                               # collate_fn=PadCollate(dim=2),
                                                **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False,
                                               **kwargs)
-    sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
-                                                   **kwargs)
-    sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
-                                                  **kwargs)
+    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
+    #                                                **kwargs)
+    # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
+    #                                               **kwargs)
 
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
     # ce = nn.CrossEntropyLoss().cuda()
@@ -283,7 +281,7 @@ def main():
         # pdb.set_trace()
         train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-        sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch)
+        # sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch)
 
         scheduler.step()
         # exit(1)
@@ -351,6 +349,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         correct) / total_datasize, total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
+    torch.cuda.empty_cache()
 
 
 def test(test_loader, valid_loader, model, epoch):
@@ -392,6 +391,7 @@ def test(test_loader, valid_loader, model, epoch):
 
     valid_accuracy = 100. * correct / total_datasize
     writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
+    torch.cuda.empty_cache()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
@@ -433,6 +433,7 @@ def test(test_loader, valid_loader, model, epoch):
     print('\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
           'Accuracy is {:.2f}%.\n\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
                                                 eer_threshold, valid_accuracy))
+    torch.cuda.empty_cache()
 
 
 def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
