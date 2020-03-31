@@ -72,7 +72,7 @@ parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/cnceleb/
 parser.add_argument('--save-init', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ExResNet34/cnceleb/kaldi_cmvn_80/checkpoint_36.pth',
+                    default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80/checkpoint_40.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
