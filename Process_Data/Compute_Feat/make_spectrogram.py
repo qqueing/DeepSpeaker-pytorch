@@ -63,8 +63,20 @@ class MakeFeatsProcess(Process):
 
             pair = wav.split()
             try:
-                compute_wav_path(pair, self.feat_scp, self.feat_ark, self.utt2dur, self.utt2num_frames)
+                feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+                # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
+
+                len_vec = len(feat.tobytes())
+                key = pair[0]
+                kaldi_io.write_mat(self.feat_ark, feat, key=key)
+
+                self.feat_scp.write(
+                    str(key) + ' ' + str(self.feat_ark.name) + ':' + str(self.feat_ark.tell() - len_vec - 10) + '\n')
+                self.utt2dur.write('%s %.6f' % (str(key), duration))
+                self.utt2num_frames.write('%s %d' % (str(key), len(feat)))
+
             except:
+                print("Error: %s" % pair[0])
                 self.e_queue.put(pair[0])
 
             if self.queue.qsize() % 1000 == 0:
