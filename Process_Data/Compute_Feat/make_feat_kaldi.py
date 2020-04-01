@@ -27,7 +27,7 @@ from Process_Data.audio_processing import Make_Fbank
 import scipy.io as sio
 
 
-def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
+def MakeFeatsProcess(lock, out_dir, ark_dir, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
     feat_ark = os.path.join(ark_dir, 'feat.%d.ark' % proid)
@@ -39,30 +39,34 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
     feat_ark_f = open(feat_ark, 'wb')
     utt2num_frames_f = open(utt2num_frames, 'w')
 
-    while not t_queue.empty():
-        comm = task_queue.get()
-        pair = comm.split()
-        key = pair[0]
+    while True:
+        lock.acquire()  # 加上锁
+        if not t_queue.empty():
+            comm = task_queue.get()
+            lock.release()  # 释放锁
+            pair = comm.split()
+            key = pair[0]
+            try:
+                # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
+                # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+                feat = np.load(pair[1]).astype(np.float32)
+                kaldi_io.write_mat(feat_ark_f, feat, key='')
+                offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
 
-        try:
-            # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
-            # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
-            feat = np.load(pair[1]).astype(np.float32)
+                feat_scp_f.write(key + ' ' + offsets + '\n')
+                utt2dur_f.write('%s %.6f' % (key, len(feat) * 0.01))
+                utt2num_frames_f.write('%s %d' % (key, len(feat)))
+            except:
+                e_queue.put(key)
 
-            kaldi_io.write_mat(feat_ark_f, feat, key='')
-            offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
-
-            feat_scp_f.write(key + ' ' + offsets + '\n')
-            utt2dur_f.write('%s %.6f' % (key, len(feat) * 0.01))
-            utt2num_frames_f.write('%s %d' % (key, len(feat)))
-
-        except:
-            e_queue.put(key)
-
-        if t_queue.qsize() % 100 == 0:
-            print('\rProcess [%3s] There are [%6s] utterances' \
-                  ' left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
-                  end='')
+            if t_queue.qsize() % 100 == 0:
+                print('\rProcess [%3s] There are [%6s] utterances' \
+                      ' left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
+                      end='')
+        else:
+            lock.release()  # 释放锁
+            print('\n>> Process {}:  queue empty!'.format(proid))
+            break
 
     feat_scp_f.close()
     utt2dur_f.close()
@@ -115,6 +119,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     manager = Manager()
+    lock = manager.Lock()
     task_queue = manager.Queue()
     error_queue = manager.Queue()
 
@@ -132,7 +137,7 @@ if __name__ == "__main__":
         if not os.path.exists(ark_dir):
             os.makedirs(ark_dir)
 
-        pool.apply_async(MakeFeatsProcess, args=(write_dir, ark_dir, i, task_queue, error_queue))
+        pool.apply_async(MakeFeatsProcess, args=(lock, write_dir, ark_dir, i, task_queue, error_queue))
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
     pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
