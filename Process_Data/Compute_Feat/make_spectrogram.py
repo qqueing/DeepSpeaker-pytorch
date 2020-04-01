@@ -82,7 +82,7 @@ def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
             key = pair[0]
             kaldi_io.write_mat(feat_ark, feat, key=key)
 
-            feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
+            feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 15) + '\n')
             utt2dur.write('%s %.6f' % (str(key), duration))
             utt2num_frames.write('%s %d' % (str(key), len(feat)))
 
