@@ -79,8 +79,8 @@ class MakeFeatsProcess(Process):
                 print("Error: %s" % pair[0])
                 self.e_queue.put(pair[0])
 
-            if self.queue.qsize() % 1000 == 0:
-                print('== Process %s:' % str(self.proid) + str(self.queue.qsize()))
+            # if self.queue.qsize() % 1000 == 0:
+            print('==> Process %s: %s left' % (str(self.proid), str(self.t_queue.qsize())))
 
         self.feat_scp.close()
         self.feat_ark.close()
