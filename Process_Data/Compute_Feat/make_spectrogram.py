@@ -39,11 +39,12 @@ def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
 
 class MakeFeatsProcess(Process):
 
-    def __init__(self, out_dir, item, proid, queue):
+    def __init__(self, out_dir, proid, task_queue, error_queue):
         super(MakeFeatsProcess, self).__init__()  # 重构run函数必须要写
         self.item = item
         self.proid = proid
-        self.queue = queue
+        self.t_queue = task_queue
+        self.e_queue = error_queue
 
         #  wav_scp = os.path.join(data_path, 'wav.scp')
         feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
@@ -57,12 +58,22 @@ class MakeFeatsProcess(Process):
         self.utt2num_frames = open(utt2num_frames, 'w')
 
     def run(self):
-        for wav in self.item:
+        while not self.t_queue.empty():
+            wav = self.t_queue.get()
+
             pair = wav.split()
-            compute_wav_path(pair, self.feat_scp, self.feat_ark, self.utt2dur, self.utt2num_frames)
-            self.queue.put(pair[0])
+            try:
+                compute_wav_path(pair, self.feat_scp, self.feat_ark, self.utt2dur, self.utt2num_frames)
+            except:
+                self.e_queue.put(pair[0])
+
             if self.queue.qsize() % 1000 == 0:
                 print('== Process %s:' % str(self.proid) + str(self.queue.qsize()))
+
+        self.feat_scp.close()
+        self.feat_ark.close()
+        self.utt2dur.close()
+        self.utt2num_frames.close()
 
         print('>> Process {} finished!'.format(self.proid))
 
