@@ -57,22 +57,22 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # options for vox1
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_kaldi',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/test_kaldi',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ExResNet34/soft/kaldi_cmvn_80/checkpoint_36.pth',
+                    default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80/checkpoint_36.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -150,7 +150,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='exploring')
 
-kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 12, 'pin_memory': False} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 opt_kwargs = {'lr': args.lr,
