@@ -251,7 +251,7 @@ def main():
         for param_group in optimizer.param_groups:
             print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
-        # train(train_loader, model, optimizer, criterion, scheduler, epoch)
+        train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
