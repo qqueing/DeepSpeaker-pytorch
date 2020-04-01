@@ -85,13 +85,13 @@ def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=6, metavar='E',
+    parser.add_argument('--nj', type=int, default=1, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/temp',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/test',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/temp',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -102,13 +102,14 @@ if __name__ == "__main__":
                         help='number of epochs to train (default: 10)')
     args = parser.parse_args()
 
-    nj = args.nj
     data_dir = args.data_dir
     out_dir = args.out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
     wav_scp_f = os.path.join(data_dir, 'wav.scp')
+    assert os.path.exists(data_dir)
+    assert os.path.exists(wav_scp_f)
 
     print('Copy wav.scp, spk2utt, utt2spk to %s' % out_dir)
     for f in ['wav.scp', 'spk2utt', 'utt2spk']:
@@ -120,9 +121,7 @@ if __name__ == "__main__":
         wav_scp = f.readlines()
         assert len(wav_scp) > 0
 
-    assert os.path.exists(data_dir)
-    assert os.path.exists(wav_scp_f)
-
+    nj = args.nj if len(wav_scp) > args.nj else 1
     num_utt = len(wav_scp)
     start_time = time.time()
 
@@ -133,7 +132,7 @@ if __name__ == "__main__":
 
     for u in wav_scp:
         task_queue.put(u)
-    # processpool = []
+
     print('Plan to make feats for %d utterances in %s.' % (task_queue.qsize(), str(time.asctime())))
     # MakeFeatsProcess(out_dir, wav_scp, 0, completed_queue)
 
