@@ -72,7 +72,7 @@ parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/dnn
 parser.add_argument('--save-init', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80/checkpoint_36.pth',
+                    default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -251,7 +251,7 @@ def main():
         for param_group in optimizer.param_groups:
             print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
-        train(train_loader, model, optimizer, criterion, scheduler, epoch)
+        # train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
