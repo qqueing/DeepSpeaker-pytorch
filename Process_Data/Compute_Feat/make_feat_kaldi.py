@@ -54,8 +54,8 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, proid, t_queue, e_queue):
                 offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
 
                 feat_scp_f.write(key + ' ' + offsets + '\n')
-                utt2dur_f.write('%s %.6f' % (key, len(feat) * 0.01))
-                utt2num_frames_f.write('%s %d' % (key, len(feat)))
+                utt2dur_f.write('%s %.6f\n' % (key, len(feat) * 0.01))
+                utt2num_frames_f.write('%s %d\n' % (key, len(feat)))
             except:
                 e_queue.put(key)
 
@@ -81,10 +81,10 @@ if __name__ == "__main__":
     parser.add_argument('--nj', type=int, default=16, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_kaldi',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev_kaldi',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     for u in wav_scp:
         task_queue.put(u)
-    print('Plan to make feats for %d utterances in %s with %d jobs.' % (task_queue.qsize(), str(time.asctime()), nj))
+    print('Plan to make feats for %d utterances in %s with %d jobs.\n' % (task_queue.qsize(), str(time.asctime()), nj))
 
     pool = Pool(processes=nj)  # 创建nj个进程
     for i in range(0, nj):
@@ -184,11 +184,12 @@ if __name__ == "__main__":
                 utt2num_frames_f.write(txt)
                 numofutt += 1
     if numofutt != num_utt:
-        print('Errors in %s ?' % utt2dur)
+        print('Errors in %s ?' % utt2num_frames)
 
     print('Delete tmp files in: %s' % Split_dir)
     shutil.rmtree(Split_dir)
-    print('For multi process Completed, write all files in: %s' % out_dir)
+    end_time = time.time()
+    print('For multi process Completed, write all files in: %s. And %.2fs collapse.' % (out_dir, end_time - start_time))
     sys.exit()
 
 """
