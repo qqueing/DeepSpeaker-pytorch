@@ -10,6 +10,7 @@
 @Overview:
 """
 import numpy as np
+import Process_Data.constants as c
 from scipy import interpolate
 # from speechpy.functions import frequency_to_mel, mel_to_frequency, triangle
 # import soundfile as sf
@@ -17,8 +18,7 @@ from scipy import interpolate
 from python_speech_features import sigproc, hz2mel, mel2hz
 
 
-def get_filterbanks(nfilt=20, nfft=512,
-                    samplerate=16000, lowfreq=0,
+def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
                     highfreq=None, filtertype='mel'):
     """Compute a Mel-filterbank. The filters are stored in the rows, the columns correspond
     to fft bins. The filters are returned as an array of size nfilt * (nfft/2 + 1)
@@ -30,30 +30,29 @@ def get_filterbanks(nfilt=20, nfft=512,
     :param highfreq: highest band edge of mel filters, default samplerate/2
     :returns: A numpy array of size nfilt * (nfft/2 + 1) containing filterbank. Each row holds 1 filter.
     """
-    highfreq = highfreq or samplerate / 2
 
+    highfreq = highfreq or samplerate / 2
     assert highfreq <= samplerate / 2, "highfreq is greater than samplerate/2"
+
     if filtertype == 'mel':
         # compute points evenly spaced in mels
         lowmel = hz2mel(lowfreq)
         highmel = hz2mel(highfreq)
         melpoints = np.linspace(lowmel, highmel, nfilt + 2)
-        # our points are in Hz, but we use fft bins, so we have to convert
-        #  from Hz to fft bin number
+        # our points are in Hz, but we use fft bins, so we have to convert from Hz to fft bin number
         bin = np.floor((nfft + 1) * mel2hz(melpoints) / samplerate)
 
     elif filtertype == 'linear':
         linearpoints = np.linspace(lowfreq, highfreq, nfilt + 2)
-        # our points are in Hz, but we use fft bins, so we have to convert
-        #  from Hz to fft bin number
+        # our points are in Hz, but we use fft bins, so we have to convert from Hz to fft bin number
         bin = np.floor((nfft + 1) * linearpoints / samplerate)
 
     elif filtertype == 'dnn':
-        x = np.arange(161) * 8000 / 160
-        y = np.load('Lime/SuResCNN10/filter_weight.npy')
+        x = np.arange(161) * samplerate / 2 / 160
+        y = np.array(c.DNN_FILTER)
         f = interpolate.interp1d(x, y)
 
-        x_new = np.arange(nfft // 2 + 1) * 8000 / (nfft // 2)
+        x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
         ynew = f(x_new)  # 计算插值结果
         weight = ynew / np.sum(ynew)
 
@@ -68,6 +67,7 @@ def get_filterbanks(nfilt=20, nfft=512,
                 else:
                     bin.append(i)
                     break
+
         bin.append(nfft // 2)
     else:
         raise ValueError
