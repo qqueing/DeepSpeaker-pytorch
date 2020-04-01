@@ -43,7 +43,7 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
 
         try:
             # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
-            feat = np.load(pair[1])
+            feat = np.load(pair[1]).astype(np.float32)
             feats[key] = feat
             feat_scp.write(str(key) + ' ' + feat_mat + ':' + key + '\n')
 
