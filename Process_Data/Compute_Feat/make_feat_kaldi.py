@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: make_fbank_kaldi.py
+@File: make_feat_kaldi.py
 @Time: 2020/4/1 11:25 AM
 @Overview:
 """
@@ -21,6 +21,7 @@ import time
 
 import kaldi_io
 import numpy as np
+import shutil
 import Process_Data.constants as c
 from Process_Data.audio_processing import Make_Fbank
 import scipy.io as sio
@@ -45,13 +46,13 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
 
         try:
             # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
+            # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
             feat = np.load(pair[1]).astype(np.float32)
 
             kaldi_io.write_mat(feat_ark_f, feat, key='')
             offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
 
             feat_scp_f.write(key + ' ' + offsets + '\n')
-
             utt2dur_f.write('%s %.6f' % (key, len(feat) * 0.01))
             utt2num_frames_f.write('%s %d' % (key, len(feat)))
 
@@ -73,7 +74,7 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing Filter banks!')
-    parser.add_argument('--nj', type=int, default=14, metavar='E',
+    parser.add_argument('--nj', type=int, default=16, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev',
@@ -135,6 +136,7 @@ if __name__ == "__main__":
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
     pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
+
     if error_queue.qsize() > 0:
         print('\n>> Saving Completed with errors in: ')
         while not error_queue.empty():
@@ -148,25 +150,39 @@ if __name__ == "__main__":
 
     all_scp_path = [os.path.join(Split_dir, '%d/feat.%d.scp' % (i, i)) for i in range(nj)]
     feat_scp = os.path.join(out_dir, 'feats.scp')
+    numofutt = 0
     with open(feat_scp, 'w') as feat_scp_f:
         for item in all_scp_path:
             for txt in open(item, 'r').readlines():
                 feat_scp_f.write(txt)
+                numofutt += 1
+    if numofutt != num_utt:
+        print('Errors in %s ?' % feat_scp)
 
+    numofutt = 0
     all_scp_path = [os.path.join(Split_dir, '%d/utt2dur.%d' % (i, i)) for i in range(nj)]
     utt2dur = os.path.join(out_dir, 'utt2dur')
     with open(utt2dur, 'w') as utt2dur_f:
         for item in all_scp_path:
             for txt in open(str(item), 'r').readlines():
                 utt2dur_f.write(txt)
+                numofutt += 1
+    if numofutt != num_utt:
+        print('Errors in %s ?' % utt2dur)
 
+    numofutt = 0
     all_scp_path = [os.path.join(Split_dir, '%d/utt2num_frames.%d' % (i, i)) for i in range(nj)]
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames')
     with open(utt2num_frames, 'w') as utt2num_frames_f:
         for item in all_scp_path:
             for txt in open(str(item), 'r').readlines():
                 utt2num_frames_f.write(txt)
+                numofutt += 1
+    if numofutt != num_utt:
+        print('Errors in %s ?' % utt2dur)
 
+    print('Delete tmp files in: %s' % Split_dir)
+    shutil.rmtree(Split_dir)
     print('For multi process Completed, write all files in: %s' % out_dir)
     sys.exit()
 
