@@ -20,7 +20,7 @@ from multiprocessing import Pool, Manager
 import time
 import numpy as np
 import Process_Data.constants as c
-from Process_Data.audio_processing import Make_Spect, Make_Fbank
+from Process_Data.audio_processing import Make_Fbank
 import scipy.io as sio
 
 
@@ -42,11 +42,12 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
         key = pair[0]
 
         try:
-            feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
+            # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
+            feat = np.load(pair[1])
             feats[key] = feat
             feat_scp.write(str(key) + ' ' + feat_mat + ':' + key + '\n')
 
-            utt2dur.write('%s %.6f' % (str(key), duration))
+            utt2dur.write('%s %.6f' % (str(key), len(feat) * 0.01))
             utt2num_frames.write('%s %d' % (str(key), len(feat)))
 
         except:
@@ -57,7 +58,7 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
                   ' left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
                   end='')
 
-    sio.savemat(feat_mat, feats)
+    sio.savemat(feat_mat, feats, do_compression=True)
     feat_scp.close()
     utt2dur.close()
     utt2num_frames.close()
@@ -66,11 +67,11 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Computing spectrogram!')
+    parser = argparse.ArgumentParser(description='Computing Filter banks!')
     parser.add_argument('--nj', type=int, default=16, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_mats',
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    wav_scp_f = os.path.join(data_dir, 'wav.scp')
+    wav_scp_f = os.path.join(data_dir, 'feats.scp')
     assert os.path.exists(data_dir)
     assert os.path.exists(wav_scp_f)
 
