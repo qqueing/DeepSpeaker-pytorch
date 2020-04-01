@@ -40,6 +40,7 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
         comm = task_queue.get()
         pair = comm.split()
         key = pair[0]
+
         try:
             feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
             feats[key] = feat
