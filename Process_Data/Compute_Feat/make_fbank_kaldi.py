@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: make_fbank_mat.py
+@File: make_fbank_kaldi.py
 @Time: 2020/4/1 11:25 AM
 @Overview:
 """
@@ -18,6 +18,8 @@ import sys
 import pdb
 from multiprocessing import Pool, Manager
 import time
+
+import kaldi_io
 import numpy as np
 import Process_Data.constants as c
 from Process_Data.audio_processing import Make_Fbank
@@ -27,15 +29,15 @@ import scipy.io as sio
 def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    feat_mat = os.path.join(ark_dir, 'feat.%d.mat' % proid)
+    feat_ark = os.path.join(ark_dir, 'feat.%d.ark' % proid)
     utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
-    feat_scp = open(feat_scp, 'w')
-    utt2dur = open(utt2dur, 'w')
-    utt2num_frames = open(utt2num_frames, 'w')
+    feat_scp_f = open(feat_scp, 'w')
+    utt2dur_f = open(utt2dur, 'w')
+    feat_ark_f = open(feat_ark, 'wb')
+    utt2num_frames_f = open(utt2num_frames, 'w')
 
-    feats = {}
     while not t_queue.empty():
         comm = task_queue.get()
         pair = comm.split()
@@ -44,11 +46,14 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
         try:
             # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
             feat = np.load(pair[1]).astype(np.float32)
-            feats[key] = feat
-            feat_scp.write(str(key) + ' ' + feat_mat + ':' + key + '\n')
 
-            utt2dur.write('%s %.6f' % (str(key), len(feat) * 0.01))
-            utt2num_frames.write('%s %d' % (str(key), len(feat)))
+            kaldi_io.write_mat(feat_ark_f, feat, key='')
+            offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
+
+            feat_scp_f.write(key + ' ' + offsets + '\n')
+
+            utt2dur_f.write('%s %.6f' % (key, len(feat) * 0.01))
+            utt2num_frames_f.write('%s %d' % (key, len(feat)))
 
         except:
             e_queue.put(key)
@@ -58,23 +63,23 @@ def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
                   ' left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
                   end='')
 
-    sio.savemat(feat_mat, feats, do_compression=True)
-    feat_scp.close()
-    utt2dur.close()
-    utt2num_frames.close()
+    feat_scp_f.close()
+    utt2dur_f.close()
+    feat_ark_f.close()
+    utt2num_frames_f.close()
     print('\n>> Process {} finished!'.format(proid))
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing Filter banks!')
-    parser.add_argument('--nj', type=int, default=16, metavar='E',
+    parser.add_argument('--nj', type=int, default=14, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_mats',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_kaldi',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
