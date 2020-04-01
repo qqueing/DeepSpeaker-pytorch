@@ -132,6 +132,7 @@ if __name__ == "__main__":
         assert len(wav_scp) > 0
 
     nj = args.nj if len(wav_scp) > args.nj else 1
+
     num_utt = len(wav_scp)
     # completed_queue = Queue()
     manager = Manager()
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     for u in wav_scp:
         task_queue.put(u)
 
-    print('Plan to make feats for %d utterances in %s.' % (task_queue.qsize(), str(time.asctime())))
+    print('Plan to make feats for %d utterances in %s with %d jobs.' % (task_queue.qsize(), str(time.asctime()), nj))
     pool = Pool(processes=nj)  # 创建nj个进程
     for i in range(0, nj):
         write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
