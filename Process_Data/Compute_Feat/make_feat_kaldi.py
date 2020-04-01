@@ -27,10 +27,10 @@ from Process_Data.audio_processing import Make_Fbank
 import scipy.io as sio
 
 
-def MakeFeatsProcess(lock, out_dir, ark_dir, proid, t_queue, e_queue):
+def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    feat_ark = os.path.join(ark_dir, 'feat.%d.ark' % proid)
+    feat_ark = os.path.join(ark_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
     utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
@@ -47,32 +47,34 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, proid, t_queue, e_queue):
             pair = comm.split()
             key = pair[0]
             try:
-                # feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
+                feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True, nfilt=c.FILTER_BANK,
+                                            duration=True)
                 # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
-                feat = np.load(pair[1]).astype(np.float32)
+                # feat = np.load(pair[1]).astype(np.float32)
+                feat = feat.astype(np.float32)
                 kaldi_io.write_mat(feat_ark_f, feat, key='')
                 offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
 
                 feat_scp_f.write(key + ' ' + offsets + '\n')
-                utt2dur_f.write('%s %.6f\n' % (key, len(feat) * 0.01))
+                utt2dur_f.write('%s %.6f\n' % (key, duration))
                 utt2num_frames_f.write('%s %d\n' % (key, len(feat)))
             except:
                 e_queue.put(key)
 
-            if t_queue.qsize() % 100 == 0:
-                print('\rProcess [%3s] There are [%6s] utterances' \
-                      ' left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
-                      end='')
+            # if t_queue.qsize() % 100 == 0:
+            print('\rProcess [%6s] There are [%6s] utterances' \
+                  ' left, with [%6s] errors.' % (str(os.getpid()), str(t_queue.qsize()), str(e_queue.qsize())),
+                  end='')
         else:
             lock.release()  # 释放锁
-            print('\n>> Process {}:  queue empty!'.format(proid))
+            print('\n>> Process {}:  queue empty!'.format(os.getpid()))
             break
 
     feat_scp_f.close()
     utt2dur_f.close()
     feat_ark_f.close()
     utt2num_frames_f.close()
-    print('\n>> Process {} finished!'.format(proid))
+    print('\n>> Process {} finished!'.format(os.getpid()))
 
 
 if __name__ == "__main__":
@@ -81,10 +83,13 @@ if __name__ == "__main__":
     parser.add_argument('--nj', type=int, default=16, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect/sitw_dev_enroll',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect/dev_enroll',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64',
+                        help='number of jobs to make feats (default: 10)')
+    parser.add_argument('--out-set', type=str,
+                        default='test_kaldi',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -97,11 +102,12 @@ if __name__ == "__main__":
 
     nj = args.nj
     data_dir = args.data_dir
-    out_dir = args.out_dir
+    out_dir = os.path.join(args.out_dir, args.out_set)
+
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    wav_scp_f = os.path.join(data_dir, 'feats.scp')
+    wav_scp_f = os.path.join(data_dir, 'wav.scp')
     assert os.path.exists(data_dir)
     assert os.path.exists(wav_scp_f)
 
@@ -133,11 +139,12 @@ if __name__ == "__main__":
         if not os.path.exists(write_dir):
             os.makedirs(write_dir)
 
-        ark_dir = os.path.join(out_dir, 'fbank')
+        ark_dir = os.path.join(args.out_dir, 'fbank')
         if not os.path.exists(ark_dir):
             os.makedirs(ark_dir)
 
-        pool.apply_async(MakeFeatsProcess, args=(lock, write_dir, ark_dir, i, task_queue, error_queue))
+        pool.apply_async(MakeFeatsProcess, args=(lock, write_dir, ark_dir, args.out_set,
+                                                 i, task_queue, error_queue))
 
     pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
     pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
