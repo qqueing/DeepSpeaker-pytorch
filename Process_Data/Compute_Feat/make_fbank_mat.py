@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: make_fbank_kaldi.py
+@File: make_fbank_mat.py
 @Time: 2020/4/1 11:25 AM
 @Overview:
 """
@@ -16,63 +16,63 @@ import os
 import pathlib
 import sys
 import pdb
-from multiprocessing import Process, Queue, Pool, Manager
+from multiprocessing import Pool, Manager
 import time
 import numpy as np
-from kaldi_io import kaldi_io
 import Process_Data.constants as c
 from Process_Data.audio_processing import Make_Spect, Make_Fbank
+import scipy.io as sio
 
 
 def MakeFeatsProcess(out_dir, ark_dir, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    feat_ark = os.path.join(ark_dir, 'feat.%d.ark' % proid)
+    feat_mat = os.path.join(ark_dir, 'feat.%d.mat' % proid)
     utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
     feat_scp = open(feat_scp, 'w')
-    feat_ark = open(feat_ark, 'wb')
     utt2dur = open(utt2dur, 'w')
     utt2num_frames = open(utt2num_frames, 'w')
 
+    feats = {}
     while not t_queue.empty():
         comm = task_queue.get()
         pair = comm.split()
         key = pair[0]
         try:
             feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
-            len_vec = len(feat.tobytes())
-            key = pair[0]
-            kaldi_io.write_mat(feat_ark, feat, key='')
+            feats[key] = feat
+            feat_scp.write(str(key) + ' ' + feat_mat + ':' + key + '\n')
 
-            feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 15) + '\n')
             utt2dur.write('%s %.6f' % (str(key), duration))
             utt2num_frames.write('%s %d' % (str(key), len(feat)))
+
         except:
             e_queue.put(key)
 
         if t_queue.qsize() % 100 == 0:
             print('\rProcess [%3s] There are [%6s] utterances' \
-                  'left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
+                  ' left, with [%6s] errors.' % (str(proid), str(t_queue.qsize()), str(e_queue.qsize())),
                   end='')
 
+    sio.savemat(feat_mat, feats)
     feat_scp.close()
     utt2dur.close()
     utt2num_frames.close()
-    # print('>> Process {} finished!'.format(proid))
+    print('\n>> Process {} finished!'.format(proid))
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=12, metavar='E',
+    parser.add_argument('--nj', type=int, default=16, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_kaldi',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_mats',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
