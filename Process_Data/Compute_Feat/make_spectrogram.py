@@ -37,57 +37,68 @@ def compute_wav_path(wav, feat_scp, feat_ark, utt2dur, utt2num_frames):
     utt2num_frames.write('%s %d' % (str(key), len(feat)))
 
 
-class MakeFeatsProcess(Process):
+#
+# class MakeFeatsProcess(Process):
+#
+#     def __init__(self, out_dir, proid, task_queue, error_queue):
+#         super(MakeFeatsProcess, self).__init__()  # 重构run函数必须要写
+#         self.item = item
+#         self.proid = proid
+#         self.t_queue = task_queue
+#         self.e_queue = error_queue
+#
+#         #  wav_scp = os.path.join(data_path, 'wav.scp')
+#         feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
+#         feat_ark = os.path.join(out_dir, 'feat.%d.ark' % proid)
+#         utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
+#         utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
+#
+#         self.feat_scp = open(feat_scp, 'w')
+#         self.feat_ark = open(feat_ark, 'wb')
+#         self.utt2dur = open(utt2dur, 'w')
+#         self.utt2num_frames = open(utt2num_frames, 'w')
 
-    def __init__(self, out_dir, proid, task_queue, error_queue):
-        super(MakeFeatsProcess, self).__init__()  # 重构run函数必须要写
-        self.item = item
-        self.proid = proid
-        self.t_queue = task_queue
-        self.e_queue = error_queue
+def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
+    #  wav_scp = os.path.join(data_path, 'wav.scp')
+    feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
+    feat_ark = os.path.join(out_dir, 'feat.%d.ark' % proid)
+    utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
+    utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
-        #  wav_scp = os.path.join(data_path, 'wav.scp')
-        feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-        feat_ark = os.path.join(out_dir, 'feat.%d.ark' % proid)
-        utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
-        utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
+    feat_scp = open(feat_scp, 'w')
+    feat_ark = open(feat_ark, 'wb')
+    utt2dur = open(utt2dur, 'w')
+    utt2num_frames = open(utt2num_frames, 'w')
 
-        self.feat_scp = open(feat_scp, 'w')
-        self.feat_ark = open(feat_ark, 'wb')
-        self.utt2dur = open(utt2dur, 'w')
-        self.utt2num_frames = open(utt2num_frames, 'w')
+    while not t_queue.empty():
+        wav = t_queue.get()
 
-    def run(self):
-        while not self.t_queue.empty():
-            wav = self.t_queue.get()
+        pair = wav.split()
+        try:
+            feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+            # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
 
-            pair = wav.split()
-            try:
-                feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
-                # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
+            len_vec = len(feat.tobytes())
+            key = pair[0]
+            kaldi_io.write_mat(feat_ark, feat, key=key)
 
-                len_vec = len(feat.tobytes())
-                key = pair[0]
-                kaldi_io.write_mat(self.feat_ark, feat, key=key)
+            feat_scp.write(str(key) + ' ' + str(feat_ark.name) + ':' + str(feat_ark.tell() - len_vec - 10) + '\n')
+            utt2dur.write('%s %.6f' % (str(key), duration))
+            utt2num_frames.write('%s %d' % (str(key), len(feat)))
 
-                self.feat_scp.write(
-                    str(key) + ' ' + str(self.feat_ark.name) + ':' + str(self.feat_ark.tell() - len_vec - 10) + '\n')
-                self.utt2dur.write('%s %.6f' % (str(key), duration))
-                self.utt2num_frames.write('%s %d' % (str(key), len(feat)))
+        except:
+            print("Error: %s" % pair[0])
+            e_queue.put(pair[0])
 
-            except:
-                print("Error: %s" % pair[0])
-                self.e_queue.put(pair[0])
+        # if self.queue.qsize() % 1000 == 0:
+        print('==> Process %s: %s left' % (str(proid), str(t_queue.qsize())))
 
-            # if self.queue.qsize() % 1000 == 0:
-            print('==> Process %s: %s left' % (str(self.proid), str(self.t_queue.qsize())))
+    feat_scp.close()
+    feat_ark.close()
+    utt2dur.close()
+    utt2num_frames.close()
 
-        self.feat_scp.close()
-        self.feat_ark.close()
-        self.utt2dur.close()
-        self.utt2num_frames.close()
-
-        print('>> Process {} finished!'.format(self.proid))
+    print('>> Process {} finished!'.format(proid))
 
 
 if __name__ == "__main__":
