@@ -39,6 +39,7 @@ def compute_wav_path(wav, feat_scp, feat_path, utt2dur, utt2num_frames):
 
 def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
+
     feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
     feat_path = os.path.join(out_dir, 'feats.%d' % proid)
     if not os.path.exists(feat_path):
@@ -53,14 +54,11 @@ def MakeFeatsProcess(out_dir, proid, t_queue, e_queue):
 
     while not t_queue.empty():
         comm = task_queue.get()
-        # print('111')
         pair = comm.split()
         key = pair[0]
         try:
             # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
             feat, duration = Make_Fbank(filename=pair[1], use_energy=True, nfilt=c.FILTER_BANK, duration=True)
-            # np_fbank = Make_Fbank(filename=uid2path[uid], use_energy=True, nfilt=c.TDNN_FBANK_FILTER)
-
             save_path = os.path.join(feat_path, key + '.npy')
             np.save(save_path, feat)
 
