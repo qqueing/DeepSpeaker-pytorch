@@ -16,7 +16,7 @@ import os
 import pathlib
 import sys
 import pdb
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Process, Queue, Pool, Manager
 import time
 import numpy as np
 from kaldi_io import kaldi_io
@@ -70,13 +70,13 @@ class MakeFeatsProcess(Process):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing spectrogram!')
-    parser.add_argument('--nj', type=int, default=16, metavar='E',
+    parser.add_argument('--nj', type=int, default=1, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/temp',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/temp',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -88,13 +88,15 @@ if __name__ == "__main__":
                         help='number of epochs to train (default: 10)')
     args = parser.parse_args()
 
-    nj = args.nj
+
     data_dir = args.data_dir
     out_dir = args.out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
     wav_scp_f = os.path.join(data_dir, 'wav.scp')
+    assert os.path.exists(data_dir)
+    assert os.path.exists(wav_scp_f)
 
     print('Copy wav.scp, spk2utt, utt2spk to %s' % out_dir)
     for f in ['wav.scp', 'spk2utt', 'utt2spk']:
@@ -106,43 +108,37 @@ if __name__ == "__main__":
         wav_scp = f.readlines()
         assert len(wav_scp) > 0
 
-    assert os.path.exists(data_dir)
-    assert os.path.exists(wav_scp_f)
-
+    nj = args.nj if len(wav_scp) > args.nj else 1
     num_utt = len(wav_scp)
-    chunk = int(num_utt / nj)
-    start_time = time.time()
+    # completed_queue = Queue()
+    manager = Manager()
+    task_queue = manager.Queue()
+    error_queue = manager.Queue()
 
-    completed_queue = Queue()
-    processpool = []
+    for u in wav_scp:
+        task_queue.put(u)
 
-    print('Plan to make feats for %d utterances.' % num_utt)
-    try:
-        for i in range(0, nj):
-            j = (i + 1) * chunk
+    print('Plan to make feats for %d utterances in %s.' % (task_queue.qsize(), str(time.asctime())))
+    pool = Pool(processes=nj)  # 创建nj个进程
+    for i in range(0, nj):
+        write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
+        if not os.path.exists(write_dir):
+            os.makedirs(write_dir)
 
-            if i == (nj - 1):
-                j = num_utt
+        pool.apply_async(MakeFeatsProcess, args=(write_dir, i, task_queue, error_queue))
 
-            write_dir = os.path.join(out_dir, 'Split%d/%d' % (nj, i))
-            if not os.path.exists(write_dir):
-                os.makedirs(write_dir)
-
-            p = MakeFeatsProcess(write_dir, wav_scp[i * chunk:j], i, completed_queue)
-            p.start()
-            processpool.append(p)
-
-        for p in processpool:
-            p.join()
-
-        print(' >> Computing Completed!')
-    except:
-        for p in processpool:
-            p.terminate()
-        sys.exit('Making Suspended!')
+    pool.close()  # 关闭进程池，表示不能在往进程池中添加进程
+    pool.join()  # 等待进程池中的所有进程执行完毕，必须在close()之后调用
+    if error_queue.qsize() > 0:
+        print('\n>> Saving Completed with errors in: ')
+        while not error_queue.empty():
+            print(error_queue.get() + ' ', end='')
+        print('')
+    else:
+        print('\n>> Saving Completed without errors.!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
-    print(' >> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
+    print('\n>> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
 
     all_scp_path = [os.path.join(Split_dir, '%d/feat.%d.scp' % (i, i)) for i in range(nj)]
     feat_scp = os.path.join(out_dir, 'feats.scp')
