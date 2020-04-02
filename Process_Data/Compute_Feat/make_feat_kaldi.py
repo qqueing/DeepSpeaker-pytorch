@@ -24,7 +24,7 @@ import numpy as np
 import shutil
 import Process_Data.constants as c
 from Process_Data.audio_augment.common import RunCommand
-from Process_Data.audio_processing import Make_Fbank
+from Process_Data.audio_processing import Make_Fbank, Make_Spect
 import scipy.io as sio
 
 
@@ -68,10 +68,10 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     os.remove(temp_wav)
 
                 else:
-                    feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
-                                                nfilt=c.FILTER_BANK, duration=True)
-                # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
-                # feat = np.load(pair[1]).astype(np.float32)
+                    # feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
+                    #                             nfilt=c.FILTER_BANK, duration=True)
+                    feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+                    # feat = np.load(pair[1]).astype(np.float32)
                 feat = feat.astype(np.float32)
                 kaldi_io.write_mat(feat_ark_f, feat, key='')
                 offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)

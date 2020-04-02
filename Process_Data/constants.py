@@ -3,7 +3,7 @@ AUDIO_DIR = '../Data/dataset/'
 
 # The length of shortest wav
 N_SAMPLES = 800
-MINIMUIN_LENGTH = 400
+# MINIMUIN_LENGTH = 400
 
 # Parameters for fbank features
 NUM_PREVIOUS_FRAME = 9

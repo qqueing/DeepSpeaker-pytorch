@@ -222,6 +222,7 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, duration=False):
     feature, _ = librosa.magphase(S)
     feature = np.log1p(feature)  # log1p操作
     feature = feature.transpose()
+
     if duration:
         return normalize_frames(feature), len(samples) / samplerate
 
