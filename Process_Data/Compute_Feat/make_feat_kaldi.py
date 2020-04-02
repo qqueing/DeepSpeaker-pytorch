@@ -56,11 +56,12 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     if command.endswith('|'):
                         command = command.rstrip('|')
                     spid, stdout, error = RunCommand(command)
-                    os.waitpid(spid, 0)
+                    # os.waitpid(spid, 0)
 
                     temp_wav = temp_dir + '/%s.wav' % key
                     with open(temp_wav, 'wb') as wav_f:
                         wav_f.write(stdout)
+
                     feat, duration = Make_Fbank(filename=temp_wav, filtertype='dnn', use_energy=True,
                                                 nfilt=c.FILTER_BANK,
                                                 duration=True)
@@ -68,8 +69,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
 
                 else:
                     feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
-                                                nfilt=c.FILTER_BANK,
-                                            duration=True)
+                                                nfilt=c.FILTER_BANK, duration=True)
                 # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
                 # feat = np.load(pair[1]).astype(np.float32)
                 feat = feat.astype(np.float32)
