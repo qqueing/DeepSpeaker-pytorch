@@ -105,13 +105,13 @@ if __name__ == "__main__":
     parser.add_argument('--nj', type=int, default=8, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/test',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-set', type=str,
-                        default='test_kaldi',
+                        default='dev',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -133,12 +133,13 @@ if __name__ == "__main__":
     assert os.path.exists(data_dir)
     assert os.path.exists(wav_scp_f)
 
-    print('Copy wav.scp, spk2utt, utt2spk, trials to %s' % out_dir)
-    for f in ['wav.scp', 'spk2utt', 'utt2spk', 'trials']:
-        orig_f = os.path.join(data_dir, f)
-        targ_f = os.path.join(out_dir, f)
-        if os.path.exists(orig_f):
-            os.system('cp %s %s' % (orig_f, targ_f))
+    if data_dir != out_dir:
+        print('Copy wav.scp, spk2utt, utt2spk, trials to %s' % out_dir)
+        for f in ['wav.scp', 'spk2utt', 'utt2spk', 'trials']:
+            orig_f = os.path.join(data_dir, f)
+            targ_f = os.path.join(out_dir, f)
+            if os.path.exists(orig_f):
+                os.system('cp %s %s' % (orig_f, targ_f))
 
     with open(wav_scp_f, 'r') as f:
         wav_scp = f.readlines()
