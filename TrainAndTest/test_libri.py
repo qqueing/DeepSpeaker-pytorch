@@ -64,15 +64,15 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 #                     help='path to dataset')
 
 parser.add_argument('--libri-dev-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/dev_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/dev_kaldi',
                     help='path to librispeech test dataset')
 parser.add_argument('--libri-test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/test_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/test_kaldi',
                     help='path to librispeech test dataset')
 
 # parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/aug',
 #                     help='folder to output model checkpoints')
-parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/aug_cmvn',
+parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80',
                     help='folder to output model checkpoints')
 parser.add_argument('--epochs', type=int, default=40, metavar='E',
                     help='number of epochs to train (default: 10)')
