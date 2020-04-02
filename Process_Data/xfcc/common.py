@@ -111,6 +111,8 @@ def local_fbank(signal, samplerate=16000, winlen=0.025, winstep=0.01,
     feat = np.dot(pspec, fb.T)  # compute the filterbank energies
     feat = np.where(feat == 0, np.finfo(float).eps, feat)  # if feat is zero, we get problems with log
 
+    # feat = np.log1p(feat)
+
     return feat, energy
 
 # filters = get_filterbanks(nfilt=24, nfft=512, samplerate=16000, lowfreq=0, highfreq=None, filtertype='dnn')
