@@ -56,6 +56,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     if command.endswith('|'):
                         command = command.rstrip('|')
                     rec, stdout, error = RunCommand(command)
+                    os.wait()
                     temp_wav = temp_dir + '/%s.wav' % key
                     with open(temp_wav, 'wb') as wav_f:
                         wav_f.write(stdout)

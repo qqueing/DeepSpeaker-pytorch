@@ -22,7 +22,7 @@ def RunCommand(command):
     p = subprocess.Popen(command, shell=True,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
-    p.wait()
+    # p.wait()
     [stdout, stderr] = p.communicate()
 
     return p.returncode, stdout, stderr
