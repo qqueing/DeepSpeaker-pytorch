@@ -102,7 +102,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Computing Filter banks!')
-    parser.add_argument('--nj', type=int, default=8, metavar='E',
+    parser.add_argument('--nj', type=int, default=15, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
