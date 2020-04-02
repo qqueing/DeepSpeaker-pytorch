@@ -15,6 +15,8 @@ import pathlib
 import pdb
 import random
 import time
+
+from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
 import torch
 import torch.nn as nn
@@ -56,10 +58,10 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/dev_org',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_aug_spect/test',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
@@ -127,7 +129,7 @@ parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=100, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=12, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
@@ -146,6 +148,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 if args.cuda:
     torch.cuda.manual_seed_all(args.seed)
@@ -178,7 +181,7 @@ if args.acoustic_feature == 'fbank':
         # varLengthFeat(),
         to2tensor()
     ])
-    file_loader = read_MFB
+
 else:
     transform = transforms.Compose([
         truncatedinput(),
@@ -189,9 +192,10 @@ else:
     file_loader = read_audio
 
 # pdb.set_trace()
-
-train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
-test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T)
+file_loader = read_mat
+train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
+                               transform=transform)
+test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
@@ -210,7 +214,7 @@ test_part = torch.utils.data.Subset(test_dir, indices)
 # indices = indices[:12800]
 # sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
-valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
+valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform)
 
