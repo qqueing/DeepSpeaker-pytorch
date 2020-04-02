@@ -25,4 +25,4 @@ def RunCommand(command):
     # p.wait()
     [stdout, stderr] = p.communicate()
 
-    return p.returncode, stdout, stderr
+    return p.pid, stdout, stderr
