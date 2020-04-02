@@ -65,7 +65,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     feat, duration = Make_Fbank(filename=temp_wav, filtertype='dnn', use_energy=True,
                                                 nfilt=c.FILTER_BANK,
                                                 duration=True)
-                    shutil.rmtree(temp_wav)
+                    os.remove(temp_wav)
 
                 else:
                     feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
