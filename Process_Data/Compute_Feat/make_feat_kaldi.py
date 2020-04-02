@@ -105,13 +105,13 @@ if __name__ == "__main__":
     parser.add_argument('--nj', type=int, default=8, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/dev',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri/test',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/libri',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-set', type=str,
-                        default='dev_kaldi',
+                        default='test_kaldi',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
