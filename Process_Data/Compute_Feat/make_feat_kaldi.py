@@ -23,6 +23,7 @@ import kaldi_io
 import numpy as np
 import shutil
 import Process_Data.constants as c
+from Process_Data.audio_augment.common import RunCommand
 from Process_Data.audio_processing import Make_Fbank
 import scipy.io as sio
 
@@ -38,6 +39,9 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
     utt2dur_f = open(utt2dur, 'w')
     feat_ark_f = open(feat_ark, 'wb')
     utt2num_frames_f = open(utt2num_frames, 'w')
+    temp_dir = out_dir + '/temp'
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
 
     while True:
         lock.acquire()  # 加上锁
@@ -47,7 +51,22 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
             pair = comm.split()
             key = pair[0]
             try:
-                feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True, nfilt=c.FILTER_BANK,
+                if len(pair) > 2:
+                    command = ' '.join(pair[1:])
+                    if command.endswith('|'):
+                        command = command.rstrip('|')
+                    rec, stdout, error = RunCommand(command)
+                    temp_wav = temp_dir + '/%s.wav' % key
+                    with open(temp_wav, 'wb') as wav_f:
+                        wav_f.write(stdout)
+                    feat, duration = Make_Fbank(filename=temp_wav, filtertype='dnn', use_energy=True,
+                                                nfilt=c.FILTER_BANK,
+                                                duration=True)
+                    shutil.rmtree(temp_wav)
+
+                else:
+                    feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
+                                                nfilt=c.FILTER_BANK,
                                             duration=True)
                 # feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
                 # feat = np.load(pair[1]).astype(np.float32)
