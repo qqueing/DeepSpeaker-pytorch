@@ -449,8 +449,9 @@ def sitw_test(test_loader, model, epoch):
 
         vec_shape = data_a.shape
         # pdb.set_trace()
-        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
-        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        if vec_shape[1] != 1:
+            data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+            data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
@@ -463,7 +464,9 @@ def sitw_test(test_loader, model, epoch):
         out_p = out_p_
 
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+
+        if vec_shape[1] != 1:
+            dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
 
         distances.append(dists)
