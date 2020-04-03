@@ -249,7 +249,7 @@ def main():
             print('=> no checkpoint found at {}'.format(args.resume))
 
     start = args.start_epoch + start_epoch
-    print('start epoch is : ' + str(start) + '\n')
+    print('start epoch is : ' + str(start))
     # start = 0
     end = start + args.epochs
 
@@ -285,7 +285,6 @@ def main():
         test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
-
         scheduler.step()
         # exit(1)
 
