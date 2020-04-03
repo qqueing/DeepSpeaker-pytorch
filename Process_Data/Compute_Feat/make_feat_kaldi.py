@@ -89,7 +89,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                   end='')
         else:
             lock.release()  # 释放锁
-            print('\n>> Process {}:  queue empty!'.format(os.getpid()))
+            # print('\n>> Process {}:  queue empty!'.format(os.getpid()))
             break
 
     feat_scp_f.close()
@@ -105,12 +105,12 @@ if __name__ == "__main__":
     parser.add_argument('--nj', type=int, default=15, metavar='E',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
+                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_reverb_fb64/dev',
                         help='number of jobs to make feats (default: 10)')
     parser.add_argument('--out-dir', type=str,
                         default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
                         help='number of jobs to make feats (default: 10)')
-    parser.add_argument('--out-set', type=str, default='test',
+    parser.add_argument('--out-set', type=str, default='dev_reverb',
                         help='number of jobs to make feats (default: 10)')
 
     parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
