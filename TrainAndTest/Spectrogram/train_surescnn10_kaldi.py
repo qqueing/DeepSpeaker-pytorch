@@ -67,16 +67,16 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_final',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_more',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_final/checkpoint_9.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_more/checkpoint_9.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=16, metavar='E',
+parser.add_argument('--epochs', type=int, default=25, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -92,9 +92,9 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--input-per-spks', type=int, default=192, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -177,8 +177,8 @@ if args.acoustic_feature == 'fbank':
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
-        # varLengthFeat(),
+        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
+        varLengthFeat(),
         to2tensor()
     ])
 
@@ -231,7 +231,7 @@ def main():
                               n_classes=train_dir.num_spks, m=args.margin)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[6, 11], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[12, 18, 22], gamma=0.1)
 
     # optionally resume from a checkpoint
     start_epoch = 0
@@ -266,11 +266,11 @@ def main():
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
     # ce = nn.CrossEntropyLoss().cuda()
 
-    # check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
-    # torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-    #             'scheduler': scheduler.state_dict()},
-    #            # 'criterion': criterion.state_dict()
-    #            check_path)
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
+    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                'scheduler': scheduler.state_dict()},
+               # 'criterion': criterion.state_dict()
+               check_path)
 
     if args.cuda:
         model = model.cuda()
