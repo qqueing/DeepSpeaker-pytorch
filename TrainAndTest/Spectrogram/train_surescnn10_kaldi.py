@@ -67,10 +67,10 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_more',
+parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_final',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_more/checkpoint_9.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_final/checkpoint_9.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -348,7 +348,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
                # 'criterion': criterion.state_dict()
                check_path)
 
-    print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\n\33[0m'.format(epoch, 100 * float(
+    print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch, 100 * float(
         correct) / total_datasize, total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
@@ -434,8 +434,8 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
     print('\n\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
-          'Accuracy is {:.2f}%.\33[0m \n'.format('cos' if args.cos_sim else 'l2', 100. * eer,
-                                                                  eer_threshold, valid_accuracy))
+          'Accuracy is {:.2f}%.\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
+                                              eer_threshold, valid_accuracy))
     torch.cuda.empty_cache()
 
 def sitw_test(test_loader, model, epoch):
