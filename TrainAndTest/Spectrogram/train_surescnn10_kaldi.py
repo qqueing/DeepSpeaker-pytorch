@@ -70,7 +70,7 @@ parser.add_argument('--sitw-dir', type=str,
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_final',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_final/checkpoint_9.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_final/checkpoint_1.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -239,7 +239,7 @@ def main():
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
-            start_epoch = checkpoint['epoch']
+            # start_epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
             # optimizer.load_state_dict(checkpoint['optimizer'])
@@ -281,7 +281,7 @@ def main():
         for param_group in optimizer.param_groups:
             print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
 
-        train(train_loader, model, ce, optimizer, scheduler, epoch)
+        # train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
@@ -402,8 +402,8 @@ def test(test_loader, valid_loader, model, epoch):
 
         vec_shape = data_a.shape
         # pdb.set_trace()
-        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
-        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        # data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        # data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
