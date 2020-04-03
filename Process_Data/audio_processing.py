@@ -215,15 +215,18 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, du
 
     samplerate, samples = wavfile.read(wav_path)
     # samples, samplerate = sf.read(wav_path)
-    samples = sigproc.preemphasis(samples, preemph)
+    signal = sigproc.preemphasis(samples, preemph)
+    frames = sigproc.framesig(signal, windowsize * samplerate, stride * samplerate, winfunc=window)
 
-    S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
-                     hop_length=int((windowsize-stride) * samplerate),
-                     window=window(int(windowsize * samplerate)))  # 进行短时傅里叶变换，参数意义在一开始有定义
-
-    feature, _ = librosa.magphase(S)
-    feature = np.log1p(feature)  # log1p操作
-    feature = feature.transpose()
+    pspec = sigproc.powspec(frames, int(windowsize * samplerate))
+    pspec = np.where(pspec == 0, np.finfo(float).eps, pspec)
+    # S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
+    #                  hop_length=int((windowsize-stride) * samplerate),
+    #                  window=window(int(windowsize * samplerate)))  # 进行短时傅里叶变换，参数意义在一开始有定义
+    # feature, _ = librosa.magphase(S)
+    # feature = np.log1p(feature)  # log1p操作
+    feature = np.log(pspec)
+    # feature = feature.transpose()
 
     if duration:
         return normalize_frames(feature), len(samples) / samplerate
@@ -265,7 +268,7 @@ def Make_Fbank(filename,
 
     if use_logscale:
         # filter_banks = 20 * np.log10(np.maximum(filter_banks, 1e-5))
-        filter_banks = np.log(np.maximum(filter_banks, 1e-5))
+        filter_banks = np.log(filter_banks)
 
     if use_delta:
         delta_1 = delta(filter_banks, N=1)
@@ -275,7 +278,7 @@ def Make_Fbank(filename,
         delta_1 = normalize_frames(delta_1, Scale=use_scale)
         delta_2 = normalize_frames(delta_2, Scale=use_scale)
 
-        frames_features = np.hstack([filter_banks, delta_1, delta_2])
+        filter_banks = np.hstack([filter_banks, delta_1, delta_2])
 
     if normalize:
         filter_banks = normalize_frames(filter_banks, Scale=use_scale)
