@@ -27,6 +27,26 @@ from Process_Data.audio_augment.common import RunCommand
 from Process_Data.audio_processing import Make_Fbank, Make_Spect
 import scipy.io as sio
 
+parser = argparse.ArgumentParser(description='Computing Filter banks!')
+parser.add_argument('--nj', type=int, default=16, metavar='E',
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--data-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_reverb_fb64/dev',
+                    help='number of jobs to make feats (default: 10)')
+
+parser.add_argument('--out-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--out-set', type=str, default='dev_reverb',
+                    help='number of jobs to make feats (default: 10)')
+
+parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
+                    help='number of epochs to train (default: 10)')
+parser.add_argument('--vad-proportion-threshold', type=float, default=0.12, metavar='E',
+                    help='number of epochs to train (default: 10)')
+parser.add_argument('--vad-frames-context', type=int, default=2, metavar='E',
+                    help='number of epochs to train (default: 10)')
+args = parser.parse_args()
 
 def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
@@ -100,27 +120,6 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='Computing Filter banks!')
-    parser.add_argument('--nj', type=int, default=16, metavar='E',
-                        help='number of jobs to make feats (default: 10)')
-    parser.add_argument('--data-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_reverb_fb64/dev',
-                        help='number of jobs to make feats (default: 10)')
-
-    parser.add_argument('--out-dir', type=str,
-                        default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
-                        help='number of jobs to make feats (default: 10)')
-    parser.add_argument('--out-set', type=str, default='dev_reverb',
-                        help='number of jobs to make feats (default: 10)')
-
-    parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--vad-proportion-threshold', type=float, default=0.12, metavar='E',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--vad-frames-context', type=int, default=2, metavar='E',
-                        help='number of epochs to train (default: 10)')
-    args = parser.parse_args()
 
     nj = args.nj
     data_dir = args.data_dir
