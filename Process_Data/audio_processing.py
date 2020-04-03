@@ -213,7 +213,8 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, du
     :return: return spectrogram with shape of (len(wav/stride), windowsize * samplerate /2 +1).
     """
 
-    samples, samplerate = sf.read(wav_path)
+    samplerate, samples = wavfile.read(wav_path)
+    # samples, samplerate = sf.read(wav_path)
     samples = sigproc.preemphasis(samples, preemph)
 
     S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
