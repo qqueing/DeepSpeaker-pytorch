@@ -70,13 +70,13 @@ parser.add_argument('--sitw-dir', type=str,
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/kaldi_final',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SuResCNN10/spect/kaldi_final/checkpoint_20.pth', type=str,
+                    default='Data/checkpoint/SuResCNN10/spect/kaldi_final/checkpoint_9.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=22, metavar='E',
+parser.add_argument('--epochs', type=int, default=16, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -231,7 +231,7 @@ def main():
                               n_classes=train_dir.num_spks, m=args.margin)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[9, 14, 19], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[6, 11], gamma=0.1)
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -241,8 +241,8 @@ def main():
             args.start_epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -265,11 +265,11 @@ def main():
     ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
     # ce = nn.CrossEntropyLoss().cuda()
 
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
-    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict()},
-               # 'criterion': criterion.state_dict()
-               check_path)
+    # check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
+    # torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+    #             'scheduler': scheduler.state_dict()},
+    #            # 'criterion': criterion.state_dict()
+    #            check_path)
 
     if args.cuda:
         model = model.cuda()
