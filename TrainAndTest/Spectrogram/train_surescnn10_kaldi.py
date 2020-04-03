@@ -76,7 +76,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=25, metavar='E',
+parser.add_argument('--epochs', type=int, default=28, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -231,7 +231,7 @@ def main():
                               n_classes=train_dir.num_spks, m=args.margin)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[12, 18, 22], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[12, 20, 25], gamma=0.1)
 
     # optionally resume from a checkpoint
     start_epoch = 0
