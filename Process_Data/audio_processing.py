@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 import numpy as np
-from python_speech_features import fbank, delta
+from python_speech_features import fbank, delta, sigproc
 from speechpy.processing import cmvn, cmvnw
 from Process_Data import constants as c
 import torch
@@ -203,7 +203,7 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
     # return spectrogram
 
 
-def Make_Spect(wav_path, windowsize, stride, window=np.hamming, duration=False):
+def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, duration=False):
     """
     read wav as float type. [-1.0 ,1.0]
     :param wav_path:
@@ -214,6 +214,7 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, duration=False):
     """
 
     samples, samplerate = sf.read(wav_path)
+    samples = sigproc.preemphasis(samples, preemph)
 
     S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
                      hop_length=int((windowsize-stride) * samplerate),
