@@ -230,7 +230,7 @@ def main():
     print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
     # instantiate model and initialize weights
-    model = LocalResNet(layers=[1, 1, 1, 0], embedding_size=args.embedding_size, n_classes=train_dir.num_spks)
+    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     scheduler = MultiStepLR(optimizer, milestones=[12, 20, 25], gamma=0.1)
