@@ -248,6 +248,7 @@ def main():
     if args.loss_type == 'soft':
         xe_criterion = None
     elif args.loss_type == 'asoft':
+        ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
         xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
@@ -304,7 +305,9 @@ def main():
 
     if args.cuda:
         model = model.cuda()
-        ce = [x.cuda() for x in ce]
+        for i in range(len(ce)):
+            if ce[i] != None:
+                ce[i] = ce[i].cuda()
 
     for epoch in range(start, end):
         # pdb.set_trace()
