@@ -679,7 +679,7 @@ class LocalResNet(nn.Module):
     Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
     """
 
-    def __init__(self, resnet_size, embedding_size, num_classes, block=Bottleneck, feature_dim=64, dropout=False):
+    def __init__(self, resnet_size, embedding_size, num_classes, block=BasicBlock, feature_dim=64, dropout=False):
         super(LocalResNet, self).__init__()
         resnet_type = {10: [1, 1, 1, 1],
                        18: [2, 2, 2, 2],
