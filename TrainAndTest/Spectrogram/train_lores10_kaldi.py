@@ -72,13 +72,13 @@ parser.add_argument('--sitw-dir', type=str,
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LoResNet10/spect/kaldi/checkpoint_1.pth', type=str,
+                    default='Data/checkpoint/LoResNet10/spect/kaldi/checkpoint_10.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=28, metavar='E',
+parser.add_argument('--epochs', type=int, default=10, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -111,7 +111,7 @@ parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO'
 # parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
 #                     help='random seed (default: 0)')
 
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.125)')
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
@@ -160,7 +160,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
 
-kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
@@ -233,7 +233,7 @@ def main():
     model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[12, 20, 25], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[5], gamma=0.1)
 
     # optionally resume from a checkpoint
     start_epoch = 0
