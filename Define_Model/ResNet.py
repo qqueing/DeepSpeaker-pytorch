@@ -693,17 +693,17 @@ class LocalResNet(nn.Module):
         self.relu = nn.LeakyReLU()
         # self.relu = ReLU(inplace=True)
 
-        self.in_planes = 64
+        self.inplanes = 64
         self.conv1 = nn.Conv2d(1, 64, kernel_size=5, stride=2, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(block, 64, layers[0])
 
-        self.in_planes = 128
+        self.inplanes = 128
         self.conv2 = nn.Conv2d(64, 128, kernel_size=5, stride=2, padding=2, bias=False)
         self.bn2 = nn.BatchNorm2d(128)
         self.layer2 = self._make_layer(block, 128, layers[1])
 
-        self.in_planes = 256
+        self.inplanes = 256
         self.conv3 = nn.Conv2d(128, 256, kernel_size=5, stride=2, padding=2, bias=False)
         self.bn3 = nn.BatchNorm2d(256)
         self.layer3 = self._make_layer(block, 256, layers[2])
