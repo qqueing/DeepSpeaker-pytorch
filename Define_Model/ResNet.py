@@ -748,10 +748,19 @@ class LocalResNet(nn.Module):
         return output
 
     def _make_layer(self, block, planes, blocks, stride=1):
-        layers = [block(self.in_planes, planes, stride)]
-        self.in_planes = planes * block.expansion
-        for i in range(1, blocks):
-            layers.append(block(self.in_planes, planes))
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                conv1x1(self.inplanes, planes * block.expansion, stride),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.inplanes, planes, stride, downsample))
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
+
         return nn.Sequential(*layers)
 
     def forward(self, x):
