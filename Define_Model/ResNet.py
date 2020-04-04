@@ -696,6 +696,8 @@ class LocalResNet(nn.Module):
         self.inplanes = 64
         self.conv1 = nn.Conv2d(1, 64, kernel_size=5, stride=2, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
         self.layer1 = self._make_layer(block, 64, layers[0])
 
         self.inplanes = 128
@@ -713,12 +715,13 @@ class LocalResNet(nn.Module):
         # self.bn4 = nn.BatchNorm2d(512)
         # self.layer4 = self._make_layer(block, 512, layers[3])
         # self.avg_pool = nn.AdaptiveAvgPool2d([4, 1])
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 8))
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
 
         self.fc = nn.Sequential(
-            nn.Linear(self.inplanes * 8, embedding_size),
+            nn.Linear(self.inplanes * 4, embedding_size),
             nn.BatchNorm1d(embedding_size)
         )
+
         self.classifier = nn.Linear(self.embedding_size, num_classes)
 
         for m in self.modules():  # 对于各层参数的初始化
@@ -767,6 +770,7 @@ class LocalResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
+        x = self.maxpool(x)
         x = self.layer1(x)
 
         x = self.conv2(x)
@@ -794,5 +798,4 @@ class LocalResNet(nn.Module):
         # feature = x * alpha
         logits = self.classifier(x)
 
-        # res = self.model.classifier(features)
         return logits, x

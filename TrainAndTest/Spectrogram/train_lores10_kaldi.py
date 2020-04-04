@@ -14,6 +14,7 @@ import argparse
 import pathlib
 import pdb
 import random
+import sys
 import time
 
 from kaldi_io import read_mat
@@ -27,10 +28,12 @@ import os
 import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
+import os.path as osp
 
+from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
 from Process_Data import constants as c
-from Define_Model.SoftmaxLoss import AngleSoftmaxLoss
+from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
@@ -39,6 +42,8 @@ from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLe
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
 # Version conflict
 import warnings
+
+from logger import NewLogger
 
 warnings.filterwarnings("ignore")
 
@@ -71,8 +76,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/kaldi',
                     help='folder to output model checkpoints')
-
-parser.add_argument('--save-init', action='store_true', default=False, help='need to make mfb file')
+parser.add_argument('--save-init', action='store_true', default=True, help='need to make mfb file')
 parser.add_argument('--resume',
                     default='Data/checkpoint/LoResNet10/spect/kaldi/checkpoint_10.pth', type=str,
                     metavar='PATH',
@@ -80,7 +84,7 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=10, metavar='E',
+parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -102,19 +106,21 @@ parser.add_argument('--test-batch-size', type=int, default=12, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
+                    help='path to voxceleb1 test dataset')
 parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 # args for a-softmax
-# parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
-#                     help='random seed (default: 0)')
-# parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
-#                     help='random seed (default: 0)')
+parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
+                    help='random seed (default: 0)')
+parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
+                    help='random seed (default: 0)')
 
-parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                    help='learning rate (default: 0.125)')
+parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
+parser.add_argument('--lr-cent', type=float, default=0.05, help="learning rate for center loss")
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--weight-decay', default=5e-4, type=float,
@@ -161,6 +167,7 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
+sys.stdout = NewLogger(osp.join(args.check_path, 'log_' + args.dataset + '.txt'))
 
 kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -203,7 +210,7 @@ test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=tr
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:9600]
+indices = indices[:12800]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 # sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
@@ -234,17 +241,34 @@ def main():
     # instantiate model and initialize weights
     model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
 
-    optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[5], gamma=0.1)
+    ce_criterion = nn.CrossEntropyLoss()
+    if args.loss_type == 'soft':
+        xe_criterion = None
+    elif args.loss_type == 'asoft':
+        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+    elif args.loss_type == 'center':
+        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.feat_dim)
+    elif args.loss_type == 'amsoft':
+        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
 
-    # optionally resume from a checkpoint
+    optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
+    if args.loss_type == 'center':
+        center_params = list(map(id, xe_criterion.parameters()))
+        base_params = filter(lambda p: id(p) not in center_params, model.parameters())
+        optimizer = torch.optim.SGD([{'params': center_params, 'lr': args.lr * 5}, {'params': base_params}],
+                                    lr=args.lr, weight_decay=args.weight_decay,
+                                    momentum=args.momentum)
+
+    scheduler = MultiStepLR(optimizer, milestones=[10, 15], gamma=0.1)
+
+    ce = [ce_criterion, xe_criterion]
+
     start_epoch = 0
     if args.save_init:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start_epoch)
-        torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-                    'scheduler': scheduler.state_dict()},
-                   # 'criterion': criterion.state_dict()
-                   check_path)
+        torch.save(model, check_path)
 
     if args.resume:
         if os.path.isfile(args.resume):
@@ -255,12 +279,18 @@ def main():
             model.load_state_dict(filtered)
             # optimizer.load_state_dict(checkpoint['optimizer'])
             # scheduler.load_state_dict(checkpoint['scheduler'])
-            # criterion.load_state_dict(checkpoint['criterion'])
+            if 'criterion' in checkpoint.keys():
+                ce.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
+    # ['soft', 'asoft', 'center', 'amsoft'],
+
+    # optionally resume from a checkpoint
+
+
     start = args.start_epoch + start_epoch
-    print('start epoch is : ' + str(start))
+    print('Start epoch is : ' + str(start))
     # start = 0
     end = start + args.epochs
 
@@ -272,13 +302,9 @@ def main():
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
 
-    # ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
-    ce = nn.CrossEntropyLoss().cuda()
-
-
     if args.cuda:
         model = model.cuda()
-        ce = ce.cuda()
+        ce = [x.cuda() for x in ce]
 
     for epoch in range(start, end):
         # pdb.set_trace()
@@ -304,7 +330,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
     total_loss = 0.
     # for param_group in optimizer.param_groups:
     #     print('\33[1;34m Optimizer \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
-
+    ce_criterion, xe_criterion = ce
     pbar = tqdm(enumerate(train_loader))
     output_softmax = nn.Softmax(dim=1)
 
@@ -317,10 +343,20 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         classfier, _ = model(data)
         true_labels = label.cuda()
         # cos_theta, phi_theta = classfier
+        classfier_label = classfier
 
-        loss = ce(classfier, true_labels)
+        if args.loss_type == 'soft':
+            loss = ce_criterion(classfier, true_labels)
+        elif args.loss_type == 'asoft':
+            loss = xe_criterion(classfier, true_labels)
+        elif args.loss_type == 'center':
+            loss_cent = ce_criterion(classfier, true_labels)
+            loss_xent = xe_criterion(classfier, true_labels)
+            loss = args.loss_ratio * loss_xent + loss_cent
+        elif args.loss_type == 'amsoft':
+            loss = xe_criterion(classfier, true_labels)
 
-        predicted_labels = output_softmax(classfier)
+        predicted_labels = output_softmax(classfier_label)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
         minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
             predicted_one_labels)
@@ -331,6 +367,11 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         # compute gradient and update weights
         optimizer.zero_grad()
         loss.backward()
+
+        if args.loss_type == 'center' and args.loss_ratio != 0:
+            for param in xe_criterion.parameters():
+                param.grad.data *= (1. / args.loss_ratio)
+
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
@@ -345,9 +386,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
 
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
     torch.save({'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict()},
+                'state_dict': model.state_dict()},
                # 'criterion': criterion.state_dict()
                check_path)
 
@@ -374,7 +413,11 @@ def test(test_loader, valid_loader, model, epoch):
 
         # compute output
         out, _ = model(data)
-        predicted_labels = out
+        if args.loss_type == 'asoft':
+            predicted_labels, _ = out
+        else:
+            predicted_labels = out
+
         true_labels = Variable(label.cuda())
 
         # pdb.set_trace()

@@ -121,7 +121,6 @@ class AngleSoftmaxLoss(nn.Module):
 
         return loss
 
-
 class AngularSoftmax(nn.Module):
     def __init__(self,
                  in_feats,
@@ -203,18 +202,70 @@ class AngularSoftmax(nn.Module):
 
         return loss
 
+
+class AdditiveMarginLinear(nn.Module):
+    def __init__(self, feat_dim, n_classes=1000, use_gpu=False):
+        super(AdditiveMarginLinear, self).__init__()
+        self.feat_dim = feat_dim
+        self.W = torch.nn.Parameter(torch.randn(feat_dim, n_classes), requires_grad=True)
+        if use_gpu:
+            self.W.cuda()
+        nn.init.xavier_normal(self.W, gain=1)
+
+    def forward(self, x):
+        # assert x.size()[0] == label.size()[0]
+        assert x.size()[1] == self.in_feats
+
+        # pdb.set_trace()
+        x_norm = torch.norm(x, p=2, dim=1, keepdim=True).clamp(min=1e-12)
+        x_norm = torch.div(x, x_norm)
+
+        w_norm = torch.norm(self.W, p=2, dim=0, keepdim=True).clamp(min=1e-12)
+        w_norm = torch.div(self.W, w_norm)
+
+        costh = torch.mm(x_norm, w_norm)
+
+        return costh
+
+
+class AMSoftmaxLoss(nn.Module):
+    def __init__(self, margin=0.3, s=15):
+        super(AMSoftmaxLoss, self).__init__()
+        self.s = s
+        self.margin = margin
+        self.ce = nn.CrossEntropyLoss()
+
+    def forward(self, costh, label):
+        lb_view = label.view(-1, 1)
+
+        if lb_view.is_cuda:
+            lb_view = lb_view.cpu()
+
+        delt_costh = torch.zeros(costh.size()).scatter_(1, lb_view.data, self.margin)
+
+        if costh.is_cuda:
+            delt_costh = Variable(delt_costh.cuda())
+
+        costh_m = costh - delt_costh
+        costh_m_s = self.s * costh_m
+
+        loss = self.ce(costh_m_s, label)
+
+        return loss
+
 class AMSoftmax(nn.Module):
-    def __init__(self,
-                 in_feats,
-                 n_classes=10,
-                 m=0.3,
-                 s=15):
+    def __init__(self, in_feats, n_classes=10, m=0.3, s=15, use_gpu=True):
         super(AMSoftmax, self).__init__()
         self.m = m
         self.s = s
         self.in_feats = in_feats
-        self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes), requires_grad=True).cuda()
+        self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes), requires_grad=True)
         self.ce = nn.CrossEntropyLoss()
+
+        if use_gpu:
+            self.W.cuda()
+            self.ce = self.ce.cuda()
+
         nn.init.xavier_normal(self.W, gain=1)
 
     def forward(self, x, label):
@@ -224,9 +275,12 @@ class AMSoftmax(nn.Module):
         # pdb.set_trace()
         x_norm = torch.norm(x, p=2, dim=1, keepdim=True).clamp(min=1e-12)
         x_norm = torch.div(x, x_norm)
+
         w_norm = torch.norm(self.W, p=2, dim=0, keepdim=True).clamp(min=1e-12)
         w_norm = torch.div(self.W, w_norm)
+
         costh = torch.mm(x_norm, w_norm)
+
         lb_view = label.view(-1, 1)
 
         if lb_view.is_cuda:
@@ -242,30 +296,6 @@ class AMSoftmax(nn.Module):
         loss = self.ce(costh_m_s, label)
 
         return costh, loss
-
-class AMSoftmaxLoss(nn.Module):
-    def __init__(self, margin=0.3, s=15):
-        super(AMSoftmaxLoss, self).__init__()
-        self.it = 0
-        self.s = s
-        self.margin = margin
-        self.ce = nn.CrossEntropyLoss()
-
-    def forward(self, costh, label):
-        x_len = costh.pow(2).sum(1).pow(0.5)
-        costh = costh / x_len.view(-1, 1)
-        lb_view = label.view(-1, 1)
-        delt_costh = torch.zeros(costh.size()).scatter_(1, lb_view.cpu().data, self.margin)
-
-        if lb_view.is_cuda:
-            delt_costh = Variable(delt_costh.cuda())
-
-        costh_m = costh - delt_costh
-        costh_m_s = self.s * costh_m
-
-        loss = self.ce(costh_m_s, label)
-
-        return loss
 
 
 class CenterLoss(nn.Module):
