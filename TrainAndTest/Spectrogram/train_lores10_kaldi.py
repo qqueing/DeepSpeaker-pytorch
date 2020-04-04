@@ -71,6 +71,8 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/kaldi',
                     help='folder to output model checkpoints')
+
+parser.add_argument('--save-init', action='store_true', default=False, help='need to make mfb file')
 parser.add_argument('--resume',
                     default='Data/checkpoint/LoResNet10/spect/kaldi/checkpoint_10.pth', type=str,
                     metavar='PATH',
@@ -237,6 +239,13 @@ def main():
 
     # optionally resume from a checkpoint
     start_epoch = 0
+    if args.save_init:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start_epoch)
+        torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                    'scheduler': scheduler.state_dict()},
+                   # 'criterion': criterion.state_dict()
+                   check_path)
+
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
@@ -266,11 +275,6 @@ def main():
     # ce = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max).cuda()
     ce = nn.CrossEntropyLoss().cuda()
 
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
-    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict()},
-               # 'criterion': criterion.state_dict()
-               check_path)
 
     if args.cuda:
         model = model.cuda()
