@@ -250,7 +250,7 @@ def main():
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
-            # start_epoch = checkpoint['epoch']
+            start_epoch = checkpoint['epoch']
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
             # optimizer.load_state_dict(checkpoint['optimizer'])
