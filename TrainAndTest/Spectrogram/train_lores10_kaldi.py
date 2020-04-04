@@ -33,7 +33,7 @@ import os.path as osp
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
 from Process_Data import constants as c
-from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear
+from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
@@ -108,7 +108,11 @@ parser.add_argument('--test-batch-size', type=int, default=12, metavar='BST',
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
+parser.add_argument('--m', type=float, default=3, metavar='M',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--s', type=float, default=15, metavar='S',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
@@ -120,15 +124,14 @@ parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
-parser.add_argument('--lr-cent', type=float, default=0.05, help="learning rate for center loss")
 parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
                     help='learning rate decay ratio (default: 1e-4')
 parser.add_argument('--weight-decay', default=5e-4, type=float,
-                    metavar='W', help='weight decay (default: 0.0)')
+                    metavar='WEI', help='weight decay (default: 0.0)')
 parser.add_argument('--momentum', default=0.9, type=float,
-                    metavar='W', help='momentum for sgd (default: 0.9)')
+                    metavar='MOM', help='momentum for sgd (default: 0.9)')
 parser.add_argument('--dampening', default=0, type=float,
-                    metavar='W', help='dampening for sgd (default: 0.0)')
+                    metavar='DAM', help='dampening for sgd (default: 0.0)')
 parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
 
@@ -167,9 +170,9 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
-sys.stdout = NewLogger(osp.join(args.check_path, 'log_' + args.dataset + '.txt'))
+sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
-kwargs = {'num_workers': 8, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
@@ -251,7 +254,7 @@ def main():
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.feat_dim)
     elif args.loss_type == 'amsoft':
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+        xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     if args.loss_type == 'center':
@@ -262,7 +265,6 @@ def main():
                                     momentum=args.momentum)
 
     scheduler = MultiStepLR(optimizer, milestones=[10, 15], gamma=0.1)
-
     ce = [ce_criterion, xe_criterion]
 
     start_epoch = 0
@@ -285,9 +287,7 @@ def main():
             print('=> no checkpoint found at {}'.format(args.resume))
 
     # ['soft', 'asoft', 'center', 'amsoft'],
-
     # optionally resume from a checkpoint
-
 
     start = args.start_epoch + start_epoch
     print('Start epoch is : ' + str(start))
@@ -386,8 +386,8 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
 
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
     torch.save({'epoch': epoch,
-                'state_dict': model.state_dict()},
-               # 'criterion': criterion.state_dict()
+                'state_dict': model.state_dict(),
+                'criterion': ce},
                check_path)
 
     print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch, 100 * float(
