@@ -716,7 +716,7 @@ class LocalResNet(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 8))
 
         self.fc = nn.Sequential(
-            nn.Linear(self.in_planes * 8, embedding_size),
+            nn.Linear(self.inplanes * 8, embedding_size),
             nn.BatchNorm1d(embedding_size)
         )
         self.classifier = nn.Linear(self.embedding_size, num_classes)
