@@ -75,11 +75,11 @@ parser.add_argument('--sitw-dir', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='need to make mfb file')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LoResNet10/spect/kaldi/checkpoint_10.pth', type=str,
+                    default='Data/checkpoint/LoResNet10/spect/soft/checkpoint_10.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -313,9 +313,9 @@ def main():
         # pdb.set_trace()
         for param_group in optimizer.param_groups:
             print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
-
-        train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
+        train(train_loader, model, ce, optimizer, scheduler, epoch)
+        # test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
