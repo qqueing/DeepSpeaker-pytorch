@@ -313,8 +313,9 @@ def main():
         # pdb.set_trace()
         for param_group in optimizer.param_groups:
             print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
-        test(test_loader, valid_loader, model, epoch)
         train(train_loader, model, ce, optimizer, scheduler, epoch)
+        test(test_loader, valid_loader, model, epoch)
+
         # test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
