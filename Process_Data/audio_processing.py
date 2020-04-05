@@ -48,8 +48,8 @@ def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale
 
     return
 
-def make_Fbank(filename,
-               write_path, # sample_rate=c.SAMPLE_RATE,
+
+def make_Fbank(filename, write_path,  # sample_rate=c.SAMPLE_RATE,
                use_delta=c.USE_DELTA,
                use_scale=c.USE_SCALE,
                nfilt=c.FILTER_BANK,
@@ -173,7 +173,8 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
         raise ValueError('wav file does not exist.')
     #pdb.set_trace()
 
-    sample_rate, samples = wavfile.read(wav_path)
+    # samples, sample_rate = wavfile.read(wav_path)
+    sample_rate, samples = sf.read(wav_path, dtype='int16')
     sample_rate_norm = int(sample_rate / 1e3)
     frequencies, times, spectrogram = signal.spectrogram(x=samples, fs=sample_rate, window=signal.hamming(windowsize * sample_rate_norm), noverlap=(windowsize-stride) * sample_rate_norm, nfft=nfft)
 
@@ -213,8 +214,8 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, du
     :return: return spectrogram with shape of (len(wav/stride), windowsize * samplerate /2 +1).
     """
 
-    samplerate, samples = wavfile.read(wav_path)
-    # samples, samplerate = sf.read(wav_path)
+    # samplerate, samples = wavfile.read(wav_path)
+    samples, samplerate = sf.read(wav_path, dtype='int16')
     signal = sigproc.preemphasis(samples, preemph)
     frames = sigproc.framesig(signal, windowsize * samplerate, stride * samplerate, winfunc=window)
 
