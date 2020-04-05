@@ -214,7 +214,7 @@ class AdditiveMarginLinear(nn.Module):
 
     def forward(self, x):
         # assert x.size()[0] == label.size()[0]
-        assert x.size()[1] == self.in_feats
+        assert x.size()[1] == self.feat_dim
 
         # pdb.set_trace()
         x_norm = torch.norm(x, p=2, dim=1, keepdim=True).clamp(min=1e-12)
