@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=3
 
+# voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -20,3 +21,13 @@ if [ $stage -le 1 ]; then
   done
 fi
 
+# sitw
+if [ $stage -le 3 ]; then
+  for name in dev eval ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+      --out-set ${name} \
+      --feat-type spectrogram
+  done
+fi

@@ -33,11 +33,18 @@ parser.add_argument('--nj', type=int, default=16, metavar='E',
 parser.add_argument('--data-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_reverb_fb64/dev',
                     help='number of jobs to make feats (default: 10)')
+parser.add_argument('--data-format', type=str,
+                    default='wav', choices=['flac', 'wav'],
+                    help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--out-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--out-set', type=str, default='dev_reverb',
+                    help='number of jobs to make feats (default: 10)')
+
+parser.add_argument('--feat-type', type=str,
+                    default='fbank', choices=['fbank', 'spectrogram'],
                     help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -78,20 +85,26 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     spid, stdout, error = RunCommand(command)
                     # os.waitpid(spid, 0)
 
-                    temp_wav = temp_dir + '/%s.wav' % key
+                    temp_wav = temp_dir + '/%s.%s' % (key, args.data_format)
                     with open(temp_wav, 'wb') as wav_f:
                         wav_f.write(stdout)
-
-                    feat, duration = Make_Fbank(filename=temp_wav, filtertype='dnn', use_energy=True,
+                    if args.feat_type == 'fbank':
+                        feat, duration = Make_Fbank(filename=temp_wav, filtertype='dnn', use_energy=True,
                                                 nfilt=c.FILTER_BANK,
                                                 duration=True)
+                    elif args.feat_type == 'spectrogram':
+                        feat, duration = Make_Spect(wav_path=temp_wav, windowsize=0.02, stride=0.01, duration=True)
+
                     os.remove(temp_wav)
 
                 else:
-                    # feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
-                    #                             nfilt=c.FILTER_BANK, duration=True)
-                    feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+                    if args.feat_type == 'fbank':
+                        feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
+                                                    nfilt=c.FILTER_BANK, duration=True)
+                    elif args.feat_type == 'spectrogram':
+                        feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
                     # feat = np.load(pair[1]).astype(np.float32)
+
                 feat = feat.astype(np.float32)
                 kaldi_io.write_mat(feat_ark_f, feat, key='')
                 offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
