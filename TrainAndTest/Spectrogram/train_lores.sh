@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for loss in asoft center ; do
+for loss in asoft soft center ; do
   python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
     --nj 12 \
     --check-path Data/checkpoint/LoResNet10/spect/${loss} \
