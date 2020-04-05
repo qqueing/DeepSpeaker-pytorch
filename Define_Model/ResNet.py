@@ -696,7 +696,7 @@ class LocalResNet(nn.Module):
         self.inplanes = 64
         self.conv1 = nn.Conv2d(1, 64, kernel_size=5, stride=2, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # self.maxpool = nn.MaxPool2d(kernel_size=(1, 3), stride=1, padding=1)
 
         self.layer1 = self._make_layer(block, 64, layers[0])
 
@@ -770,7 +770,7 @@ class LocalResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        # x = self.maxpool(x)
         x = self.layer1(x)
 
         x = self.conv2(x)
