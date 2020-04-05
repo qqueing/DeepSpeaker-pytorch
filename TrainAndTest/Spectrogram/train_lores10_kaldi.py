@@ -121,7 +121,7 @@ parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO'
 # args for a-softmax
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
+parser.add_argument('--lambda-max', type=int, default=12500, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
