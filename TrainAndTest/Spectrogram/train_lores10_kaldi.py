@@ -216,11 +216,11 @@ random.shuffle(indices)
 indices = indices[:12800]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
-sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
-indices = list(range(len(sitw_test_dir)))
-random.shuffle(indices)
-indices = indices[:12800]
-sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
+# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
+# indices = list(range(len(sitw_test_dir)))
+# random.shuffle(indices)
+# indices = indices[:12800]
+# sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 #
 # sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
 # indices = list(range(len(sitw_dev_dir)))
@@ -298,8 +298,8 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2), shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
-                                                   **kwargs)
+    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
+    #                                                **kwargs)
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
 
@@ -316,7 +316,7 @@ def main():
 
         train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-        sitw_test(sitw_test_loader, model, epoch)
+        # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
         # exit(1)
