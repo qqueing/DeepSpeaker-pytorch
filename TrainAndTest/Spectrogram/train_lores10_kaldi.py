@@ -114,7 +114,7 @@ parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--s', type=float, default=15, metavar='S',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
+parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
 # args for a-softmax
@@ -216,11 +216,11 @@ random.shuffle(indices)
 indices = indices[:12800]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
-# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
-# indices = list(range(len(sitw_test_dir)))
-# random.shuffle(indices)
-# indices = indices[:12800]
-# sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
+sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
+indices = list(range(len(sitw_test_dir)))
+random.shuffle(indices)
+indices = indices[:12800]
+sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
 #
 # sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
 # indices = list(range(len(sitw_dev_dir)))
@@ -243,6 +243,25 @@ def main():
 
     # instantiate model and initialize weights
     model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
+
+    start_epoch = 0
+    if args.save_init:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start_epoch)
+        torch.save(model, check_path)
+
+    if args.resume:
+        if os.path.isfile(args.resume):
+            print('=> loading checkpoint {}'.format(args.resume))
+            checkpoint = torch.load(args.resume)
+            start_epoch = checkpoint['epoch']
+            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+            model.load_state_dict(filtered)
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # scheduler.load_state_dict(checkpoint['scheduler'])
+            # if 'criterion' in checkpoint.keys():
+            #     ce = checkpoint['criterion']
+        else:
+            print('=> no checkpoint found at {}'.format(args.resume))
 
     ce_criterion = nn.CrossEntropyLoss()
     if args.loss_type == 'soft':
@@ -268,25 +287,6 @@ def main():
     scheduler = MultiStepLR(optimizer, milestones=[10, 15], gamma=0.1)
     ce = [ce_criterion, xe_criterion]
 
-    start_epoch = 0
-    if args.save_init:
-        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start_epoch)
-        torch.save(model, check_path)
-
-    if args.resume:
-        if os.path.isfile(args.resume):
-            print('=> loading checkpoint {}'.format(args.resume))
-            checkpoint = torch.load(args.resume)
-            start_epoch = checkpoint['epoch']
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-            model.load_state_dict(filtered)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
-            # scheduler.load_state_dict(checkpoint['scheduler'])
-            if 'criterion' in checkpoint.keys():
-                ce.load_state_dict(checkpoint['criterion'])
-        else:
-            print('=> no checkpoint found at {}'.format(args.resume))
-
     # ['soft', 'asoft', 'center', 'amsoft'],
     # optionally resume from a checkpoint
 
@@ -298,8 +298,8 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2), shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
-    #                                                **kwargs)
+    sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
+                                                   **kwargs)
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
 
@@ -316,7 +316,7 @@ def main():
 
         train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-        # sitw_test(sitw_test_loader, model, epoch)
+        sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
         # exit(1)
