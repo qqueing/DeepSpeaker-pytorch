@@ -73,6 +73,7 @@ parser.add_argument('--test-dir', type=str,
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/kaldi',
                     help='folder to output model checkpoints')
@@ -172,7 +173,7 @@ if args.cuda:
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
-kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
