@@ -278,9 +278,8 @@ def main():
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     if args.loss_type == 'center':
-        center_params = list(map(id, xe_criterion.parameters()))
-        base_params = filter(lambda p: id(p) not in center_params, model.parameters())
-        optimizer = torch.optim.SGD([{'params': center_params, 'lr': args.lr * 5}, {'params': base_params}],
+        optimizer = torch.optim.SGD([{'params': xe_criterion.parameters(), 'lr': args.lr * 5},
+                                     {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
 
@@ -351,6 +350,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         if args.loss_type == 'soft':
             loss = ce_criterion(classfier, true_labels)
         elif args.loss_type == 'asoft':
+            classfier_label, _ = classfier
             loss = xe_criterion(classfier, true_labels)
         elif args.loss_type == 'center':
             loss_cent = ce_criterion(classfier, true_labels)
