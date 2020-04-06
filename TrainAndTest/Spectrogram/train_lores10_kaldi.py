@@ -109,6 +109,8 @@ parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
+parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
+                    help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
@@ -217,7 +219,7 @@ else:
 # pdb.set_trace()
 file_loader = read_mat
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
-                               transform=transform)
+                               transform=transform, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
 
 indices = list(range(len(test_dir)))
