@@ -12,6 +12,7 @@
 
 from __future__ import print_function
 import argparse
+import pdb
 import time
 import torch
 import os
@@ -125,7 +126,7 @@ def main():
         if os.path.isfile(check_path):
             print('=> loading checkpoint {}'.format(check_path))
             checkpoint = torch.load(check_path)
-
+            pdb.set_trace()
             e = checkpoint['epoch']
             model.load_state_dict(checkpoint['model'])
             ce = checkpoint['criterion']
