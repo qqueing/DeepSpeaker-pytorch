@@ -62,7 +62,7 @@ except AttributeError:
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
-# Model options
+# Data options
 parser.add_argument('--train-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
                     help='path to dataset')
@@ -94,6 +94,9 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
                     help='number of epochs to train (default: 10)')
 
 # Training options
+# Model options
+parser.add_argument('--channels', default='64,128,256', type=str,
+                    metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
@@ -246,11 +249,15 @@ def main():
     kernel_size = args.kernel_size.split(',')
     kernel_size = [int(x) for x in kernel_size]
     padding = [int((x - 1) / 2) for x in kernel_size]
+
     kernel_size = tuple(kernel_size)
     padding = tuple(padding)
 
+    channels = args.channels.split(',')
+    channels = [int(x) for x in channels]
+
     model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks,
-                        kernal_size=kernel_size, padding=padding)
+                        channels=channels, kernal_size=kernel_size, padding=padding)
 
     start_epoch = 0
     if args.save_init:
