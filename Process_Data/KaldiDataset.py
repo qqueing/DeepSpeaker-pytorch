@@ -895,89 +895,53 @@ class ScriptTestDataset(data.Dataset):
 
 
 class SitwTestDataset(data.Dataset):
-    def __init__(self, sitw_dir, sitw_set, transform, loader=np.load, return_uid=False, set_suffix='no_sil'):
+    """
+
+    """
+
+    def __init__(self, sitw_dir, sitw_set, transform, loader=read_mat, return_uid=False, set_suffix='no_sil'):
         # sitw_set: dev, eval
-        # sitw_dev_enroll  sitw_dev_test
-        enroll_feat_scp = sitw_dir + '/sitw_%s_enroll_%s/feats.scp' % (sitw_set, set_suffix)
-        enroll_spk2utt = sitw_dir + '/sitw_%s_enroll_%s/spk2utt' % (sitw_set, set_suffix)
+        feat_scp = sitw_dir + '/%s%s/feats.scp' % (sitw_set, set_suffix)
+        spk2utt = sitw_dir + '/%s%s/spk2utt' % (sitw_set, set_suffix)
+        trials = sitw_dir + '/%s%s/trials' % (sitw_set, set_suffix)
 
-        test_feat_scp = sitw_dir + '/sitw_%s_test_%s/feats.scp' % (sitw_set, set_suffix)
-        test_utt2spk = sitw_dir + '/sitw_%s_test_%s/utt2spk' % (sitw_set, set_suffix)
-        trials = sitw_dir + '/sitw_%s_test/trials/core-core.lst' % sitw_set
-
-        # else:
-        #     enroll_feat_scp = sitw_dir + '/sitw_%s_enroll/feats.scp' % sitw_set
-        #     enroll_spk2utt = sitw_dir + '/sitw_%s_enroll/spk2utt' % sitw_set
-        #
-        #     test_feat_scp = sitw_dir + '/sitw_%s_test/feats.scp' % sitw_set
-        #     test_utt2spk = sitw_dir + '/sitw_%s_test/utt2spk' % sitw_set
-
-        for p in enroll_feat_scp, enroll_spk2utt, test_feat_scp, test_utt2spk, trials:
+        for p in feat_scp, spk2utt, trials:
             check_exist(p)
 
-        enroll_spk2utt_dict = {}
-        with open(enroll_spk2utt, 'r') as u:
-            all_cls = u.readlines()
-            for line in all_cls:
-                spk_utt = line.split()
-                spk_name = spk_utt[0]
-                spk_utt = spk_utt[1]
-
-                enroll_spk2utt_dict[spk_name] = spk_utt
-
-        test_utt2spk_dict = {}
-        with open(test_utt2spk, 'r') as u:
-            all_cls = u.readlines()
-            for line in all_cls:
-                spk_utt = line.split()
-                spk_name = spk_utt[1]
-                spk_utt = spk_utt[0]
-
-                test_utt2spk_dict[spk_name] = spk_utt
-
-        enroll_speakers = [spk for spk in enroll_spk2utt_dict.keys()]
-        enroll_speakers.sort()
-        test_utts = [spk for spk in test_utt2spk_dict.keys()]
-        print('==> There are %d speakers in Enroll Dataset. ' \
-              'And %d utterances in sitw %s Dataset.' % (len(enroll_speakers), len(test_utts), sitw_set))
-
-        enroll_uid2feat = {}
-        with open(enroll_feat_scp, 'r') as t:
+        uid2feat = {}
+        with open(feat_scp, 'r') as t:
             all_pairs = t.readlines()
             for line in all_pairs:
                 # 12013 lpnns target
                 pair = line.split()
-                enroll_uid2feat[pair[0]] = pair[1]
-
-        test_uid2feat = {}
-        with open(test_feat_scp, 'r') as t:
-            all_pairs = t.readlines()
-            for line in all_pairs:
-                # 12013 lpnns target
-                pair = line.split()
-                test_uid2feat[pair[0]] = pair[1]
+                uid2feat[pair[0]] = pair[1]
 
         trials_pair = []
+        numofpositive = 0
         with open(trials, 'r') as t:
             all_pairs = t.readlines()
             for line in all_pairs:
                 # 12013 lpnns target
                 pair = line.split()
-                pair_true = False if pair[2] == 'nontarget' else True
+                if pair[2] == 'nontarget':
+                    pair_true = False
+                else:
+                    pair_true = True
+                    numofpositive += 1
 
-                trials_pair.append((enroll_spk2utt_dict[pair[0]], pair[1], pair_true))
+                trials_pair.append((pair[0], pair[1], pair_true))
+
+        trials_pair = np.array(trials_pair)
+        trials_pair = trials_pair[trials_pair[:, 2].argsort()]
 
         print('    There are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
         # pdb.set_trace()
-        self.feat_dim = loader(enroll_uid2feat[enroll_spk2utt_dict[enroll_speakers[0]]]).shape[1]
+        self.feat_dim = loader(uid2feat[trials[0][0]]).shape[1]
 
-        self.speakers = enroll_speakers
-        self.enroll_uid2feat = enroll_uid2feat
-        self.test_uid2feat = test_uid2feat
-
+        self.pairs = len(trials_pair)
+        self.numofpositive = numofpositive
+        self.uid2feat = uid2feat
         self.trials_pair = trials_pair
-        self.num_spks = len(enroll_speakers)
-
         self.loader = loader
         self.transform = transform
         self.return_uid = return_uid
@@ -985,8 +949,8 @@ class SitwTestDataset(data.Dataset):
     def __getitem__(self, index):
         uid_a, uid_b, label = self.trials_pair[index]
 
-        data_a = self.loader(self.enroll_uid2feat[uid_a])
-        data_b = self.loader(self.test_uid2feat[uid_b])
+        data_a = self.loader(self.uid2feat[uid_a])
+        data_b = self.loader(self.uid2feat[uid_b])
 
         data_a = self.transform(data_a)
         data_b = self.transform(data_b)
@@ -995,6 +959,35 @@ class SitwTestDataset(data.Dataset):
             return data_a, data_b, label, uid_a, uid_b
 
         return data_a, data_b, label
+
+    def partition(self, num):
+        if num > self.pairs:
+            print('%d is greater than the total number of pairs')
+
+        elif num * 0.4 > self.numofpositive:
+            indices = list(range(self.numofpositive, len(self.trials_pair)))
+            random.shuffle(indices)
+            indices = indices[:(num - self.numofpositive)]
+            positive_idx = list(range(self.numofpositive))
+
+            positive_pairs = self.trials_pair[positive_idx]
+            nagative_pairs = self.trials_pair[indices]
+
+            self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
+        else:
+            indices = list(range(self.numofpositive, len(self.trials_pair)))
+            random.shuffle(indices)
+            indices = indices[:(num - int(0.4 * num))]
+
+            positive_idx = list(range(self.numofpositive))
+            random.shuffle(indices)
+            positive_idx = positive_idx[:int(0.4 * num)]
+            positive_pairs = self.trials_pair[positive_idx]
+            nagative_pairs = self.trials_pair[indices]
+
+            self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
+
+        assert len(self.trials_pair) == num
 
     def __len__(self):
         return len(self.trials_pair)
