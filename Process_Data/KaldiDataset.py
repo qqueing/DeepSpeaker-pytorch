@@ -936,7 +936,7 @@ class SitwTestDataset(data.Dataset):
 
         print('    There are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
         # pdb.set_trace()
-        self.feat_dim = loader(uid2feat[trials[0][0]]).shape[1]
+        self.feat_dim = loader(uid2feat[trials_pair[0][0]]).shape[1]
 
         self.pairs = len(trials_pair)
         self.numofpositive = numofpositive
