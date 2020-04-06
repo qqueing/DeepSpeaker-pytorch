@@ -25,7 +25,8 @@ fi
 
 if [ $stage -le 2 ]; then
 
-  for loss in center amsoft ; do
+#  for loss in center amsoft ; do/
+  for loss in center ; do
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss} \
