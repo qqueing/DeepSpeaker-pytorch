@@ -934,7 +934,7 @@ class SitwTestDataset(data.Dataset):
         trials_pair = np.array(trials_pair)
         trials_pair = trials_pair[trials_pair[:, 2].argsort()[::-1]]
 
-        print('    There are %d pairs in sitw %s Dataset %d of them are positive.\n' % (
+        print('==>There are %d pairs in sitw %s Dataset %d of them are positive.' % (
         len(trials_pair), sitw_set, numofpositive))
         # pdb.set_trace()
         self.feat_dim = loader(uid2feat[trials_pair[0][0]]).shape[1]
@@ -992,7 +992,7 @@ class SitwTestDataset(data.Dataset):
         assert len(self.trials_pair) == num
         num_positive = 0
         for x, y, z in self.trials_pair:
-            if bool(z) == True:
+            if z == 'True':
                 num_positive += 1
 
         assert len(self.trials_pair) == num, '%d != %d' % (len(self.trials_pair), num)
