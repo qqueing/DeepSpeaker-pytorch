@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=4
+stage=5
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -55,5 +55,15 @@ if [ $stage -le 4 ]; then
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
       --out-set ${name}_spect \
       --feat-type spectrogram
+  done
+fi
+
+if [ $stage -le 5 ]; then
+  for name in train test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+      --out-set ${name}_fb64 \
+      --feat-type fbank
   done
 fi
