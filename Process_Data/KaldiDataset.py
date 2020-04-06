@@ -932,7 +932,7 @@ class SitwTestDataset(data.Dataset):
                 trials_pair.append((pair[0], pair[1], pair_true))
 
         trials_pair = np.array(trials_pair)
-        trials_pair = trials_pair[trials_pair[:, 2].argsort()]
+        trials_pair = trials_pair[trials_pair[:, 2].argsort()[::-1]]
 
         print('    There are %d pairs in sitw %s Dataset %d of them are positive.\n' % (
         len(trials_pair), sitw_set, numofpositive))
@@ -989,6 +989,14 @@ class SitwTestDataset(data.Dataset):
             self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
 
         assert len(self.trials_pair) == num
+        num_positive = 0
+        for x, y, z in self.trials_pair:
+            if bool(z) == True:
+                num_positive += 1
+
+        assert len(self.trials_pair) == num
+        assert self.numofpositive == num_positive
+        print('There are %d positive pairs' % num_positive)
 
     def __len__(self):
         return len(self.trials_pair)
