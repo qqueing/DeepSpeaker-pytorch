@@ -675,7 +675,9 @@ class LocalResNet(nn.Module):
     Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
     """
 
-    def __init__(self, resnet_size, embedding_size, num_classes, block=BasicBlock, kernal_size=5, padding=2):
+    def __init__(self, resnet_size, embedding_size, num_classes, block=BasicBlock,
+                 channels=[64, 128, 256],
+                 kernal_size=5, padding=2):
         super(LocalResNet, self).__init__()
         resnet_type = {10: [1, 1, 1, 1],
                        18: [2, 2, 2, 2],
@@ -689,22 +691,22 @@ class LocalResNet(nn.Module):
         self.relu = nn.LeakyReLU()
         # self.relu = ReLU(inplace=True)
 
-        self.inplanes = 64
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=kernal_size, stride=2, padding=padding, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.inplanes = channels[0]
+        self.conv1 = nn.Conv2d(1, channels[0], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
+        self.bn1 = nn.BatchNorm2d(channels[0])
         # self.maxpool = nn.MaxPool2d(kernel_size=(1, 3), stride=1, padding=1)
 
-        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer1 = self._make_layer(block, channels[0], layers[0])
 
-        self.inplanes = 128
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=kernal_size, stride=2, padding=padding, bias=False)
-        self.bn2 = nn.BatchNorm2d(128)
-        self.layer2 = self._make_layer(block, 128, layers[1])
+        self.inplanes = channels[1]
+        self.conv2 = nn.Conv2d(channels[0], channels[1], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
+        self.bn2 = nn.BatchNorm2d(channels[1])
+        self.layer2 = self._make_layer(block, channels[1], layers[1])
 
-        self.inplanes = 256
-        self.conv3 = nn.Conv2d(128, 256, kernel_size=kernal_size, stride=2, padding=padding, bias=False)
-        self.bn3 = nn.BatchNorm2d(256)
-        self.layer3 = self._make_layer(block, 256, layers[2])
+        self.inplanes = channels[2]
+        self.conv3 = nn.Conv2d(channels[1], channels[2], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
+        self.bn3 = nn.BatchNorm2d(channels[2])
+        self.layer3 = self._make_layer(block, channels[2], layers[2])
 
         # self.in_planes = 512
         # self.conv4 = nn.Conv2d(256, 512, kernel_size=5, stride=2, padding=2, bias=False)
