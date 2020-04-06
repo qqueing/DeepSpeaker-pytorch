@@ -28,7 +28,7 @@ if [ $stage -le 1 ]; then
       --lr 0.01 \
       --loss-ratio 0.1 \
       --milestones 4 \
-      --epochs 8
+      --epochs 10
   done
 
 fi
