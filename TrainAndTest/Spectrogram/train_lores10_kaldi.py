@@ -502,10 +502,11 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
     writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
 
-    print('\nFor {}_distance, ' % ('cos' if args.cos_sim else 'l2'))
+    dist_type = 'cos' if args.cos_sim else 'l2'
+    print('\nFor %s_distance, ' % dist_type)
     print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
     print('  mindcf-0.01 {:.4f}, mindcf-0.01 {:.4f},'.format(mindcf_01, mindcf_001))
-    print('  Valid Accuracy is %.2f %%.\33[0m' % valid_accuracy)
+    print('  Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
 
     torch.cuda.empty_cache()
 
