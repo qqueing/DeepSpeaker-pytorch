@@ -934,7 +934,8 @@ class SitwTestDataset(data.Dataset):
         trials_pair = np.array(trials_pair)
         trials_pair = trials_pair[trials_pair[:, 2].argsort()]
 
-        print('    There are %d pairs in sitw %s Dataset.\n' % (len(trials_pair), sitw_set))
+        print('    There are %d pairs in sitw %s Dataset %d of them are positive.\n' % (
+        len(trials_pair), sitw_set, numofpositive))
         # pdb.set_trace()
         self.feat_dim = loader(uid2feat[trials_pair[0][0]]).shape[1]
 
@@ -970,8 +971,8 @@ class SitwTestDataset(data.Dataset):
             indices = indices[:(num - self.numofpositive)]
             positive_idx = list(range(self.numofpositive))
 
-            positive_pairs = self.trials_pair[positive_idx]
-            nagative_pairs = self.trials_pair[indices]
+            positive_pairs = self.trials_pair[positive_idx].copy()
+            nagative_pairs = self.trials_pair[indices].copy()
 
             self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
         else:
@@ -982,9 +983,9 @@ class SitwTestDataset(data.Dataset):
             positive_idx = list(range(self.numofpositive))
             random.shuffle(positive_idx)
             positive_idx = positive_idx[:int(0.4 * num)]
-            positive_pairs = self.trials_pair[positive_idx]
-            nagative_pairs = self.trials_pair[indices]
-
+            positive_pairs = self.trials_pair[positive_idx].copy()
+            nagative_pairs = self.trials_pair[indices].copy()
+            self.numofpositive = len(positive_pairs)
             self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
 
         assert len(self.trials_pair) == num
