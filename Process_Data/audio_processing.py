@@ -250,8 +250,8 @@ def Make_Fbank(filename,
     if not os.path.exists(filename):
         raise ValueError('wav file does not exist.')
 
-    sample_rate, audio = wavfile.read(filename)
-    # audio, sample_rate = sf.read(filename)
+    # sample_rate, audio = wavfile.read(filename)
+    audio, sample_rate = sf.read(filename, dtype='int16')
     # audio, sample_rate = librosa.load(filename, sr=None)
     #audio = audio.flatten()
 
