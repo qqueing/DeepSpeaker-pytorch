@@ -980,7 +980,7 @@ class SitwTestDataset(data.Dataset):
             indices = indices[:(num - int(0.4 * num))]
 
             positive_idx = list(range(self.numofpositive))
-            random.shuffle(indices)
+            random.shuffle(positive_idx)
             positive_idx = positive_idx[:int(0.4 * num)]
             positive_pairs = self.trials_pair[positive_idx]
             nagative_pairs = self.trials_pair[indices]
