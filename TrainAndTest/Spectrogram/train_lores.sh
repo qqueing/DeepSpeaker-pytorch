@@ -33,6 +33,7 @@ if [ $stage -le 2 ]; then
       --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_20.pth \
       --loss-type ${loss} \
       --lr 0.01 \
+      --loss-ratio 0.01 \
       --milestones 6 \
       --epochs 10
 
