@@ -86,6 +86,8 @@ parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
+parser.add_argument('--milestones', default='10,15', type=str,
+                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
 parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
@@ -138,8 +140,6 @@ parser.add_argument('--dampening', default=0, type=float,
                     metavar='DAM', help='dampening for sgd (default: 0.0)')
 parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
-parser.add_argument('--milestones', default='10,15', type=str,
-                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
 
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
