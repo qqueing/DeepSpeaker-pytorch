@@ -128,7 +128,11 @@ def main():
             checkpoint = torch.load(check_path)
             # pdb.set_trace()
             e = checkpoint['epoch']
-            model.load_state_dict(checkpoint['model'])
+
+            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+            model.load_state_dict(filtered)
+
+            # model.load_state_dict(checkpoint['model'])
             ce = checkpoint['criterion']
 
             torch.save({'epoch': e,
