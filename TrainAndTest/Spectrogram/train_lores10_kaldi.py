@@ -15,7 +15,7 @@ import pathlib
 import pdb
 import random
 import time
-
+import sys
 from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
 import torch
@@ -171,7 +171,7 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
-import sys
+
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
