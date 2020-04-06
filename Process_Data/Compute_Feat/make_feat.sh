@@ -12,7 +12,18 @@ if [ $stage -le 0 ]; then
       --out-set ${name}_kaldi \
       --feat-type fbank \
       --filter-type mel
+  done
+fi
 
+if [ $stage -le 0 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --nj 16 \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64 \
+      --out-set ${name}_linear \
+      --feat-type fbank \
+      --filter-type linear
   done
 fi
 
