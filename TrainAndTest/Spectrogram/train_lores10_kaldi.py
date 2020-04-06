@@ -28,7 +28,7 @@ import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 import os.path as osp
-import sys
+
 
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
@@ -171,6 +171,7 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
+import sys
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
