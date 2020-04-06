@@ -55,7 +55,6 @@ class CenterLoss(nn.Module):
 
         # Variance for centers
         # variance = torch.std(self.centers, dim=1).sum()
-
         loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
 
         return loss
