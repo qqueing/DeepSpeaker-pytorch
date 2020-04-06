@@ -272,7 +272,7 @@ def main():
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
         xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
-        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.feat_dim)
+        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
         xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
