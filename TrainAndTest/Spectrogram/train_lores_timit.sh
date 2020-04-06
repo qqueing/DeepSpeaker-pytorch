@@ -14,10 +14,11 @@ if [ $stage -le 0 ]; then
       --milestones 4,8 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
-      --channels 8,32,128 \
+      --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --num-valid 3 \
+      --weight-decay 0.001 \
       --loss-type ${loss}
   done
 fi
@@ -34,12 +35,13 @@ if [ $stage -le 1 ]; then
       --milestones 3 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_15.pth \
-      --channels 8,32,128 \
+      --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --lr 0.01 \
       --loss-ratio 0.1 \
       --num-valid 3 \
+      --weight-decay 0.001 \
       --loss-type ${loss}
   done
 
@@ -57,11 +59,12 @@ if [ $stage -le 2 ]; then
       --milestones 4,8 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
-      --channels 8,32,128 \
+      --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --num-valid 3 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/kernel_${kernel} \
+      --weight-decay 0.001 \
       --kernel-size ${kernel}
   done
 
