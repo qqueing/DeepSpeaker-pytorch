@@ -144,7 +144,7 @@ parser.add_argument('--optimizer', default='sgd', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='0', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
