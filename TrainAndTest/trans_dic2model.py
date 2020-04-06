@@ -57,7 +57,7 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
+parser.add_argument('--loss-type', type=str, default='asoft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--m', type=float, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
