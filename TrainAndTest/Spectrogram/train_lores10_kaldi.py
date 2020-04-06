@@ -92,6 +92,8 @@ parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPO
 # Training options
 parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
                     help='acoustic feature dimension')
+parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
+                    help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
@@ -245,7 +247,14 @@ def main():
     print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
     # instantiate model and initialize weights
-    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
+    kernel_size = args.kernel_size.split(',')
+    kernel_size = [int(x) for x in kernel_size]
+    padding = [int((x - 1) / 2) for x in kernel_size]
+    kernel_size = tuple(kernel_size)
+    padding = tuple(padding)
+
+    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks,
+                        kernal_size=kernel_size, padding=padding)
 
     start_epoch = 0
     if args.save_init:
