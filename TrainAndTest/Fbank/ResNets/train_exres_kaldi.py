@@ -11,9 +11,9 @@
 """
 # from __future__ import print_function
 import argparse
-import pathlib
 import pdb
 import random
+import sys
 import time
 from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
@@ -29,12 +29,16 @@ from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from Define_Model.ResNet import ExporingResNet
+from Define_Model.LossFunction import CenterLoss
+from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer
+from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Define_Model.model import PairwiseDistance
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
 import warnings
+
+from logger import NewLogger
 
 warnings.filterwarnings("ignore")
 # Version conflict
@@ -57,16 +61,15 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # options for vox1
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/dev_kaldi',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_kaldi',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_dnn64/test_kaldi',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_kaldi',
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
+
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
-parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
-                    help='path to pairs file')
-
 parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True,
@@ -78,17 +81,19 @@ parser.add_argument('--resume',
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=40, metavar='E',
+parser.add_argument('--epochs', type=int, default=30, metavar='E',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
-                    help='minimum epoch for initial parameter using softmax (default: 2')
+parser.add_argument('--milestones', default='14,20,25', type=str,
+                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
+parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
+                    help='number of epochs to train (default: 10)')
 
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=80, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=8, metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -97,11 +102,22 @@ parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT'
 parser.add_argument('--input-per-spks', type=int, default=240, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
-# parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
-parser.add_argument('--margin', type=float, default=3, metavar='MARGIN',
-                    help='the margin value for the triplet loss function (default: 1.0')
-parser.add_argument('--loss-ratio', type=float, default=2.0, metavar='LOSSRATIO',
+# loss configure
+parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
+                    help='path to voxceleb1 test dataset')
+parser.add_argument('--m', type=float, default=3, metavar='M',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--s', type=float, default=15, metavar='S',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
+# args for a-softmax
+parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
+                    help='random seed (default: 0)')
+parser.add_argument('--lambda-max', type=int, default=10500, metavar='S',
+                    help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                     help='learning rate (default: 0.125)')
@@ -123,7 +139,7 @@ parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--log-interval', type=int, default=100, metavar='LI',
+parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
                     help='how many batches to wait before logging training status')
 
 parser.add_argument('--mfb', action='store_true', default=True,
@@ -150,10 +166,12 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='exploring')
+sys.stdout = NewLogger(os.path.join(args.check_path, 'log.txt'))
 
-kwargs = {'num_workers': 12, 'pin_memory': False} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
+
 opt_kwargs = {'lr': args.lr,
               'lr_decay': args.lr_decay,
               'weight_decay': args.weight_decay,
@@ -189,7 +207,7 @@ test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, loader=fi
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:25600]
+indices = indices[:args.veri_pairs]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
@@ -206,15 +224,19 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers))
+    model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers),
+                           embedding_size=args.embedding_size)
 
     if args.cuda:
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[15, 24, 32], gamma=0.1)
-    # criterion = AngularSoftmax(in_feats=args.embedding_size,
-    #                           num_classes=len(train_dir.classes))
+
+    milestones = args.milestones.split(',')
+    milestones = [int(x) for x in milestones]
+    milestones.sort()
+    scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+
     start = 0
     if args.save_init:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
@@ -235,6 +257,29 @@ def main():
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
+    ce_criterion = nn.CrossEntropyLoss()
+    if args.loss_type == 'soft':
+        xe_criterion = None
+    elif args.loss_type == 'asoft':
+        ce_criterion = None
+        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+
+        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
+        lambda_max = int(all_iteration * 0.3) // 500 * 500
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
+    elif args.loss_type == 'center':
+        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
+    elif args.loss_type == 'amsoft':
+        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
+        xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
+
+    optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
+    if args.loss_type == 'center':
+        optimizer = torch.optim.SGD([{'params': xe_criterion.parameters(), 'lr': args.lr * 5},
+                                     {'params': model.parameters()}],
+                                    lr=args.lr, weight_decay=args.weight_decay,
+                                    momentum=args.momentum)
+
     start += args.start_epoch
     print('Start epoch is : ' + str(start))
     end = start + args.epochs
@@ -244,14 +289,21 @@ def main():
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-    criterion = nn.CrossEntropyLoss().cuda()
+    ce = [ce_criterion, xe_criterion]
+    if args.cuda:
+        model = model.cuda()
+        for i in range(len(ce)):
+            if ce[i] != None:
+                ce[i] = ce[i].cuda()
 
     for epoch in range(start, end):
         # pdb.set_trace()
+        print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
-            print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
+            print('{} '.format(param_group['lr']), end='')
+        print(' \33[0m')
 
-        train(train_loader, model, optimizer, criterion, scheduler, epoch)
+        train(train_loader, model, optimizer, ce, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
@@ -260,7 +312,7 @@ def main():
     writer.close()
 
 
-def train(train_loader, model, optimizer, criterion, scheduler, epoch):
+def train(train_loader, model, optimizer, ce, scheduler, epoch):
     # switch to evaluate mode
     model.train()
 
@@ -268,6 +320,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     total_datasize = 0.
     total_loss = 0.
     output_softmax = nn.Softmax(dim=1)
+    ce_criterion, xe_criterion = ce
 
     pbar = tqdm(enumerate(train_loader))
     for batch_idx, (data, label) in pbar:
@@ -275,27 +328,40 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         if args.cuda:
             data = data.cuda()
             label = label.cuda()
-        data, label = Variable(data), Variable(label)
+        data, true_labels = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model.pre_forward_norm(data)
-        classfier = model(feats)
+        classfier, feats = model(data)
+        classfier_label = classfier
 
-        predicted_labels = output_softmax(classfier)
+        if args.loss_type == 'soft':
+            loss = ce_criterion(classfier, true_labels)
+        elif args.loss_type == 'asoft':
+            classfier_label, _ = classfier
+            loss = xe_criterion(classfier, true_labels)
+        elif args.loss_type == 'center':
+            loss_cent = ce_criterion(classfier, true_labels)
+            loss_xent = xe_criterion(feats, true_labels)
+            loss = args.loss_ratio * loss_xent + loss_cent
+        elif args.loss_type == 'amsoft':
+            loss = xe_criterion(classfier, true_labels)
+
+        predicted_labels = output_softmax(classfier_label)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-
-        loss = criterion(classfier, label)
-
-        batch_correct = float((predicted_one_labels == label).sum().item())
-        minibatch_acc = batch_correct / len(predicted_one_labels)
-        correct += batch_correct
+        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
+            predicted_one_labels)
+        correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
         total_datasize += len(predicted_one_labels)
         total_loss += loss.item()
         # pdb.set_trace()
-
         # compute gradient and update weights
         optimizer.zero_grad()
         loss.backward()
+
+        if args.loss_type == 'center' and args.loss_ratio != 0:
+            for param in xe_criterion.parameters():
+                param.grad.data *= (1. / args.loss_ratio)
+
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
@@ -312,9 +378,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
     torch.save({'epoch': epoch,
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict()},
-               # 'criterion': criterion.state_dict()
+                'criterion': ce},
                check_path)
 
     print('\n\33[91mFor Softmax Exporing-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m'.format(
@@ -336,15 +400,16 @@ def test(test_loader, valid_loader, model, epoch):
     total_datasize = 0.
     for batch_idx, (data, label) in valid_pbar:
         data = Variable(data.cuda())
-        # compute output
-        # pdb.set_trace()
-        out = model.pre_forward_norm(data)
-        cls = model(out)
 
-        predicted_labels = cls
+        # compute output
+        out, _ = model(data)
+        if args.loss_type == 'asoft':
+            predicted_labels, _ = out
+        else:
+            predicted_labels = out
+
         true_labels = Variable(label.cuda())
 
-        # pdb.set_trace()
         predicted_one_labels = softmax(predicted_labels)
         predicted_one_labels = torch.max(predicted_one_labels, dim=1)[1]
 
@@ -372,19 +437,21 @@ def test(test_loader, valid_loader, model, epoch):
     for batch_idx, (data_a, data_p, label) in pbar:
         vec_shape = data_a.shape
         # pdb.set_trace()
-        data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
-        data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+        if vec_shape[1] != 1:
+            data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+            data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a = model.pre_forward_norm(data_a)
-        out_p = model.pre_forward_norm(data_p)
+        _, out_a = model(data_a)
+        _, out_p = model(data_p)
 
         dists = l2_dist.forward(out_a, out_p)
-        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+        if vec_shape[1] != 1:
+            dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
@@ -402,8 +469,16 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\n\33[91mFor %s_distance, Test ERR is %.4f %%. Threshold is %.4f . Valid Accuracy is %.4f %%.\33[0m' % ( \
-        'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+    # mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
+    # writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    # writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+
+    dist_type = 'cos' if args.cos_sim else 'l2'
+    print('\nFor %s_distance, ' % dist_type)
+    print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
+    # print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
+    print('  Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
+
 
     torch.cuda.empty_cache()
 

@@ -29,9 +29,9 @@ from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 import os.path as osp
 
-from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
 from Process_Data import constants as c
+from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
 from TrainAndTest.common_func import create_optimizer
@@ -122,7 +122,6 @@ parser.add_argument('--s', type=float, default=15, metavar='S',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
-
 # args for a-softmax
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
@@ -282,7 +281,11 @@ def main():
     elif args.loss_type == 'asoft':
         ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+
+        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
+        lambda_max = int(all_iteration * 0.3) // 500 * 500
+
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':
@@ -505,7 +508,7 @@ def test(test_loader, valid_loader, model, epoch):
     dist_type = 'cos' if args.cos_sim else 'l2'
     print('\nFor %s_distance, ' % dist_type)
     print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
-    print('  mindcf-0.01 {:.4f}, mindcf-0.01 {:.4f},'.format(mindcf_01, mindcf_001))
+    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
     print('  Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
 
     torch.cuda.empty_cache()

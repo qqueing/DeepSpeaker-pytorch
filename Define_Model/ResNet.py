@@ -230,7 +230,7 @@ class ExporingResNet(nn.Module):
         )
 
         self.alpha = 12
-        self.fc2 = nn.Linear(embedding_size, num_classes)
+        self.classifier = nn.Linear(embedding_size, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -278,7 +278,7 @@ class ExporingResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def pre_forward_norm(self, x):
+    def _forward(self, x):
         # pdb.set_trace()
         x = self.conv1(x)
         x = self.bn1(x)
@@ -295,13 +295,11 @@ class ExporingResNet(nn.Module):
         x = self.fc1(x)
 
         x = self.l2_norm(x)
-        x = x * self.alpha
+        feat = x * self.alpha
 
-        return x
+        x = self.classifier(x)
 
-    def _forward(self, x):
-        x = self.fc2(x)
-        return x
+        return x, feat
 
     # Allow for accessing forward method in a inherited class
     forward = _forward
