@@ -127,7 +127,7 @@ def main():
             checkpoint = torch.load(check_path)
 
             e = checkpoint['epoch']
-            model = model.load_state_dict(checkpoint['model'])
+            model.load_state_dict(checkpoint['model'])
             ce = checkpoint['criterion']
 
             torch.save({'epoch': e,
