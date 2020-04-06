@@ -36,7 +36,6 @@ parser.add_argument('--data-dir', type=str,
 parser.add_argument('--data-format', type=str,
                     default='wav', choices=['flac', 'wav'],
                     help='number of jobs to make feats (default: 10)')
-
 parser.add_argument('--out-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
                     help='number of jobs to make feats (default: 10)')
@@ -45,6 +44,9 @@ parser.add_argument('--out-set', type=str, default='dev_reverb',
 
 parser.add_argument('--feat-type', type=str,
                     default='fbank', choices=['fbank', 'spectrogram'],
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--filter-type', type=str,
+                    default='mel', choices=['mel', 'linear', 'dnn'],
                     help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
@@ -89,9 +91,9 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     with open(temp_wav, 'wb') as wav_f:
                         wav_f.write(stdout)
                     if args.feat_type == 'fbank':
-                        feat, duration = Make_Fbank(filename=temp_wav, filtertype='dnn', use_energy=True,
-                                                nfilt=c.FILTER_BANK,
-                                                duration=True)
+                        feat, duration = Make_Fbank(filename=temp_wav, filtertype=args.filter_type, use_energy=True,
+                                                    nfilt=c.FILTER_BANK,
+                                                    duration=True)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=temp_wav, windowsize=0.02, stride=0.01, duration=True)
 
@@ -99,7 +101,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
 
                 else:
                     if args.feat_type == 'fbank':
-                        feat, duration = Make_Fbank(filename=pair[1], filtertype='dnn', use_energy=True,
+                        feat, duration = Make_Fbank(filename=pair[1], filtertype=args.filter_type, use_energy=True,
                                                     nfilt=c.FILTER_BANK, duration=True)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
