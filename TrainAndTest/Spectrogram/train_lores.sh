@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-stage=0
-if [ $stage -le 0 ]; then
-  for loss in asoft soft ; do
-    python TrainAndTest/trans_dic2model.py \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-      --loss-type ${loss} \
-      --epochs 20
-  done
-fi
+stage=2
+#if [ $stage -le 0 ]; then
+#  for loss in asoft soft ; do
+#    python TrainAndTest/trans_dic2model.py \
+#      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
+#      --loss-type ${loss} \
+#      --epochs 20
+#  done
+#fi
 
-stage=10
+#stage=10
 
 if [ $stage -le 1 ]; then
-  for loss in asoft soft center ; do
+  for loss in asoft soft  ; do
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss} \
@@ -24,10 +24,17 @@ if [ $stage -le 1 ]; then
 fi
 
 if [ $stage -le 2 ]; then
-  python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-    --check-path Data/checkpoint/LoResNet10/spect/amsoft \
-    --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_20.pth \
-    --loss-type amsoft \
-    --lr 0.01 \
-    --epochs 10
+
+  for loss in center amsoft ; do
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --nj 12 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
+      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_20.pth \
+      --loss-type ${loss} \
+      --lr 0.01 \
+      --milestones 6 \
+      --epochs 10
+
+  done
+
 fi

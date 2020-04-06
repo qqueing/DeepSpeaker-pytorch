@@ -134,6 +134,8 @@ parser.add_argument('--dampening', default=0, type=float,
                     metavar='DAM', help='dampening for sgd (default: 0.0)')
 parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
+parser.add_argument('--milestones', default='10,15', type=str,
+                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
 
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -288,7 +290,10 @@ def main():
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
 
-    scheduler = MultiStepLR(optimizer, milestones=[10, 15], gamma=0.1)
+    milestones = args.milestones.split(',')
+    milestones = [int(x) for x in milestones]
+    milestones.sort()
+    scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
     ce = [ce_criterion, xe_criterion]
 
     # ['soft', 'asoft', 'center', 'amsoft'],
