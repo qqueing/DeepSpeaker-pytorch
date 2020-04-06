@@ -124,7 +124,8 @@ def main():
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
         if os.path.isfile(check_path):
             print('=> loading checkpoint {}'.format(check_path))
-            checkpoint = torch.load(args.resume)
+            checkpoint = torch.load(check_path)
+
             e = checkpoint['epoch']
             model = model.load_state_dict(checkpoint['model'])
             ce = checkpoint['criterion']
