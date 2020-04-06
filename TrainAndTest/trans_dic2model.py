@@ -127,20 +127,14 @@ def main():
         if os.path.isfile(check_path):
             print('=> loading checkpoint {}'.format(check_path))
             checkpoint = torch.load(check_path)
-            pdb.set_trace()
+            # pdb.set_trace()
             e = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+            model_dict = model.state_dict()
+            model_dict.update(filtered)
 
-            # if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
-            #
-            #     filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k and 'classifier' not in k}
-            #     model_dict = model.state_dict()
-            #     model_dict.update(filtered)
-            #     filtered = model_dict
-            model.load_state_dict(filtered)
-
-            # model.load_state_dict(checkpoint['model'])
+            model.load_state_dict(model_dict)
             ce = checkpoint['criterion']
 
             torch.save({'epoch': e,
