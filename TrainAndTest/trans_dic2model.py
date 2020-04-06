@@ -116,7 +116,7 @@ def main():
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=num_spks)
 
     # ['soft', 'asoft', 'center', 'amsoft'], optionally resume from a checkpoint
-    start = 0
+    start = 1
     print('Start epoch is : ' + str(start))
     # start = 0
     end = start + args.epochs
@@ -126,7 +126,7 @@ def main():
         if os.path.isfile(check_path):
             print('=> loading checkpoint {}'.format(check_path))
             checkpoint = torch.load(check_path)
-            pdb.set_trace()
+            # pdb.set_trace()
             e = checkpoint['epoch']
             model.load_state_dict(checkpoint['model'])
             ce = checkpoint['criterion']
