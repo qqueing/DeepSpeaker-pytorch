@@ -41,7 +41,7 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='Trans dict to model object')
 # Model options
-parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
+parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/asoft',
                     help='folder to output model checkpoints')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -126,7 +126,7 @@ def main():
         if os.path.isfile(check_path):
             print('=> loading checkpoint {}'.format(check_path))
             checkpoint = torch.load(check_path)
-            # pdb.set_trace()
+            pdb.set_trace()
             e = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
