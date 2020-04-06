@@ -259,10 +259,10 @@ def main():
             start_epoch = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-            model_dict = model.state_dict()
-            model_dict = model_dict.update(filtered)
+            # model_dict = model.state_dict()
+            # model_dict = model_dict.update(filtered)
 
-            model.load_state_dict(model_dict)
+            model.load_state_dict(filtered)
             # optimizer.load_state_dict(checkpoint['optimizer'])
             # scheduler.load_state_dict(checkpoint['scheduler'])
             # if 'criterion' in checkpoint.keys():
