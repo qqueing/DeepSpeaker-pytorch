@@ -985,6 +985,7 @@ class SitwTestDataset(data.Dataset):
             positive_idx = positive_idx[:int(0.4 * num)]
             positive_pairs = self.trials_pair[positive_idx].copy()
             nagative_pairs = self.trials_pair[indices].copy()
+
             self.numofpositive = len(positive_pairs)
             self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
 
@@ -994,8 +995,8 @@ class SitwTestDataset(data.Dataset):
             if bool(z) == True:
                 num_positive += 1
 
-        assert len(self.trials_pair) == num
-        assert self.numofpositive == num_positive
+        assert len(self.trials_pair) == num, '%d != %d' % (len(self.trials_pair), num)
+        assert self.numofpositive == num_positive, '%d != %d' % (self.numofpositive, num_positive)
         print('There are %d positive pairs' % num_positive)
 
     def __len__(self):
