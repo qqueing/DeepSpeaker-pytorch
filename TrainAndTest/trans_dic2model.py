@@ -9,51 +9,17 @@
 @Time: 2020/4/6 1:38 PM
 @Overview:
 """
-# !/usr/bin/env python
-# encoding: utf-8
 
-"""
-@Author: yangwenhao
-@Contact: 874681044@qq.com
-@Software: PyCharm
-@File: train_lores10_kaldi.py
-@Time: 2020/4/4 11:14 AM
-@Overview:
-"""
 from __future__ import print_function
 import argparse
-import pathlib
-import pdb
-import random
 import time
-import sys
-from kaldi_io import read_mat
-from tensorboardX import SummaryWriter
 import torch
-import torch.nn as nn
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
 import os
-import numpy as np
-from torch.optim.lr_scheduler import MultiStepLR
-from tqdm import tqdm
-import os.path as osp
 
-from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
-from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
-from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer
-from Define_Model.model import PairwiseDistance, SuperficialResCNN
-from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
 # Version conflict
 import warnings
-
-from logger import NewLogger
 
 warnings.filterwarnings("ignore")
 
@@ -72,7 +38,7 @@ except AttributeError:
     torch._utils._rebuild_tensor_v2 = _rebuild_tensor_v2
 
 # Training settings
-parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
+parser = argparse.ArgumentParser(description='Trans dict to model object')
 # Model options
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
                     help='folder to output model checkpoints')
