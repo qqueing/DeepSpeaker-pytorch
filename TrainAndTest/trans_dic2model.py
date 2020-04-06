@@ -112,6 +112,7 @@ def main():
     # start_epoch = 0
     if args.loss_type == 'asoft':
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=num_spks, m=args.m)
+
     elif args.loss_type == 'amsoft':
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=num_spks)
 
@@ -130,6 +131,13 @@ def main():
             e = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+
+            # if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
+            #
+            #     filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k and 'classifier' not in k}
+            #     model_dict = model.state_dict()
+            #     model_dict.update(filtered)
+            #     filtered = model_dict
             model.load_state_dict(filtered)
 
             # model.load_state_dict(checkpoint['model'])
