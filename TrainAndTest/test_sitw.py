@@ -175,7 +175,7 @@ def sitw_test(sitw_dev_loader, sitw_test_loader, model, epoch):
     for batch_idx, (data_a, data_p, label) in pbar:
 
         vec_shape = data_a.shape
-        print(label)
+        # print(label)
         # pdb.set_trace()
         if vec_shape[1] != 1:
             data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
