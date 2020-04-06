@@ -6,7 +6,8 @@ for loss in asoft soft ; do
     --check-path Data/checkpoint/LoResNet10/spect/${loss} \
     --veri-pairs 18000 \
     --loss-type ${loss} \
-    --gpu-id 0
+    --gpu-id 0 \
+    --epochs 20
 done
 
 #python TrainAndTest/Spectrogram/train_lores10_kaldi.py \

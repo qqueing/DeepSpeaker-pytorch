@@ -285,7 +285,7 @@ def main():
                                                    shuffle=False, **kwargs)
     sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_dir, batch_size=args.test_batch_size,
                                                   shuffle=False, **kwargs)
-    epochs = np.arange(1, args.epoch)
+    epochs = np.arange(1, args.epoch + 1)
     resume_path = args.check_path + '/checkpoint_{}.pth'
     for epoch in epochs:
         # Load model from Checkpoint file
