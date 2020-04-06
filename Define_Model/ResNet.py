@@ -184,14 +184,8 @@ class SimpleResNet(nn.Module):
 # https://arxiv.org/abs/1806.03209
 class ExporingResNet(nn.Module):
 
-    def __init__(self, layers, block=BasicBlock,
-                 input_frames=300,
-                 num_classes=1000,
-                 embedding_size=128,
-                 zero_init_residual=False,
-                 groups=1,
-                 width_per_group=64,
-                 replace_stride_with_dilation=None,
+    def __init__(self, layers, block=BasicBlock, input_frames=300, num_classes=1000, embedding_size=128,
+                 zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
         super(ExporingResNet, self).__init__()
 
@@ -213,7 +207,7 @@ class ExporingResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=7, stride=1, padding=3, bias=False)
         self.bn1 = norm_layer(num_filter[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
@@ -229,8 +223,12 @@ class ExporingResNet(nn.Module):
         time_dim = int(np.ceil(input_frames / 8))
         self.avgpool = nn.AdaptiveAvgPool2d((1, time_dim))
         # 300 is the length of features
-        self.fc1 = nn.Linear(128 * time_dim, embedding_size)
-        # self.norm = self.l2_norm(num_filter[3])
+
+        self.fc1 = nn.Sequential(
+            nn.Linear(num_filter[3] * time_dim, embedding_size),
+            nn.BatchNorm1d(embedding_size)
+        )
+
         self.alpha = 12
         self.fc2 = nn.Linear(embedding_size, num_classes)
 
