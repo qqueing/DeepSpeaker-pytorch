@@ -955,11 +955,15 @@ class SitwTestDataset(data.Dataset):
 
         data_a = self.transform(data_a)
         data_b = self.transform(data_b)
+        if label == 'True' or label == True:
+            label = True
+        else:
+            label = False
 
         if self.return_uid:
             return data_a, data_b, label, uid_a, uid_b
 
-        return data_a, data_b, bool(label)
+        return data_a, data_b, label
 
     def partition(self, num):
         if num > self.pairs:
@@ -997,7 +1001,7 @@ class SitwTestDataset(data.Dataset):
 
         assert len(self.trials_pair) == num, '%d != %d' % (len(self.trials_pair), num)
         assert self.numofpositive == num_positive, '%d != %d' % (self.numofpositive, num_positive)
-        print('There are %d positive pairs' % num_positive)
+        print('%d positive pairs remain.' % num_positive)
 
     def __len__(self):
         return len(self.trials_pair)
