@@ -23,7 +23,7 @@ if [ $stage -le 1 ]; then
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_20.pth \
+      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_18.pth \
       --loss-type ${loss} \
       --lr 0.01 \
       --loss-ratio 0.1 \
@@ -43,8 +43,6 @@ if [ $stage -le 2 ]; then
       --epochs 18 \
       --milestones 8,13,18 \
       --check-path Data/checkpoint/LoResNet10/spect/kernel_${kernel} \
-      --resume Data/checkpoint/LoResNet10/spect/kernel_${kernel}/checkpoint_20.pth \
-      --epochs 20 \
       --kernel-size ${kernel}
   done
 
