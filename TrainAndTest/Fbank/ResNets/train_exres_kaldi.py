@@ -300,7 +300,7 @@ def main():
         # pdb.set_trace()
         print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
-            print('{} '.format(param_group['lr']), end='')
+            print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
         train(train_loader, model, optimizer, ce, scheduler, epoch)
