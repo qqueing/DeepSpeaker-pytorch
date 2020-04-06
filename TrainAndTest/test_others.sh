@@ -4,7 +4,7 @@ for loss in asoft soft ; do
   python TrainAndTest/test_sitw.py \
     --nj 12 \
     --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-    --veri-pairs 18000 \
+    --veri-pairs 12800 \
     --loss-type ${loss} \
     --gpu-id 0 \
     --epochs 20
