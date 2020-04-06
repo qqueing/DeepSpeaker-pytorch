@@ -222,10 +222,16 @@ train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.inpu
                                transform=transform, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
 
-indices = list(range(len(test_dir)))
-random.shuffle(indices)
-indices = indices[:args.veri_pairs]
-test_part = torch.utils.data.Subset(test_dir, indices)
+if len(test_dir) < args.veri_pairs:
+    args.veri_pairs = len(test_dir)
+    print('There are %d verification pairs in sitw eval.' % len(test_dir))
+else:
+    test_dir.partition(args.veri_pairs)
+
+# indices = list(range(len(test_dir)))
+# random.shuffle(indices)
+# indices = indices[:args.veri_pairs]
+# test_part = torch.utils.data.Subset(test_dir, indices)
 
 # sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, set_suffix='')
 # if len(sitw_test_dir) < args.veri_pairs:

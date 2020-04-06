@@ -901,7 +901,7 @@ class ScriptTestDataset(data.Dataset):
         if num > len(self.trials_pair):
             print('%d is greater than the total number of pairs')
 
-        elif num * 0.4 > self.numofpositive:
+        elif num * 0.3 > self.numofpositive:
             indices = list(range(self.numofpositive, len(self.trials_pair)))
             random.shuffle(indices)
             indices = indices[:(num - self.numofpositive)]
@@ -914,11 +914,11 @@ class ScriptTestDataset(data.Dataset):
         else:
             indices = list(range(self.numofpositive, len(self.trials_pair)))
             random.shuffle(indices)
-            indices = indices[:(num - int(0.4 * num))]
+            indices = indices[:(num - int(0.3 * num))]
 
             positive_idx = list(range(self.numofpositive))
             random.shuffle(positive_idx)
-            positive_idx = positive_idx[:int(0.4 * num)]
+            positive_idx = positive_idx[:int(0.3 * num)]
             positive_pairs = self.trials_pair[positive_idx].copy()
             nagative_pairs = self.trials_pair[indices].copy()
 
@@ -1015,7 +1015,7 @@ class SitwTestDataset(data.Dataset):
         if num > self.pairs:
             print('%d is greater than the total number of pairs')
 
-        elif num * 0.4 > self.numofpositive:
+        elif num * 0.3 > self.numofpositive:
             indices = list(range(self.numofpositive, len(self.trials_pair)))
             random.shuffle(indices)
             indices = indices[:(num - self.numofpositive)]
@@ -1028,11 +1028,11 @@ class SitwTestDataset(data.Dataset):
         else:
             indices = list(range(self.numofpositive, len(self.trials_pair)))
             random.shuffle(indices)
-            indices = indices[:(num - int(0.4 * num))]
+            indices = indices[:(num - int(0.3 * num))]
 
             positive_idx = list(range(self.numofpositive))
             random.shuffle(positive_idx)
-            positive_idx = positive_idx[:int(0.4 * num)]
+            positive_idx = positive_idx[:int(0.3 * num)]
             positive_pairs = self.trials_pair[positive_idx].copy()
             nagative_pairs = self.trials_pair[indices].copy()
 
