@@ -70,7 +70,7 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
@@ -223,12 +223,12 @@ random.shuffle(indices)
 indices = indices[:args.veri_pairs]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
-sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, set_suffix='')
-if len(sitw_test_dir) < args.veri_pairs:
-    args.veri_pairs = len(sitw_test_dir)
-    print('There are %d verification pairs in sitw eval.' % len(sitw_test_dir))
-else:
-    sitw_test_dir.partition(args.veri_pairs)
+# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, set_suffix='')
+# if len(sitw_test_dir) < args.veri_pairs:
+#     args.veri_pairs = len(sitw_test_dir)
+#     print('There are %d verification pairs in sitw eval.' % len(sitw_test_dir))
+# else:
+#     sitw_test_dir.partition(args.veri_pairs)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -310,8 +310,8 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2), shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
-                                                   shuffle=False, **kwargs)
+    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
+    #                                                shuffle=False, **kwargs)
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
 
