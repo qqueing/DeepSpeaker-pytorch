@@ -177,7 +177,7 @@ if __name__ == "__main__":
         if not os.path.exists(write_dir):
             os.makedirs(write_dir)
 
-        ark_dir = os.path.join(args.out_dir, 'fbank')
+        ark_dir = os.path.join(args.out_dir, args.feat_type)
         if not os.path.exists(ark_dir):
             os.makedirs(ark_dir)
 
