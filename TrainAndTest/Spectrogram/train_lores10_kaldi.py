@@ -14,7 +14,6 @@ import argparse
 import pathlib
 import pdb
 import random
-import sys
 import time
 
 from kaldi_io import read_mat
@@ -29,6 +28,7 @@ import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 import os.path as osp
+import sys
 
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
