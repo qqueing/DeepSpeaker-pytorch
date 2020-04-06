@@ -353,7 +353,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        classfier, _ = model(data)
+        classfier, feats = model(data)
         true_labels = label.cuda()
         # cos_theta, phi_theta = classfier
         classfier_label = classfier
@@ -365,7 +365,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
             loss = xe_criterion(classfier, true_labels)
         elif args.loss_type == 'center':
             loss_cent = ce_criterion(classfier, true_labels)
-            loss_xent = xe_criterion(classfier, true_labels)
+            loss_xent = xe_criterion(feats, true_labels)
             loss = args.loss_ratio * loss_xent + loss_cent
         elif args.loss_type == 'amsoft':
             loss = xe_criterion(classfier, true_labels)
