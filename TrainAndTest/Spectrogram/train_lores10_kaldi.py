@@ -255,8 +255,8 @@ def main():
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
             start_epoch = checkpoint['epoch']
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-            model.load_state_dict(filtered)
+
+            model = checkpoint['model']
             # optimizer.load_state_dict(checkpoint['optimizer'])
             # scheduler.load_state_dict(checkpoint['scheduler'])
             # if 'criterion' in checkpoint.keys():
@@ -391,7 +391,7 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
 
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
     torch.save({'epoch': epoch,
-                'state_dict': model.state_dict(),
+                'model': model,
                 'criterion': ce},
                check_path)
 
