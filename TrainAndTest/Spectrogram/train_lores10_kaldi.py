@@ -323,9 +323,9 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer))
+        print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
-            print('{} '.format(args.optimizer, param_group['lr']), end='')
+            print('{} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
         train(train_loader, model, ce, optimizer, scheduler, epoch)
