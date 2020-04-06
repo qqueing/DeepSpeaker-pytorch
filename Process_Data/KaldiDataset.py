@@ -870,6 +870,7 @@ class ScriptTestDataset(data.Dataset):
         self.uid2feat = uid2feat
         self.trials_pair = trials_pair
         self.num_spks = len(speakers)
+        self.numofpositive = positive_pairs
 
         self.loader = loader
         self.transform = transform
@@ -885,10 +886,55 @@ class ScriptTestDataset(data.Dataset):
 
         data_a = self.transform(y_a)
         data_b = self.transform(y_b)
+
+        if label == 'True' or label == True:
+            label = True
+        else:
+            label = False
+
         if self.return_uid:
             data_a, data_b, label, uid_a, uid_b
 
         return data_a, data_b, label
+
+    def partition(self, num):
+        if num > len(self.trials_pair):
+            print('%d is greater than the total number of pairs')
+
+        elif num * 0.4 > self.numofpositive:
+            indices = list(range(self.numofpositive, len(self.trials_pair)))
+            random.shuffle(indices)
+            indices = indices[:(num - self.numofpositive)]
+            positive_idx = list(range(self.numofpositive))
+
+            positive_pairs = self.trials_pair[positive_idx].copy()
+            nagative_pairs = self.trials_pair[indices].copy()
+
+            self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
+        else:
+            indices = list(range(self.numofpositive, len(self.trials_pair)))
+            random.shuffle(indices)
+            indices = indices[:(num - int(0.4 * num))]
+
+            positive_idx = list(range(self.numofpositive))
+            random.shuffle(positive_idx)
+            positive_idx = positive_idx[:int(0.4 * num)]
+            positive_pairs = self.trials_pair[positive_idx].copy()
+            nagative_pairs = self.trials_pair[indices].copy()
+
+            self.numofpositive = len(positive_pairs)
+            self.trials_pair = np.concatenate((positive_pairs, nagative_pairs), axis=0)
+
+        assert len(self.trials_pair) == num
+        num_positive = 0
+        for x, y, z in self.trials_pair:
+            if z == 'True':
+                num_positive += 1
+
+        assert len(self.trials_pair) == num, '%d != %d' % (len(self.trials_pair), num)
+        assert self.numofpositive == num_positive, '%d != %d' % (self.numofpositive, num_positive)
+        print('%d positive pairs remain.' % num_positive)
+
 
     def __len__(self):
         return len(self.trials_pair)
