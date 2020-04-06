@@ -738,7 +738,7 @@ class LocalResNet(nn.Module):
         # self.weight = nn.Parameter(torch.Tensor(embedding_size, num_classes))  # 本层权重
         # self.weight.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)  # 初始化权重，在第一维度上做normalize
 
-    def l2_norm(self, input):
+    def l2_norm(self, input, alpha=1.0):
         input_size = input.size()
         buffer = torch.pow(input, 2)
 
@@ -748,7 +748,7 @@ class LocalResNet(nn.Module):
         _output = torch.div(input, norm.view(-1, 1).expand_as(input))
         output = _output.view(input_size)
 
-        return output
+        return output * alpha
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -770,7 +770,6 @@ class LocalResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        # x = self.maxpool(x)
         x = self.layer1(x)
 
         x = self.conv2(x)
@@ -791,11 +790,8 @@ class LocalResNet(nn.Module):
         x = self.avg_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        x = self.l2_norm(x, alpha=12)
 
-        # x = self.l2_norm(x)
-        # # Multiply by alpha = 10 as suggested in https://arxiv.org/pdf/1703.09507.pdf
-        # alpha = 10
-        # feature = x * alpha
         logits = self.classifier(x)
 
         return logits, x
