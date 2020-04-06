@@ -260,7 +260,7 @@ def ComputeMinDcf(fnrs, fprs, thresholds, p_target, c_miss, c_fa):
     return min_dcf, min_c_det_threshold
 
 
-def evaluate_kaldi_mindcf(scores, labels):
+def evaluate_kaldi_mindcf(scores, labels, return_threshold=False):
     c_miss = 1
     c_fa = 1
 
@@ -272,4 +272,7 @@ def evaluate_kaldi_mindcf(scores, labels):
     p_target = 0.001
     mindcf_001, threshold_001 = ComputeMinDcf(fnrs, fprs, thresholds, p_target, c_miss, c_fa)
 
-    return (mindcf_01, threshold_01, mindcf_001, threshold_001)
+    if return_threshold:
+        return (mindcf_01, threshold_01, mindcf_001, threshold_001)
+
+    return mindcf_01, mindcf_001

@@ -35,7 +35,7 @@ from Process_Data import constants as c
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
 from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer
+from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
 from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
@@ -88,6 +88,8 @@ parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
+parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
+                    help='number of epochs to train (default: 10)')
 
 # Training options
 parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
@@ -142,7 +144,7 @@ parser.add_argument('--milestones', default='10,15', type=str,
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='1', type=str,
+parser.add_argument('--gpu-id', default='0', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
@@ -218,20 +220,15 @@ test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=tr
 
 indices = list(range(len(test_dir)))
 random.shuffle(indices)
-indices = indices[:12800]
+indices = indices[:args.veri_pairs]
 test_part = torch.utils.data.Subset(test_dir, indices)
 
-# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
-# indices = list(range(len(sitw_test_dir)))
-# random.shuffle(indices)
-# indices = indices[:12800]
-# sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
-#
-# sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
-# indices = list(range(len(sitw_dev_dir)))
-# random.shuffle(indices)
-# indices = indices[:12800]
-# sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
+sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, set_suffix='')
+if len(sitw_test_dir) < args.veri_pairs:
+    args.veri_pairs = len(sitw_test_dir)
+    print('There are %d verification pairs in sitw eval.' % len(sitw_test_dir))
+else:
+    sitw_test_dir.partition(args.veri_pairs)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -305,9 +302,6 @@ def main():
     scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
     ce = [ce_criterion, xe_criterion]
 
-    # ['soft', 'asoft', 'center', 'amsoft'],
-    # optionally resume from a checkpoint
-
     start = args.start_epoch + start_epoch
     print('Start epoch is : ' + str(start))
     # start = 0
@@ -316,8 +310,8 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2), shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
-    #                                                **kwargs)
+    sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
+                                                   shuffle=False, **kwargs)
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
 
@@ -336,8 +330,6 @@ def main():
 
         train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-
-        # test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
@@ -506,18 +498,24 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\n\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
-          'Accuracy is {:.2f}%.\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
-                                              eer_threshold, valid_accuracy))
+    mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
+    writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+
+    print('\nFor {}_distance, ' % ('cos' if args.cos_sim else 'l2'))
+    print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
+    print('  mindcf-0.01 {:.4f}, mindcf-0.01 {:.4f},'.format(mindcf_01, mindcf_001))
+    print('  Valid Accuracy is %.2f %%.\33[0m' % valid_accuracy)
+
     torch.cuda.empty_cache()
 
 
-def sitw_test(test_loader, model, epoch):
+def sitw_test(sitw_test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
     labels, distances = [], []
-    pbar = tqdm(enumerate(test_loader))
+    pbar = tqdm(enumerate(sitw_test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
         vec_shape = data_a.shape
@@ -537,7 +535,6 @@ def sitw_test(test_loader, model, epoch):
         out_p = out_p_
 
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-
         if vec_shape[1] != 1:
             dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
@@ -547,17 +544,19 @@ def sitw_test(test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a) / vec_shape[1], len(test_loader.dataset),
-                       100. * batch_idx / len(test_loader)))
+                epoch, batch_idx * vec_shape[0], len(sitw_test_loader.dataset),
+                       100. * batch_idx / len(sitw_test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/SITW_EER', 100. * eer, epoch)
-    writer.add_scalar('Test/SITW_Threshold', eer_threshold, epoch)
+    eer_t, eer_threshold_t, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
+    torch.cuda.empty_cache()
 
-    print('\33[91mFor Sitw Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer, eer_threshold))
+    writer.add_scalars('Test/EER', {'sitw_test': 100. * eer_t}, epoch)
+    writer.add_scalars('Test/Threshold', {'sitw_test': eer_threshold_t}, epoch)
+
+    print('\33[91mFor Sitw Test ERR: {:.4f}%, Threshold: {}.\n\33[0m'.format(100. * eer_t, eer_threshold_t))
 
 
 # python TrainAndTest/Spectrogram/train_surescnn10_kaldi.py > Log/SuResCNN10/spect_161/
