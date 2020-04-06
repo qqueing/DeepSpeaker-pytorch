@@ -10,11 +10,11 @@ if [ $stage -le 0 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 8 \
-      --epochs 8 \
-      --milestones 3,6 \
+      --epochs 10 \
+      --milestones 4,8 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
-      --channels 2,8,64 \
+      --channels 2,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --num-valid 2 \
@@ -35,7 +35,7 @@ if [ $stage -le 1 ]; then
       --milestones 3 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_15.pth \
-      --channels 2,8,64 \
+      --channels 2,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --lr 0.01 \
@@ -55,11 +55,11 @@ if [ $stage -le 2 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 8 \
-      --epochs 8 \
-      --milestones 3,6 \
+      --epochs 10 \
+      --milestones 4,8 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
-      --channels 2,8,64 \
+      --channels 2,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --num-valid 2 \
