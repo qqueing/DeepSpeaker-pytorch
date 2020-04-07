@@ -2,9 +2,11 @@
 
 waited=0
 while [ `ps 160299 | wc -l` -eq 2 ]; do
-    echo -e "\f\033[1;4;31m Having waited for ${waited}s!\033[0m\c"
-    waited=$(expr $waited + 10)
-    sleep 10
+  sleep 10
+  waited=$(expr $waited + 10)
+  echo -e "\033[1;4;31m Having waited for ${waited}s!\033[0m\c"
+  echo -e "\f\c"
+
 #    break
 done
 
