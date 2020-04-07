@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 while [ `ps 160299 | wc -l` -eq 2 ]; do
-    echo hello
-    sleep 13
+    echo -e "\033[1;4;31m Waiting for 10s!\033[0m\r"
+    sleep 10
 #    break
 done
 
