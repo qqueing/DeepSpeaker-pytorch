@@ -86,6 +86,9 @@ parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
+parser.add_argument('--accumulation-steps', type=int, default=2, metavar='ACC',
+                    help='number of epochs to train (default: 10)')
+
 parser.add_argument('--milestones', default='10,15', type=str,
                     metavar='MIL', help='The optimizer to use (default: Adagrad)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
@@ -113,7 +116,7 @@ parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=2, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -403,14 +406,24 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         total_loss += loss.item()
 
         # compute gradient and update weights
-        optimizer.zero_grad()
+        loss = loss / args.accumulation_steps
+        # 2.2 back propagation
         loss.backward()
+
+        # 3. update parameters of net
+        if ((batch_idx + 1) % args.accumulation_steps) == 0:
+            # optimizer the net
+            optimizer.step()  # update parameters of net
+            optimizer.zero_grad()
+
+        # optimizer.zero_grad()
+        # loss.backward()
 
         if args.loss_type == 'center' and args.loss_ratio != 0:
             for param in xe_criterion.parameters():
                 param.grad.data *= (1. / args.loss_ratio)
 
-        optimizer.step()
+        # optimizer.step()
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description(

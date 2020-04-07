@@ -8,7 +8,8 @@ if [ $stage -le 0 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257 \
       --embedding-size 128 \
-      --batch-size 64 \
+      --batch-size 32 \
+      --accumulation-steps 2 \
       --nj 12 \
       --epochs 30 \
       --milestones 14,24 \
