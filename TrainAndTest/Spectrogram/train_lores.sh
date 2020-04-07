@@ -18,7 +18,7 @@ fi
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
-  for loss in amsoft center ; do
+  for loss in center ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
