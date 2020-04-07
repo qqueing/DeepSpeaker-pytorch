@@ -10,7 +10,7 @@ if [ $stage -le 0 ]; then
       --embedding-size 128 \
       --batch-size 32 \
       --test-batch-size 2 \
-      --accumulation-steps 4 \
+      --accumulation-steps 2 \
       --nj 12 \
       --epochs 20 \
       --milestones 10,15 \
