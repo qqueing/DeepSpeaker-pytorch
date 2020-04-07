@@ -9,10 +9,11 @@ if [ $stage -le 0 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257 \
       --embedding-size 128 \
       --batch-size 32 \
-      --accumulation-steps 2 \
+      --test-batch-size 2 \
+      --accumulation-steps 4 \
       --nj 12 \
-      --epochs 30 \
-      --milestones 14,24 \
+      --epochs 20 \
+      --milestones 10,15 \
       --veri-pairs 12800 \
       --check-path Data/checkpoint/ResNet20/spect_257/${loss} \
       --resume Data/checkpoint/ResNet20/spect_257/${loss}/checkpoint_1.pth \
