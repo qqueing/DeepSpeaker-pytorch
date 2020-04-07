@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=01
 #stage=10
 
 if [ $stage -le 0 ]; then
@@ -26,7 +26,7 @@ if [ $stage -le 1 ]; then
       --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_18.pth \
       --loss-type ${loss} \
       --lr 0.01 \
-      --loss-ratio 0.1 \
+      --loss-ratio 0.01 \
       --milestones 4 \
       --epochs 10
   done
@@ -42,6 +42,7 @@ if [ $stage -le 2 ]; then
       --nj 12 \
       --epochs 18 \
       --milestones 8,13,18 \
+      --resume Data/checkpoint/LoResNet10/spect/kernel_${kernel}/checkpoint_18.pth \
       --check-path Data/checkpoint/LoResNet10/spect/kernel_${kernel} \
       --kernel-size ${kernel}
   done
