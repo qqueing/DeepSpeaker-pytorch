@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: train_lores10_kaldi.py
+@File: train_resnet20_kaldi.py
 @Time: 2020/4/4 11:14 AM
 @Overview:
 """
@@ -29,13 +29,13 @@ from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 import os.path as osp
 
-from Define_Model.LossFunction import CenterLoss
-from Define_Model.ResNet import LocalResNet
+from Define_Model.ResNet import LocalResNet, ResNet20
 from Process_Data import constants as c
+from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
 from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer
+from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from Define_Model.model import PairwiseDistance, SuperficialResCNN
 from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
@@ -62,7 +62,7 @@ except AttributeError:
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
-# Model options
+# Data options
 parser.add_argument('--train-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
                     help='path to dataset')
@@ -70,15 +70,15 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw_spect',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/filters',
+parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='need to make mfb file')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LoResNet10/spect/filters/checkpoint_10.pth', type=str,
+                    default='Data/checkpoint/LoResNet10/spect/soft/checkpoint_10.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -86,12 +86,21 @@ parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
+parser.add_argument('--milestones', default='10,15', type=str,
+                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
+parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
+                    help='number of epochs to train (default: 10)')
 
 # Training options
+# Model options
+parser.add_argument('--channels', default='64,128,256', type=str,
+                    metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
                     help='acoustic feature dimension')
+parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
+                    help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
@@ -99,6 +108,8 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
+                    help='input sample per file for testing (default: 8)')
+parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -116,11 +127,10 @@ parser.add_argument('--s', type=float, default=15, metavar='S',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
-
 # args for a-softmax
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=int, default=12500, metavar='S',
+parser.add_argument('--lambda-max', type=int, default=10500, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
@@ -134,13 +144,11 @@ parser.add_argument('--dampening', default=0, type=float,
                     metavar='DAM', help='dampening for sgd (default: 0.0)')
 parser.add_argument('--optimizer', default='sgd', type=str,
                     metavar='OPT', help='The optimizer to use (default: Adagrad)')
-parser.add_argument('--milestones', default='10,15', type=str,
-                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
 
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
-parser.add_argument('--gpu-id', default='0', type=str,
+parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
@@ -211,25 +219,26 @@ else:
 # pdb.set_trace()
 file_loader = read_mat
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
-                               transform=transform)
+                               transform=transform, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
 
-indices = list(range(len(test_dir)))
-random.shuffle(indices)
-indices = indices[:12800]
-test_part = torch.utils.data.Subset(test_dir, indices)
+if len(test_dir) < args.veri_pairs:
+    args.veri_pairs = len(test_dir)
+    print('There are %d verification pairs in sitw eval.' % len(test_dir))
+else:
+    test_dir.partition(args.veri_pairs)
 
-# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T)
-# indices = list(range(len(sitw_test_dir)))
+# indices = list(range(len(test_dir)))
 # random.shuffle(indices)
-# indices = indices[:12800]
-# sitw_test_part = torch.utils.data.Subset(sitw_test_dir, indices)
-#
-# sitw_dev_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='dev', transform=transform_T)
-# indices = list(range(len(sitw_dev_dir)))
-# random.shuffle(indices)
-# indices = indices[:12800]
-# sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
+# indices = indices[:args.veri_pairs]
+# test_part = torch.utils.data.Subset(test_dir, indices)
+
+# sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, set_suffix='')
+# if len(sitw_test_dir) < args.veri_pairs:
+#     args.veri_pairs = len(sitw_test_dir)
+#     print('There are %d verification pairs in sitw eval.' % len(sitw_test_dir))
+# else:
+#     sitw_test_dir.partition(args.veri_pairs)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -245,8 +254,17 @@ def main():
     print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
     # instantiate model and initialize weights
-    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks,
-                        kernal_size=(5, 9), padding=(2, 4))
+    # kernel_size = args.kernel_size.split(',')
+    # kernel_size = [int(x) for x in kernel_size]
+    # padding = [int((x - 1) / 2) for x in kernel_size]
+    #
+    # kernel_size = tuple(kernel_size)
+    # padding = tuple(padding)
+    #
+    # channels = args.channels.split(',')
+    # channels = [int(x) for x in channels]
+
+    model = ResNet20(embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
 
     start_epoch = 0
     if args.save_init:
@@ -260,10 +278,10 @@ def main():
             start_epoch = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-            model_dict = model.state_dict()
-            model_dict.update(filtered)
+            # model_dict = model.state_dict()
+            # model_dict = model_dict.update(filtered)
 
-            model.load_state_dict(model_dict)
+            model.load_state_dict(filtered)
             # optimizer.load_state_dict(checkpoint['optimizer'])
             # scheduler.load_state_dict(checkpoint['scheduler'])
             # if 'criterion' in checkpoint.keys():
@@ -277,10 +295,15 @@ def main():
     elif args.loss_type == 'asoft':
         ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+
+        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
+        lambda_max = int(all_iteration * 0.3) // 500 * 500
+
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':
+        ce_criterion = None
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
         xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
 
@@ -297,19 +320,18 @@ def main():
     scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
     ce = [ce_criterion, xe_criterion]
 
-    # ['soft', 'asoft', 'center', 'amsoft'],
-    # optionally resume from a checkpoint
-
     start = args.start_epoch + start_epoch
     print('Start epoch is : ' + str(start))
     # start = 0
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2), shuffle=False, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_part, batch_size=args.test_batch_size, shuffle=False,
-    #                                                **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
+                                               shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size,
+                                              shuffle=False, **kwargs)
+    # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
+    #                                                shuffle=False, **kwargs)
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
 
@@ -321,12 +343,13 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
+        print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
-            print('\n\33[1;34m Current \'{}\' learning rate is {}.\33[0m'.format(args.optimizer, param_group['lr']))
+            print('{:.5f} '.format(param_group['lr']), end='')
+        print(' \33[0m')
+
         train(train_loader, model, ce, optimizer, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
-
-        # test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
@@ -495,18 +518,25 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print('\n\33[91mFor {}_distance, Test ERR is {:.4f}%, Threshold is {}. Valid ' \
-          'Accuracy is {:.2f}%.\33[0m'.format('cos' if args.cos_sim else 'l2', 100. * eer,
-                                              eer_threshold, valid_accuracy))
+    mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
+    writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+
+    dist_type = 'cos' if args.cos_sim else 'l2'
+    print('\nFor %s_distance, ' % dist_type)
+    print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
+    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
+    print('  Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
+
     torch.cuda.empty_cache()
 
 
-def sitw_test(test_loader, model, epoch):
+def sitw_test(sitw_test_loader, model, epoch):
     # switch to evaluate mode
     model.eval()
 
     labels, distances = [], []
-    pbar = tqdm(enumerate(test_loader))
+    pbar = tqdm(enumerate(sitw_test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
         vec_shape = data_a.shape
@@ -526,7 +556,6 @@ def sitw_test(test_loader, model, epoch):
         out_p = out_p_
 
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-
         if vec_shape[1] != 1:
             dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
@@ -536,17 +565,19 @@ def sitw_test(test_loader, model, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                epoch, batch_idx * len(data_a) / vec_shape[1], len(test_loader.dataset),
-                       100. * batch_idx / len(test_loader)))
+                epoch, batch_idx * vec_shape[0], len(sitw_test_loader.dataset),
+                       100. * batch_idx / len(sitw_test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
     distances = np.array([subdist for dist in distances for subdist in dist])
 
-    eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/SITW_EER', 100. * eer, epoch)
-    writer.add_scalar('Test/SITW_Threshold', eer_threshold, epoch)
+    eer_t, eer_threshold_t, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
+    torch.cuda.empty_cache()
 
-    print('\33[91mFor Sitw Test ERR is {:.4f}%, Threshold is {}.\n\33[0m'.format(100. * eer, eer_threshold))
+    writer.add_scalars('Test/EER', {'sitw_test': 100. * eer_t}, epoch)
+    writer.add_scalars('Test/Threshold', {'sitw_test': eer_threshold_t}, epoch)
+
+    print('\33[91mFor Sitw Test ERR: {:.4f}%, Threshold: {}.\n\33[0m'.format(100. * eer_t, eer_threshold_t))
 
 
 # python TrainAndTest/Spectrogram/train_surescnn10_kaldi.py > Log/SuResCNN10/spect_161/

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=3
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -14,7 +14,7 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-if [ $stage -le 0 ]; then
+if [ $stage -le 1 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
@@ -26,8 +26,8 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-stage=4
-if [ $stage -le 1 ]; then
+#stage=4
+if [ $stage -le 2 ]; then
   for name in reverb babble noise music ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_${name}_fb64/dev \
@@ -36,8 +36,23 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-# sitw
+# vox1 spectrogram 257
 if [ $stage -le 3 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --nj 16 \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect \
+      --out-set ${name}_257 \
+      --windowsize 0.025 \
+      --nfft 512 \
+      --feat-type spectrogram
+  done
+fi
+stage=100
+
+# sitw
+if [ $stage -le 4 ]; then
   for name in dev eval ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw/${name} \
@@ -48,7 +63,7 @@ if [ $stage -le 3 ]; then
 fi
 
 # timit
-if [ $stage -le 4 ]; then
+if [ $stage -le 5 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
@@ -58,7 +73,7 @@ if [ $stage -le 4 ]; then
   done
 fi
 
-if [ $stage -le 5 ]; then
+if [ $stage -le 6 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
