@@ -50,7 +50,7 @@ fi
 
 if [ $stage -le 2 ]; then
 #  for loss in center amsoft ; do/
-  for kernel in '3,3' '5,5' '7,7' '3,5' '3,7' '5,7' ; do
+  for kernel in '7,3' ; do
     echo -e "\n\033[1;4;31m Training with kernel size ${kernel} \033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
