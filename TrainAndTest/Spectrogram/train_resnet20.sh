@@ -2,8 +2,8 @@
 
 while [ `ps 160299 | wc -l` -eq 2 ]; do
     echo hello
-    sleep 1
-    break
+    sleep 13
+#    break
 done
 
 stage=0
