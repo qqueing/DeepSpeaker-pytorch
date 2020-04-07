@@ -679,7 +679,7 @@ class Block3x3(nn.Module):
         return out
 
 class ResNet20(nn.Module):
-    def __init__(self, layers, block=BasicBlock, input_frames=300, num_classes=1000, embedding_size=128,
+    def __init__(self, block=BasicBlock, input_frames=300, num_classes=1000, embedding_size=128,
                  zero_init_residual=False):
         super(ResNet20, self).__init__()
         self.inplanes = 1
@@ -701,7 +701,7 @@ class ResNet20(nn.Module):
         self.layer6 = self._make_layer(Block3x3, planes=512, blocks=1, stride=2)
 
         self.inplanes = 512
-        self.avgpool = nn.AdaptiveAvgPool2d(1, None)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, None))
 
         self.fc1 = nn.Sequential(
             nn.Linear(17 * self.inplanes, embedding_size),
