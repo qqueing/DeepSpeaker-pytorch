@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=1
 #stage=10
 
 if [ $stage -le 0 ]; then
@@ -34,7 +34,7 @@ if [ $stage -le 1 ]; then
       --epochs 6 \
       --milestones 3 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_15.pth \
+      --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_10.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
@@ -58,7 +58,7 @@ if [ $stage -le 2 ]; then
       --epochs 10 \
       --milestones 4,8 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
+      --resume None \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
