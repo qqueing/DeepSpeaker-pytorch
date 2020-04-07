@@ -97,13 +97,13 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 # Model options
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
-parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
+parser.add_argument('--feat-dim', default=257, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
