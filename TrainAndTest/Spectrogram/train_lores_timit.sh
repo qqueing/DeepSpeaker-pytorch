@@ -59,7 +59,7 @@ if [ $stage -le 2 ]; then
       --milestones 4,8 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume None \
-      --channels 4,16,64 \
+      --channels 4,8,64 \
       --embedding-size 128 \
       --input-per-spks 128 \
       --num-valid 2 \
