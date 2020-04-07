@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+stage=0
 if [ $stage -le 0 ]; then
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
