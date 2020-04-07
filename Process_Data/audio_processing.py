@@ -204,7 +204,7 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
     # return spectrogram
 
 
-def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, duration=False):
+def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, duration=False, nfft=None):
     """
     read wav as float type. [-1.0 ,1.0]
     :param wav_path:
@@ -219,7 +219,10 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, du
     signal = sigproc.preemphasis(samples, preemph)
     frames = sigproc.framesig(signal, windowsize * samplerate, stride * samplerate, winfunc=window)
 
-    pspec = sigproc.powspec(frames, int(windowsize * samplerate))
+    if nfft == None:
+        nfft = int(windowsize * samplerate)
+
+    pspec = sigproc.powspec(frames, nfft)
     pspec = np.where(pspec == 0, np.finfo(float).eps, pspec)
     # S = librosa.stft(samples, n_fft=int(windowsize * samplerate),
     #                  hop_length=int((windowsize-stride) * samplerate),

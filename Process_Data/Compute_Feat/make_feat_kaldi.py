@@ -48,6 +48,12 @@ parser.add_argument('--feat-type', type=str,
 parser.add_argument('--filter-type', type=str,
                     default='mel', choices=['mel', 'linear', 'dnn'],
                     help='number of jobs to make feats (default: 10)')
+parser.add_argument('--windowsize', type=float, default=0.02, choices=[0.02, 0.025],
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--stride', type=float, default=0.01,
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--nfft', type=int, default=None,
+                    help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
                     help='number of epochs to train (default: 10)')
@@ -95,7 +101,8 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                                                     nfilt=c.FILTER_BANK,
                                                     duration=True)
                     elif args.feat_type == 'spectrogram':
-                        feat, duration = Make_Spect(wav_path=temp_wav, windowsize=0.02, stride=0.01, duration=True)
+                        feat, duration = Make_Spect(wav_path=temp_wav, windowsize=args.windowsize,
+                                                    stride=args.stride, duration=True, nfft=args.nfft)
 
                     os.remove(temp_wav)
 
@@ -104,7 +111,8 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                         feat, duration = Make_Fbank(filename=pair[1], filtertype=args.filter_type, use_energy=True,
                                                     nfilt=c.FILTER_BANK, duration=True)
                     elif args.feat_type == 'spectrogram':
-                        feat, duration = Make_Spect(wav_path=pair[1], windowsize=0.02, stride=0.01, duration=True)
+                        feat, duration = Make_Spect(wav_path=pair[1], windowsize=args.windowsize,
+                                                    stride=args.stride, duration=True, nfft=args.nfft)
                     # feat = np.load(pair[1]).astype(np.float32)
 
                 feat = feat.astype(np.float32)
