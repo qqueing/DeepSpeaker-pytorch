@@ -32,3 +32,4 @@ speechpy==2.4
 tensorboardX==2.0
 tqdm==4.42.0
 urllib3==1.25.7
+torchvision==0.3.0
