@@ -11,6 +11,7 @@ kaldi-io==0.9.1
 librosa==0.7.2
 llvmlite==0.31.0
 netifaces==0.10.9
+matplotlib==3.0.3
 numba==0.47.0
 numpy==1.18.1
 nvidia-ml-py3==7.352.0
