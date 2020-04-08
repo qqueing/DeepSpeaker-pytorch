@@ -24,8 +24,8 @@ if [ $stage -le 0 ]; then
 fi
 
 if [ $stage -le 1 ]; then
-#  for loss in center amsoft ; do/
-  for loss in amsoft asoft ; do
+#  for loss in center amsoft amsoft ; do/
+  for loss in asoft ; do
     echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
@@ -43,6 +43,7 @@ if [ $stage -le 1 ]; then
       --num-valid 2 \
       --weight-decay 0.001 \
       --loss-type ${loss} \
+      --lambda-max 0.2 \
       --margin 0.35 \
       --s 30
   done
