@@ -10,8 +10,8 @@ if [ $stage -le 0 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
-      --epochs 10 \
-      --milestones 4,8 \
+      --epochs 12 \
+      --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
       --channels 4,16,64 \
@@ -32,7 +32,7 @@ if [ $stage -le 1 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
       --epochs 6 \
-      --milestones 3 \
+      --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_fine \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_10.pth \
       --channels 4,16,64 \
@@ -61,8 +61,8 @@ if [ $stage -le 2 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
-      --epochs 10 \
-      --milestones 4,8 \
+      --epochs 12 \
+      --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
       --resume None \
       --channels 4,16,64 \
@@ -86,7 +86,7 @@ if [ $stage -le 3 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
       --epochs 6 \
-      --milestones 3 \
+      --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/dropout_${p} \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_10.pth \
       --channels 4,16,64 \
@@ -107,8 +107,8 @@ if [ $stage -le 4 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
-      --epochs 10 \
-      --milestones 4,8 \
+      --epochs 12 \
+      --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_dp0.5 \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
       --channels 4,16,64 \
