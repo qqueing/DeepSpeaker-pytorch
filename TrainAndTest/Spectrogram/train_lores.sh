@@ -39,7 +39,7 @@ if [ $stage -le 2 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_s30 \
       --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_18.pth \
       --loss-type ${loss} \
       --margin 0.35 \
