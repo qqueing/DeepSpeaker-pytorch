@@ -677,9 +677,10 @@ class Block3x3(nn.Module):
 
 class ResNet20(nn.Module):
     def __init__(self, block=BasicBlock, input_frames=300, num_classes=1000,
-                 embedding_size=128, dropout_p=0.5,
+                 embedding_size=128, dropout_p=0.0,
                  zero_init_residual=False):
         super(ResNet20, self).__init__()
+        self.dropout_p = dropout_p
         self.inplanes = 1
         self.layer1 = self._make_layer(Block3x3, planes=64, blocks=1, stride=2)
 
@@ -734,7 +735,10 @@ class ResNet20(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-        x = self.dropout(x)
+
+        if self.dropout_p != 0:
+            x = self.dropout(x)
+
         feat = self.fc1(x)
 
         logits = self.classifier(feat)

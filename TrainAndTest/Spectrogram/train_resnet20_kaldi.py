@@ -10,38 +10,36 @@
 @Overview:
 """
 from __future__ import print_function
-import argparse
-import pathlib
-import pdb
-import random
-import time
-import sys
-from kaldi_io import read_mat
-from tensorboardX import SummaryWriter
-import torch
-import torch.nn as nn
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
-import os
-import numpy as np
-from torch.optim.lr_scheduler import MultiStepLR
-from tqdm import tqdm
-import os.path as osp
 
-from Define_Model.ResNet import LocalResNet, ResNet20
-from Process_Data import constants as c
-from Define_Model.LossFunction import CenterLoss
-from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
-from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
-from Define_Model.model import PairwiseDistance, SuperficialResCNN
-from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
+import argparse
+import os
+import os.path as osp
+import sys
+import time
 # Version conflict
 import warnings
 
+import numpy as np
+import torch
+import torch.backends.cudnn as cudnn
+import torch.nn as nn
+import torchvision.transforms as transforms
+from kaldi_io import read_mat
+from tensorboardX import SummaryWriter
+from torch.autograd import Variable
+from torch.optim.lr_scheduler import MultiStepLR
+from tqdm import tqdm
+
+from Define_Model.LossFunction import CenterLoss
+from Define_Model.ResNet import ResNet20
+from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
+from Define_Model.model import PairwiseDistance
+from Process_Data import constants as c
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.audio_processing import concateinputfromMFB, to2tensor
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
+from TrainAndTest.common_func import create_optimizer
+from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
 warnings.filterwarnings("ignore")
@@ -117,6 +115,8 @@ parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-batch-size', type=int, default=2, metavar='BST',
+                    help='input batch size for testing (default: 64)')
+parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
@@ -267,7 +267,7 @@ def main():
     # channels = args.channels.split(',')
     # channels = [int(x) for x in channels]
 
-    model = ResNet20(embedding_size=args.embedding_size, num_classes=train_dir.num_spks)
+    model = ResNet20(embedding_size=args.embedding_size, num_classes=train_dir.num_spks, dropout_p=args.dropout_p)
 
     start_epoch = 0
     if args.save_init:
