@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=3
 #stage=10
 
 if [ $stage -le 0 ]; then
