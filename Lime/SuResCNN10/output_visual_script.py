@@ -11,11 +11,11 @@
 """
 import argparse
 import os
-import pdb
-import pickle
-import numpy as np
 import pathlib
+import pickle
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import animation
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
@@ -32,7 +32,7 @@ parser.add_argument('--sitw-dir', type=str,
 
 parser.add_argument('--check-path', default='Data/checkpoint/SuResCNN10/spect/aug',
                     help='folder to output model checkpoints')
-parser.add_argument('--extract-path', default='Data/extract/SuResCNN10/spect',
+parser.add_argument('--extract-path', default='Lime/SuResCNN10/data',
                     help='folder to output model checkpoints')
 
 # Training options
@@ -52,14 +52,31 @@ parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 
 args = parser.parse_args()
-cValue_1 = ['purple', 'green', 'blue', 'pink', 'brown', 'red', 'teal', 'orange', 'magenta', 'yellow', 'grey',
-            'violet', 'turquoise', 'lavender', 'tan', 'cyan', 'aqua', 'maroon', 'olive', 'salmon', 'beige',
-            'black', 'peach', 'lime', 'indigo', 'mustard', 'rose', 'aquamarine', 'navy', 'gold', 'plum', 'burgundy',
-            'khaki', 'taupe', 'chartreuse', 'mint', 'sand', 'puce', 'seafoam', 'goldenrod', 'slate', 'rust',
-            'cerulean', 'ochre', 'crimson', 'fuchsia', 'puke', 'eggplant', 'white', 'sage', 'brick', 'cream',
-            'coral', 'greenish', 'grape', 'azure', 'wine', 'cobalt', 'pinkish', 'vomit', 'moss', 'grass',
-            'chocolate', 'cornflower', 'charcoal', 'pumpkin', 'tangerine', 'raspberry', 'orchid', 'sky']
-marker = ['o', 'x']
+cValue_1 = ['#15b01a', '#ff796c', '#7e1e9c', '#ff81c0', '#96f97b', '#e50000', '#ffff14', '#653700', '#95d0fc',
+            '#029386', '#f97306',
+            '#c20078', '#75bbfd', '#929591', '#89fe05', '#bf77f6', '#9a0eea', '#033500', '#06c2ac', '#c79fef',
+            '#00035b', '#d1b26f', '#00ffff', '#13eac9', '#06470c', '#ae7181', '#35063e', '#01ff07', '#650021',
+            '#6e750e', '#e6daa6', '#0504aa', '#001146', '#cea2fd', '#000000', '#ff028d', '#ad8150', '#c7fdb5',
+            '#ffb07c', '#677a04', '#cb416b', '#8e82fe', '#53fca1', '#aaff32', '#380282', '#ceb301', '#ffd1df',
+            '#cf6275', '#0165fc', '#0cff0c', '#c04e01', '#04d8b2', '#01153e', '#3f9b0b', '#d0fefe', '#840000',
+            '#be03fd', '#c0fb2d', '#a2cffe', '#dbb40c', '#8fff9f', '#580f41', '#4b006e', '#8f1402', '#014d4e',
+            '#610023', '#aaa662', '#137e6d', '#7af9ab', '#02ab2e', '#9aae07', '#8eab12', '#b9a281', '#341c02',
+            '#36013f', '#c1f80a', '#fe01b1', '#fdaa48', '#9ffeb0', '#b0ff9d', '#e2ca76', '#c65102', '#a9f971',
+            '#a57e52', '#80f9ad', '#6b8ba4', '#4b5d16', '#363737', '#d5b60a', '#fac205', '#516572', '#0343df',
+            '#90e4c1', '#a83c09', '#040273', '#ffcfdc', '#0485d1', '#ff474c', '#d2bd0a', '#bf9005', '#ffff84',
+            '#8c000f', '#ed0dd9', '#0b4008', '#607c8e', '#5b7c99', '#b790d4', '#047495', '#d648d7', '#a5a502',
+            '#d8dcd6', '#5ca904', '#fffe7a', '#380835', '#5a7d9a', '#658b38', '#98eff9', '#ffffff', '#789b73',
+            '#87ae73', '#a03623', '#b04e0f', '#7f2b0a', '#ffffc2', '#fc5a50', '#03719c', '#40a368', '#960056',
+            '#fd3c06', '#703be7', '#020035', '#d6b4fc', '#c0737a', '#2c6fbb', '#cdfd02', '#b0dd16', '#601ef9',
+            '#5e819d', '#6c3461', '#acbf69', '#5170d7', '#f10c45', '#ff000d', '#069af3', '#5729ce', '#045c5a',
+            '#0652ff', '#ffffe4', '#b1d1fc', '#80013f', '#74a662', '#76cd26', '#7ef4cc', '#bc13fe', '#1e488f',
+            '#d46a7e', '#6f7632', '#0a888a', '#632de9', '#34013f', '#856798', '#154406', '#a2a415', '#ffa756',
+            '#0b8b87', '#af884a', '#06b48b', '#10a674', '#a2bffe', '#769958', '#5cac2d', '#cb0162', '#980002',
+            '#88b378', '#02d8e9', '#ca6641', '#caa0ff', '#a9561e', '#373e02', '#c9ff27', '#be0119', '#82a67d',
+            '#3d1c02', '#5d06e9', '#6a79f7', '#ffb7ce', '#343837', '#0a481e', '#e17701', '#696112', '#8b2e16',
+            '#6a6e09', '#ff9408', '#fe7b7c', '#12e193', '#b00149', '#887191', '#f7879a', '#fe019a', '#030aa7',
+            '#be6400', '#9a0200', '#fd411e', '#cdc50a']
+marker = ['.', 'x']
 
 def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
@@ -203,25 +220,25 @@ def main():
     plt.xlabel('Frequency')
     plt.ylabel('Weight')
 
-    x = np.arange(121) * 8000 / 121  # [0-8000]
-    y = np.nan_to_num(input_grads)  # 2,
+    x = np.arange(161) * 8000 / 161  # [0-8000]
+    y = np.nan_to_num(input_grads)  # 2, 21, 2, 161
     # pdb.set_trace()
     max_x = np.max(x)
     min_x = np.min(x)
-    max_y = np.max(y)
+    max_y = np.max(y[0][0][0] / y[0][0][0].sum())
     min_y = np.min(y)
     plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
     plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
     # pdb.set_trace()
     # print(y.shape)
     text_e = plt.text(min_x, max_y, 'Epoch 0')
-    y_shape = y.shape  # 2, 21, 2, 64
+    y_shape = y.shape  # 2, 21, 2, 161
     set_dots = []
 
     for j in range(y_shape[0]):  # aug and kaldi
         dots = []
         for h in range(y_shape[2]):  # train and valid
-            dot, = plt.plot(x, y[j][0][h], marker=marker[j], color=cValue_1[j + h * 4])
+            dot, = plt.plot(x, y[j][0][h] / y[j][0][h].sum(), marker=marker[j], color=cValue_1[j + h * 4])
             dots.append(dot)
 
         set_dots.append(dots)
@@ -231,7 +248,7 @@ def main():
 
     def gen_line():
         for i in range(1, y_shape[1]):
-            newdot = [x, y[:, i]]  # 2,2,64
+            newdot = [x, y[:, i]]  # 2,2,161
             text_e.set_text('Epoch %2s' % str(i))
 
             yield newdot
@@ -240,7 +257,7 @@ def main():
         for i in range(y_shape[0]):
             dots = set_dots[i]
             for j in range(y_shape[2]):
-                dots[j].set_data(newd[0], newd[1][i][j])
+                dots[j].set_data(newd[0], newd[1][i][j] / newd[1][i][j].sum())
 
         return set_dots
 
