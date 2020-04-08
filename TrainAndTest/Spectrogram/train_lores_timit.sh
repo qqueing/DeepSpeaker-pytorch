@@ -43,6 +43,7 @@ if [ $stage -le 1 ]; then
       --num-valid 2 \
       --weight-decay 0.001 \
       --loss-type ${loss} \
+      --m 4 \
       --lambda-max 0.2 \
       --margin 0.35 \
       --s 30
@@ -91,6 +92,7 @@ if [ $stage -le 3 ]; then
       --embedding-size 128 \
       --input-per-spks 128 \
       --num-valid 2 \
+      --lr 0.01 \
       --weight-decay 0.001 \
       --dropout-p ${p}
   done
