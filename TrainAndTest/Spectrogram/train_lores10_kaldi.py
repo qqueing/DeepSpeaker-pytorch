@@ -10,38 +10,36 @@
 @Overview:
 """
 from __future__ import print_function
-import argparse
-import pathlib
-import pdb
-import random
-import time
-import sys
-from kaldi_io import read_mat
-from tensorboardX import SummaryWriter
-import torch
-import torch.nn as nn
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
-import os
-import numpy as np
-from torch.optim.lr_scheduler import MultiStepLR
-from tqdm import tqdm
-import os.path as osp
 
-from Define_Model.ResNet import LocalResNet
-from Process_Data import constants as c
-from Define_Model.LossFunction import CenterLoss
-from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, SitwTestDataset
-from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
-from Define_Model.model import PairwiseDistance, SuperficialResCNN
-from Process_Data.audio_processing import concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio
+import argparse
+import os
+import os.path as osp
+import sys
+import time
 # Version conflict
 import warnings
 
+import numpy as np
+import torch
+import torch.backends.cudnn as cudnn
+import torch.nn as nn
+import torchvision.transforms as transforms
+from kaldi_io import read_mat
+from tensorboardX import SummaryWriter
+from torch.autograd import Variable
+from torch.optim.lr_scheduler import MultiStepLR
+from tqdm import tqdm
+
+from Define_Model.LossFunction import CenterLoss
+from Define_Model.ResNet import LocalResNet
+from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
+from Define_Model.model import PairwiseDistance
+from Process_Data import constants as c
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.audio_processing import concateinputfromMFB, to2tensor
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
+from TrainAndTest.common_func import create_optimizer
+from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
 warnings.filterwarnings("ignore")
@@ -116,21 +114,24 @@ parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT'
 parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
                     help='input batch size for testing (default: 64)')
 
-# parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
+# loss configure
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--m', type=float, default=3, metavar='M',
-                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
+                    help='the ratio softmax loss - triplet loss (default: 2.0')
+
+# args for additive margin-softmax
 parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--s', type=float, default=15, metavar='S',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
-parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
-                    help='the ratio softmax loss - triplet loss (default: 2.0')
+
 # args for a-softmax
+parser.add_argument('--m', type=float, default=3, metavar='M',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=int, default=10500, metavar='S',
+parser.add_argument('--lambda-max', type=int, default=1500, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
@@ -296,11 +297,9 @@ def main():
     elif args.loss_type == 'asoft':
         ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-
-        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
-        lambda_max = int(all_iteration * 0.3) // 500 * 500
-
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
+        # all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
+        # lambda_max = int(all_iteration * 0.3) // 500 * 500
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':
