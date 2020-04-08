@@ -113,6 +113,8 @@ parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT'
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
                     help='input batch size for testing (default: 64)')
+parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
+                    help='input batch size for testing (default: 64)')
 
 # loss configure
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
@@ -225,7 +227,7 @@ test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=tr
 
 if len(test_dir) < args.veri_pairs:
     args.veri_pairs = len(test_dir)
-    print('There are %d verification pairs in sitw eval.' % len(test_dir))
+    print('There are %d verification pairs.' % len(test_dir))
 else:
     test_dir.partition(args.veri_pairs)
 
@@ -265,7 +267,8 @@ def main():
     channels = args.channels.split(',')
     channels = [int(x) for x in channels]
 
-    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size, num_classes=train_dir.num_spks,
+    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size,
+                        num_classes=train_dir.num_spks, dropout_p=args.dropout_p,
                         channels=channels, kernal_size=kernel_size, padding=padding)
 
     start_epoch = 0
@@ -280,10 +283,10 @@ def main():
             start_epoch = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-            # model_dict = model.state_dict()
-            # model_dict = model_dict.update(filtered)
+            model_dict = model.state_dict()
+            model_dict = model_dict.update(filtered)
 
-            model.load_state_dict(filtered)
+            model.load_state_dict(model_dict)
             # optimizer.load_state_dict(checkpoint['optimizer'])
             # scheduler.load_state_dict(checkpoint['scheduler'])
             # if 'criterion' in checkpoint.keys():

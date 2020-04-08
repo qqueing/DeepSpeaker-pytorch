@@ -13,15 +13,14 @@ This file define resnet in 'Deep Residual Learning for Image Recognition'
 For all model, the pre_forward function is for extract vectors and forward for classification.
 """
 import math
-import pdb
+
 import numpy as np
-from torch import nn
 import torch
-from torchvision.models.resnet import Bottleneck
+from torch import nn
 from torchvision.models.resnet import BasicBlock
+from torchvision.models.resnet import Bottleneck
 
 from Define_Model.SoftmaxLoss import AngleLinear
-from Define_Model.model import ReLU
 
 
 def conv1x1(in_planes, out_planes, stride=1):
@@ -310,7 +309,6 @@ class ExporingResNet(nn.Module):
     # Allow for accessing forward method in a inherited class
     forward = _forward
 
-
 class AttenSiResNet(nn.Module):
 
     def __init__(self, layers, block=BasicBlock,
@@ -546,7 +544,6 @@ class ResNet(nn.Module):
 
         return x
 
-
 class AResNet(nn.Module):
 
     def __init__(self, block=BasicBlock, layers=[1, 1, 1, 1],
@@ -679,7 +676,8 @@ class Block3x3(nn.Module):
         return out
 
 class ResNet20(nn.Module):
-    def __init__(self, block=BasicBlock, input_frames=300, num_classes=1000, embedding_size=128,
+    def __init__(self, block=BasicBlock, input_frames=300, num_classes=1000,
+                 embedding_size=128, dropout_p=0.5,
                  zero_init_residual=False):
         super(ResNet20, self).__init__()
         self.inplanes = 1
@@ -702,7 +700,7 @@ class ResNet20(nn.Module):
 
         self.inplanes = 512
         self.avgpool = nn.AdaptiveAvgPool2d((1, None))
-
+        self.dropout = nn.Dropout(p=dropout_p)
         self.fc1 = nn.Sequential(
             nn.Linear(17 * self.inplanes, embedding_size),
             nn.BatchNorm1d(embedding_size)
@@ -736,6 +734,7 @@ class ResNet20(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
+        x = self.dropout(x)
         feat = self.fc1(x)
 
         logits = self.classifier(feat)
@@ -750,7 +749,7 @@ class LocalResNet(nn.Module):
     """
 
     def __init__(self, resnet_size, embedding_size, num_classes, block=BasicBlock,
-                 channels=[64, 128, 256],
+                 channels=[64, 128, 256], dropout_p=0.,
                  kernal_size=5, padding=2):
         super(LocalResNet, self).__init__()
         resnet_type = {10: [1, 1, 1, 1],
@@ -760,6 +759,7 @@ class LocalResNet(nn.Module):
                        101: [3, 4, 23, 3]}
 
         layers = resnet_type[resnet_size]
+        self.dropout_p = dropout_p
 
         self.embedding_size = embedding_size
         self.relu = nn.LeakyReLU()
@@ -787,7 +787,10 @@ class LocalResNet(nn.Module):
         # self.bn4 = nn.BatchNorm2d(512)
         # self.layer4 = self._make_layer(block, 512, layers[3])
         # self.avg_pool = nn.AdaptiveAvgPool2d([4, 1])
+
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
+
+        self.dropout = nn.Dropout(self.dropout_p)
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
@@ -858,8 +861,11 @@ class LocalResNet(nn.Module):
         # x = self.bn4(x)
         # x = self.relu(x)
         # x = self.layer4(x)
+        if self.dropout_p > 0:
+            x = self.dropout(x)
 
         x = self.avg_pool(x)
+
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         x = self.l2_norm(x, alpha=12)
