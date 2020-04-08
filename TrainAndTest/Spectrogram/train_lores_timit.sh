@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=3
+#stage=3
 #stage=10
 
 if [ $stage -le 0 ]; then
@@ -51,7 +51,7 @@ if [ $stage -le 1 ]; then
 
 fi
 
-stage=3
+#stage=3
 
 if [ $stage -le 2 ]; then
 #  for loss in center amsoft ; do/
