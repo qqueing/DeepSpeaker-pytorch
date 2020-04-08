@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #stage=3
-#stage=10
+stage=0
 
 if [ $stage -le 0 ]; then
   for loss in soft ; do
