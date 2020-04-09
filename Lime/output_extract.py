@@ -66,6 +66,8 @@ parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiR
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
+parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
+                    help='path to voxceleb1 test dataset')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--cos-sim', action='store_true', default=True, help='using Cosine similarity')
@@ -177,8 +179,11 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
         data = Variable(data.cuda(), requires_grad=True)
 
         logit, _ = model(data)
-        cos_theta, phi_theta = logit
 
+        if args.loss_type == 'asoft':
+            classifed, _ = logit
+        else:
+            classifed = logit
         # conv1 = model.conv1(data)
         # bn1 = model.bn1(conv1)
         # relu1 = model.relu(bn1)
@@ -186,7 +191,7 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
         # bn1 = bn1.cpu().detach().numpy().squeeze().astype(np.float32)
         # relu1 = relu1.cpu().detach().numpy().squeeze().astype(np.float32)
 
-        cos_theta[0][label.long()].backward()
+        classifed[0][label.long()].backward()
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
 
         input_grads.append(grad)
