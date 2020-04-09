@@ -251,7 +251,7 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
         grad_b = data_a.grad.cpu().numpy().squeeze().astype(np.float32)
 
         input_grads.append((label, grad_a, grad_b))
-        inputs_uids([uid_a, uid_b])
+        inputs_uids.append([uid_a, uid_b])
 
         model.zero_grad()
 
