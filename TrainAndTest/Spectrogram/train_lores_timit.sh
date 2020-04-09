@@ -13,7 +13,7 @@ if [ $stage -le 0 ]; then
       --epochs 12 \
       --lr 0.05 \
       --scheduler exp \
-      --gamma 0.765 \
+      --gamma 0.65 \
       --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sch/checkpoint_1.pth \
