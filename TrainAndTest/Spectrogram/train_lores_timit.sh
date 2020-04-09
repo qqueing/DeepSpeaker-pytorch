@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
 #stage=3
-stage=0
+stage=1
 
 if [ $stage -le 0 ]; then
-  for loss in soft amsoft ; do
+  for loss in soft  ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
-      --epochs 14 \
+      --epochs 12 \
       --lr 0.05 \
-      --milestones 6,11 \
+      --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_lr \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_lr/checkpoint_1.pth \
       --channels 4,16,64 \
@@ -23,7 +23,51 @@ if [ $stage -le 0 ]; then
       --loss-type ${loss}
   done
 fi
+
+if [ $stage -le 1 ]; then
+  for loss in soft  ; do
+    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
+      --nj 12 \
+      --epochs 12 \
+      --lr 0.05 \
+      --milestones 6,10 \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_wd \
+      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_wd/checkpoint_1.pth \
+      --channels 4,16,64 \
+      --embedding-size 128 \
+      --input-per-spks 256 \
+      --num-valid 2 \
+      --dropout-p 0.5 \
+      --weight-decay 0.0005 \
+      --loss-type ${loss}
+  done
+fi
 stage=13
+if [ $stage -le 0 ]; then
+  for loss in soft amsoft ; do
+    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
+      --nj 12 \
+      --epochs 16 \
+      --lr 0.05 \
+      --milestones 6,12 \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_epoch \
+      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_epoch/checkpoint_1.pth \
+      --channels 4,16,64 \
+      --embedding-size 128 \
+      --input-per-spks 256 \
+      --num-valid 2 \
+      --weight-decay 0.001 \
+      --loss-type ${loss}
+  done
+fi
+
+
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft amsoft ; do/
