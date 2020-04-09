@@ -12,8 +12,8 @@
 from __future__ import print_function
 
 import argparse
+import json
 import os
-import pdb
 import pickle
 import random
 import time
@@ -175,6 +175,7 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
     model.eval()
 
     input_grads = []
+    inputs_uids = []
     pbar = tqdm(enumerate(train_loader))
 
     for batch_idx, (data, label, uid) in pbar:
@@ -199,6 +200,7 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
 
         input_grads.append(grad)
+        inputs_uids.append(uid)
 
         model.zero_grad()
 
@@ -217,7 +219,11 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
             with open(filename, 'wb') as f:
                 pickle.dump(input_grads, f)
 
+            with open(file_dir + '/inputs.%s.%d.json' % (set_name, num), 'w') as f:
+                json.dump(inputs_uids, f)
+
             input_grads = []
+            inputs_uids = []
 
     print('Saving pairs in %s.\n' % file_dir)
 
@@ -226,10 +232,11 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
     model.eval()
 
     input_grads = []
+    inputs_uids = []
     pbar = tqdm(enumerate(test_loader))
-    pdb.set_trace()
-    for batch_idx, (data_a, data_b, label) in pbar:
-        # for batch_idx, (data_a, data_b, label, uid_a, uid_b) in pbar:
+
+    # for batch_idx, (data_a, data_b, label) in pbar:
+    for batch_idx, (data_a, data_b, label, uid_a, uid_b) in pbar:
 
         data_a = Variable(data_a.cuda(), requires_grad=True)
         data_b = Variable(data_b.cuda(), requires_grad=True)
@@ -244,6 +251,7 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
         grad_b = data_a.grad.cpu().numpy().squeeze().astype(np.float32)
 
         input_grads.append((label, grad_a, grad_b))
+        inputs_uids([uid_a, uid_b])
 
         model.zero_grad()
 
@@ -263,7 +271,11 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
             with open(filename, 'wb') as f:
                 pickle.dump(input_grads, f)
 
+            with open(file_dir + '/inputs.%s.%d.json' % (set_name, num), 'w') as f:
+                json.dump(inputs_uids, f)
+
             input_grads = []
+            inputs_uids = []
 
 def main():
     class_to_idx = train_dir.spk_to_idx
@@ -320,8 +332,8 @@ def main():
             model_conv1 = model.conv1.weight.cpu().detach().numpy()
             np.save(file_dir + '/model.conv1.npy', model_conv1)
 
-        # train_extract(train_loader, model, file_dir, 'vox1_train')
-        # train_extract(valid_loader, model, file_dir, 'vox1_valid')
+        train_extract(train_loader, model, file_dir, 'vox1_train')
+        train_extract(valid_loader, model, file_dir, 'vox1_valid')
         test_extract(test_loader, model, file_dir, 'vox1_test')
 
 
