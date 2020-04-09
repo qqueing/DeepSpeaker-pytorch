@@ -900,8 +900,8 @@ class ScriptTestDataset(data.Dataset):
             # pdb.set_trace()
             # print(uid_a, uid_b)
             data_a, data_b, label, uid_a, uid_b
-
-        return data_a, data_b, label
+        else:
+            return data_a, data_b, label
 
     def partition(self, num):
         if num > len(self.trials_pair):
