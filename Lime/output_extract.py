@@ -289,8 +289,11 @@ def main():
         if os.path.isfile(resume_path.format(e)):
             print('=> loading checkpoint {}'.format(resume_path.format(e)))
             checkpoint = torch.load(resume_path.format(e))
-            epoch = checkpoint['epoch']
-            filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+            # epoch = checkpoint['epoch']
+            if e == 0:
+                filtered = checkpoint.state_dict()
+            else:
+                filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
 
             # model.load_state_dict(filtered)
             model_dict = model.state_dict()
@@ -301,7 +304,7 @@ def main():
             continue
         model.cuda()
 
-        file_dir = args.extract_path + '/epoch_%d' % epoch
+        file_dir = args.extract_path + '/epoch_%d' % e
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
 
