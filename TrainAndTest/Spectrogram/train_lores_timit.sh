@@ -33,7 +33,7 @@ if [ $stage -le 1 ]; then
       --nj 12 \
       --epochs 6 \
       --scheduler exp \
-      --gamma 0.675 \
+      --gamma 0.625 \
       --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_12.pth \
