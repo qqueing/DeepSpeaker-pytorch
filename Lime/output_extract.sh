@@ -10,6 +10,7 @@ for model in LoResNet10 ; do
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect/soft \
     --extract-path Lime/${model} \
+    --dropout-p 0.5 \
     --sample-utt 500
 
 done
