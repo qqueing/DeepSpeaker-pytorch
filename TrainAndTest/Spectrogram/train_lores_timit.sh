@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 
 #stage=3
-stage=1
+stage=0
 
 if [ $stage -le 0 ]; then
-  for loss in soft ; do
+  for loss in soft amsoft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
       --epochs 12 \
+      --lr 0.05 \
+      --scheduler exp \
+      --gamma 0.765 \
       --milestones 6,10 \
-      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
+      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sch/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
@@ -22,6 +25,7 @@ if [ $stage -le 0 ]; then
       --loss-type ${loss}
   done
 fi
+stage=13
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft amsoft ; do/
@@ -33,7 +37,7 @@ if [ $stage -le 1 ]; then
       --nj 12 \
       --epochs 6 \
       --scheduler exp \
-      --gamma 0.565 \
+      --gamma 0.625 \
       --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch5 \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_12.pth \
@@ -53,7 +57,7 @@ if [ $stage -le 1 ]; then
 
 fi
 
-stage=13
+
 
 if [ $stage -le 2 ]; then
 #  for loss in center amsoft ; do/
