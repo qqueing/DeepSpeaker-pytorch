@@ -322,7 +322,7 @@ def main():
                                     momentum=args.momentum)
 
     if args.scheduler == 'exp':
-        scheduler = ExponentialLR(optimizer, gamma=args.gamma, last_epoch=args.epochs)
+        scheduler = ExponentialLR(optimizer, gamma=args.gamma)
     else:
         milestones = args.milestones.split(',')
         milestones = [int(x) for x in milestones]
