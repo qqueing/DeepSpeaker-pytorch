@@ -25,6 +25,7 @@ from scipy import interpolate
 from torch import nn
 import torchvision.transforms as transforms
 import json
+from Lime import cValue_1
 
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset
 from Process_Data.audio_processing import concateinputfromMFB, to2tensor
@@ -73,27 +74,6 @@ torch.manual_seed(args.seed)
 # Define visulaize SummaryWriter instance
 kwargs = {}
 
-cValue_1 = ['#7e1e9c', '#15b01a', '#0343df', '#ff81c0', '#653700', '#e50000', '#95d0fc', '#029386', '#f97306',
-            '#96f97b', '#c20078', '#ffff14', '#75bbfd', '#929591', '#89fe05', '#bf77f6', '#9a0eea', '#033500',
-            '#06c2ac', '#c79fef', '#00035b', '#d1b26f', '#00ffff', '#13eac9', '#06470c', '#ae7181', '#35063e',
-            '#01ff07', '#650021',
-            '#6e750e', '#ff796c', '#e6daa6', '#0504aa', '#001146', '#cea2fd', '#000000', '#ff028d', '#ad8150',
-            '#c7fdb5', '#ffb07c', '#677a04', '#cb416b', '#8e82fe', '#53fca1', '#aaff32', '#380282', '#ceb301',
-            '#ffd1df', '#cf6275', '#0165fc', '#0cff0c', '#c04e01', '#04d8b2', '#01153e', '#3f9b0b', '#d0fefe',
-            '#840000', '#be03fd', '#c0fb2d', '#a2cffe', '#dbb40c', '#8fff9f', '#580f41', '#4b006e', '#8f1402',
-            '#014d4e', '#610023', '#aaa662', '#137e6d', '#7af9ab', '#02ab2e', '#9aae07', '#8eab12', '#b9a281',
-            '#341c02', '#36013f', '#c1f80a', '#fe01b1', '#fdaa48', '#9ffeb0', '#b0ff9d', '#e2ca76', '#c65102',
-            '#a9f971', '#a57e52', '#80f9ad', '#6b8ba4', '#4b5d16', '#363737', '#d5b60a', '#fac205', '#516572',
-            '#90e4c1', '#a83c09', '#040273', '#ffcfdc', '#0485d1', '#ff474c', '#d2bd0a', '#bf9005', '#ffff84',
-            '#8c000f', '#ed0dd9', '#0b4008', '#607c8e', '#5b7c99', '#b790d4', '#047495', '#d648d7', '#a5a502',
-            '#d8dcd6', '#5ca904', '#fffe7a', '#380835', '#5a7d9a', '#658b38', '#98eff9', '#ffffff', '#789b73',
-            '#87ae73', '#a03623', '#b04e0f', '#7f2b0a', '#ffffc2', '#fc5a50', '#03719c', '#40a368', '#960056',
-            '#fd3c06', '#703be7', '#020035', '#d6b4fc', '#c0737a', '#2c6fbb', '#cdfd02', '#b0dd16', '#601ef9',
-            '#5e819d', '#6c3461', '#acbf69', '#5170d7', '#f10c45', '#ff000d', '#069af3', '#5729ce', '#045c5a',
-            '#0652ff', '#ffffe4', '#b1d1fc', '#80013f', '#74a662', '#76cd26', '#7ef4cc', '#bc13fe', '#1e488f',
-            '#d46a7e', '#6f7632', '#0a888a', '#632de9', '#34013f', '#856798', '#154406', '#a2a415', '#ffa756',
-            '#0b8b87', '#af884a', '#06b48b', '#10a674']
-marker = ['o', 'x']
 
 def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
