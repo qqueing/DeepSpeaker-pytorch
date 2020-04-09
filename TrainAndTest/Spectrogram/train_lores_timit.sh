@@ -33,6 +33,7 @@ if [ $stage -le 1 ]; then
       --nj 12 \
       --epochs 6 \
       --scheduler exp \
+      --gamma 0.675 \
       --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_12.pth \
@@ -46,7 +47,7 @@ if [ $stage -le 1 ]; then
       --loss-type ${loss} \
       --m 4 \
       --lambda-max 0.2 \
-      --margin 0.35 \
+      --margin 0.3 \
       --s 30
   done
 
