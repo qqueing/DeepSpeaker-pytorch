@@ -21,7 +21,7 @@ if [ $stage -le 0 ]; then
       --nj 12 \
       --epochs 22 \
       --milestones 10,15 \
-      --lr 0.05 \
+      --lr 0.1 \
       --veri-pairs 12800 \
       --check-path Data/checkpoint/ResNet20/spect_257/${loss}_dp0.5 \
       --resume Data/checkpoint/ResNet20/spect_257/${loss}_dp0.5/checkpoint_1.pth \
