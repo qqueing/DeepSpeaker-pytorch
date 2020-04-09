@@ -9,7 +9,7 @@ for model in LoResNet10 ; do
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect/soft \
-    --extract-path \
+    --extract-path Lime/${model} \
     --sample-utt 500
 
 done
