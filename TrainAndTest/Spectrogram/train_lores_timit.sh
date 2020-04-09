@@ -34,7 +34,7 @@ if [ $stage -le 1 ]; then
       --epochs 6 \
       --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_fine \
-      --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_10.pth \
+      --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_12.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
