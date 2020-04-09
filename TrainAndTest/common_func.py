@@ -9,8 +9,10 @@
 @Time: 2019/12/16 6:36 PM
 @Overview:
 """
-import inspect
 import torch.optim as optim
+
+from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet
+
 
 def create_optimizer(parameters, optimizer, **kwargs):
     # setup optimizer
@@ -36,6 +38,22 @@ def create_optimizer(parameters, optimizer, **kwargs):
     return opt
 
 
+# ALSTM  ASiResNet34  ExResNet34  LoResNet10  ResNet20  SiResNet34  SuResCNN10  TDNN
+
+__factory = {
+    'LoResNet10': LocalResNet,
+    'ResNet20': ResNet20,
+    'ExResNet34': ExporingResNet,
+}
+
+
+def create_model(name, **kwargs):
+    if name not in __factory.keys():
+        raise KeyError("Unknown model: {}".format(name))
+
+    return __factory[name](kwargs)
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value.
        Code imported from https://github.com/pytorch/examples/blob/master/imagenet/main.py#L247-L262
@@ -56,11 +74,3 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-def write_test_scalar(writer, epoch, **kwargs):
-    writer.add_scalar('Test/Valid_Accuracy', kwargs['valid_accuracy'], epoch)
-    writer.add_scalar('Test/EER', kwargs['eer'], epoch)
-    writer.add_scalar('Test/Threshold', kwargs['eer_threshold'], epoch)
-
-def retrieve_name(var):
-    callers_local_vars = inspect.currentframe().f_back.f_locals.items()
-    return [var_name for var_name, var_val in callers_local_vars if var_val is var]

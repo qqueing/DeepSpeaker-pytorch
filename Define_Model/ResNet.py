@@ -191,7 +191,7 @@ class ExporingResNet(nn.Module):
 
     def __init__(self, layers, block=BasicBlock, input_frames=300, num_classes=1000, embedding_size=128,
                  zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None):
+                 norm_layer=None, **kwargs):
         super(ExporingResNet, self).__init__()
 
         if norm_layer is None:
@@ -676,9 +676,8 @@ class Block3x3(nn.Module):
         return out
 
 class ResNet20(nn.Module):
-    def __init__(self, block=BasicBlock, input_frames=300, num_classes=1000,
-                 embedding_size=128, dropout_p=0.0,
-                 zero_init_residual=False):
+    def __init__(self, num_classes=1000, embedding_size=128, dropout_p=0.0,
+                 block=BasicBlock, input_frames=300, **kwargs):
         super(ResNet20, self).__init__()
         self.dropout_p = dropout_p
         self.inplanes = 1
@@ -752,9 +751,10 @@ class LocalResNet(nn.Module):
     Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
     """
 
-    def __init__(self, resnet_size, embedding_size, num_classes, block=BasicBlock,
+    def __init__(self, embedding_size, num_classes, block=BasicBlock,
+                 resnet_size=10,
                  channels=[64, 128, 256], dropout_p=0.,
-                 kernal_size=5, padding=2):
+                 kernal_size=5, padding=2, **kwargs):
         super(LocalResNet, self).__init__()
         resnet_type = {10: [1, 1, 1, 1],
                        18: [2, 2, 2, 2],
