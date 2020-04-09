@@ -74,6 +74,8 @@ parser.add_argument('--cos-sim', action='store_true', default=True, help='using 
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES', help='Dimensionality of the embedding')
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
                     help='Dimensionality of the embedding')
+parser.add_argument('--veri-pairs', type=int, default=25600, metavar='VP',
+                    help='number of epochs to train (default: 10)')
 
 parser.add_argument('--batch-size', type=int, default=1, metavar='BS',
                     help='input batch size for training (default: 128)')
@@ -139,10 +141,11 @@ indices = indices[:args.sample_utt]
 train_part = torch.utils.data.Subset(train_dir, indices)
 
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T, return_uid=True)
-indices = list(range(len(test_dir)))
-random.shuffle(indices)
-indices = indices[:args.sample_utt]
-test_part = torch.utils.data.Subset(test_dir, indices)
+if len(test_dir) < args.veri_pairs:
+    args.veri_pairs = len(test_dir)
+    print('There are %d verification pairs.' % len(test_dir))
+else:
+    test_dir.partition(args.veri_pairs)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
@@ -217,7 +220,6 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
 
     print('Saving pairs in %s.\n' % file_dir)
 
-
 def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
     # switch to evaluate mode
     model.eval()
@@ -281,7 +283,7 @@ def main():
 
     train_loader = DataLoader(train_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     valid_loader = DataLoader(valid_part, batch_size=args.batch_size, shuffle=False, **kwargs)
-    test_loader = DataLoader(test_part, batch_size=args.batch_size, shuffle=False, **kwargs)
+    test_loader = DataLoader(test_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
 
     # sitw_test_loader = DataLoader(sitw_test_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     # sitw_dev_loader = DataLoader(sitw_dev_part, batch_size=args.batch_size, shuffle=False, **kwargs)
@@ -317,8 +319,8 @@ def main():
             model_conv1 = model.conv1.weight.cpu().detach().numpy()
             np.save(file_dir + '/model.conv1.npy', model_conv1)
 
-        train_extract(train_loader, model, file_dir, 'vox1_train')
-        train_extract(valid_loader, model, file_dir, 'vox1_valid')
+        # train_extract(train_loader, model, file_dir, 'vox1_train')
+        # train_extract(valid_loader, model, file_dir, 'vox1_valid')
         test_extract(test_loader, model, file_dir, 'vox1_test')
 
 
