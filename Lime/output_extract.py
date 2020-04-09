@@ -228,7 +228,8 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
     input_grads = []
     pbar = tqdm(enumerate(test_loader))
     pdb.set_trace()
-    for batch_idx, (data_a, data_b, label, uid_a, uid_b) in pbar:
+    for batch_idx, (data_a, data_b, label) in pbar:
+        # for batch_idx, (data_a, data_b, label, uid_a, uid_b) in pbar:
 
         data_a = Variable(data_a.cuda(), requires_grad=True)
         data_b = Variable(data_b.cuda(), requires_grad=True)
