@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #stage=3
-stage=0
+stage=1
 
 if [ $stage -le 0 ]; then
   for loss in soft ; do
@@ -38,7 +38,7 @@ if [ $stage -le 1 ]; then
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
-      --lr 0.01 \
+      --lr 0.05 \
       --loss-ratio 0.01 \
       --num-valid 2 \
       --weight-decay 0.001 \
@@ -51,7 +51,7 @@ if [ $stage -le 1 ]; then
 
 fi
 
-#stage=3
+stage=13
 
 if [ $stage -le 2 ]; then
 #  for loss in center amsoft ; do/
