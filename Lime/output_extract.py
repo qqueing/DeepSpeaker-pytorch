@@ -75,8 +75,6 @@ parser.add_argument('--cos-sim', action='store_true', default=True, help='using 
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES', help='Dimensionality of the embedding')
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--veri-pairs', type=int, default=25600, metavar='VP',
-                    help='number of epochs to train (default: 10)')
 
 parser.add_argument('--batch-size', type=int, default=1, metavar='BS',
                     help='input batch size for training (default: 128)')
