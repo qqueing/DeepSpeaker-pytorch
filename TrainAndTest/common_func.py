@@ -51,7 +51,7 @@ def create_model(name, **kwargs):
     if name not in __factory.keys():
         raise KeyError("Unknown model: {}".format(name))
 
-    return __factory[name](kwargs)
+    return __factory[name](**kwargs)
 
 
 class AverageMeter(object):
