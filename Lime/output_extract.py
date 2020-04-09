@@ -268,6 +268,7 @@ def main():
     model_kwargs = {'embedding_size': args.embedding_size,
                     'num_classes': len(class_to_idx),
                     'dropout_p': args.dropout_p}
+    print('Model options: {}'.format(model_kwargs))
 
     model = create_model(args.model, **model_kwargs)
 
