@@ -2,6 +2,12 @@
 
 stage=0
 #stage=10
+waited=0
+while [ `ps 105999 | wc -l` -eq 2 ]; do
+  sleep 60
+  waited=$(expr $waited + 1)
+  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
+done
 
 if [ $stage -le 0 ]; then
   for loss in soft ; do
