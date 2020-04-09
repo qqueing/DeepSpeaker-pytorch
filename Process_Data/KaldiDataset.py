@@ -1013,7 +1013,7 @@ class SitwTestDataset(data.Dataset):
             label = False
 
         if self.return_uid:
-            return (data_a, data_b, label, uid_a, uid_b)
+            return data_a, data_b, (label, uid_a, uid_b)
 
         return data_a, data_b, label
 
