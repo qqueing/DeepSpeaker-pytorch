@@ -142,11 +142,7 @@ indices = indices[:args.sample_utt]
 train_part = torch.utils.data.Subset(train_dir, indices)
 
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T, return_uid=True)
-if len(test_dir) < args.veri_pairs:
-    args.veri_pairs = len(test_dir)
-    print('There are %d verification pairs.' % len(test_dir))
-else:
-    test_dir.partition(args.veri_pairs)
+test_dir.partition(args.sample_utt)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
