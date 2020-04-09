@@ -10,13 +10,11 @@ if [ $stage -le 0 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
-      --epochs 12 \
+      --epochs 14 \
       --lr 0.05 \
-      --scheduler exp \
-      --gamma 0.65 \
-      --milestones 6,10 \
-      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
-      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sch/checkpoint_1.pth \
+      --milestones 6,11 \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_lr \
+      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_lr/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
