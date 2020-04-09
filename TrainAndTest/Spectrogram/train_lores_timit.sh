@@ -33,9 +33,9 @@ if [ $stage -le 1 ]; then
       --nj 12 \
       --epochs 6 \
       --scheduler exp \
-      --gamma 0.625 \
+      --gamma 0.565 \
       --milestones 4 \
-      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch5 \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_12.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
