@@ -13,13 +13,15 @@ import os
 import pathlib
 import pdb
 import random
-from tqdm import tqdm
-import Process_Data.constants as c
+
 import kaldi_io
 import numpy as np
-import torch.utils.data as data
 import torch
+import torch.utils.data as data
 from kaldi_io import read_mat
+from tqdm import tqdm
+
+import Process_Data.constants as c
 
 
 def check_exist(path):
@@ -895,6 +897,7 @@ class ScriptTestDataset(data.Dataset):
             label = False
 
         if self.return_uid:
+            print(uid_a, uid_b)
             data_a, data_b, label, uid_a, uid_b
 
         return data_a, data_b, label
