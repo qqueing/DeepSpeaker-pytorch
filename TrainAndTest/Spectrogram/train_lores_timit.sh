@@ -32,6 +32,7 @@ if [ $stage -le 1 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 12 \
       --epochs 6 \
+      --scheduler exp \
       --milestones 4 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sch \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft/checkpoint_12.pth \
