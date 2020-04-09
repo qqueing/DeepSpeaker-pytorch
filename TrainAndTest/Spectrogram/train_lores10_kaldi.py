@@ -27,7 +27,7 @@ import torchvision.transforms as transforms
 from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
 from torch.autograd import Variable
-from torch.optim.lr_scheduler import MultiStepLR
+from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR
 from tqdm import tqdm
 
 from Define_Model.LossFunction import CenterLoss
@@ -84,6 +84,10 @@ parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
+parser.add_argument('--scheduler', default='multi', type=str,
+                    metavar='SCH', help='The optimizer to use (default: Adagrad)')
+parser.add_argument('--gamma', default=0.75, type=float,
+                    metavar='GAMMA', help='The optimizer to use (default: Adagrad)')
 parser.add_argument('--milestones', default='10,15', type=str,
                     metavar='MIL', help='The optimizer to use (default: Adagrad)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
@@ -317,10 +321,14 @@ def main():
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
 
-    milestones = args.milestones.split(',')
-    milestones = [int(x) for x in milestones]
-    milestones.sort()
-    scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+    if args.scheduler == 'exp':
+        scheduler = ExponentialLR(optimizer, gamma=args.gamma, last_epoch=args.epochs)
+    else:
+        milestones = args.milestones.split(',')
+        milestones = [int(x) for x in milestones]
+        milestones.sort()
+        scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+
     ce = [ce_criterion, xe_criterion]
 
     start = args.start_epoch + start_epoch
