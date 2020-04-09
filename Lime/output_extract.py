@@ -286,7 +286,7 @@ def main():
     train_loader = DataLoader(train_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     valid_loader = DataLoader(valid_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = DataLoader(test_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
-
+    pdb.set_trace()
     # sitw_test_loader = DataLoader(sitw_test_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     # sitw_dev_loader = DataLoader(sitw_dev_part, batch_size=args.batch_size, shuffle=False, **kwargs)
 
