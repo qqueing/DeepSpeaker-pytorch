@@ -5,14 +5,25 @@ stage=0
 
 if [ $stage -le 0 ]; then
   for loss in soft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
       --epochs 20 \
       --milestones 10,15 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_33 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_33/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_1.pth \
       --kernel-size 3,3 \
+      --loss-type ${loss} \
+      --num-valid 2 \
+      --dropout-p 0.5
+
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --nj 12 \
+      --epochs 20 \
+      --milestones 10,15 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp/checkpoint_1.pth \
       --loss-type ${loss} \
       --num-valid 2 \
       --dropout-p 0.5
