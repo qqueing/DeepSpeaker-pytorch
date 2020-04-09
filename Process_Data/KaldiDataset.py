@@ -1014,8 +1014,8 @@ class SitwTestDataset(data.Dataset):
 
         if self.return_uid:
             return data_a, data_b, (label, uid_a, uid_b)
-
-        return data_a, data_b, label
+        else:
+            return data_a, data_b, label
 
     def partition(self, num):
         if num > self.pairs:
