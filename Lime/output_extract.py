@@ -23,6 +23,7 @@ import torch._utils
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
+from kaldi_io import read_mat
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -31,7 +32,6 @@ from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import concateinputfromMFB, varLengthFeat, to2tensor
-from Process_Data.audio_processing import read_MFB
 from TrainAndTest.common_func import create_model
 
 # Version conflict
@@ -125,10 +125,10 @@ transform_T = transforms.Compose([
     varLengthFeat(),
     to2tensor()
 ])
-file_loader = read_MFB
+file_loader = read_mat
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks,
-                               transform=transform, return_uid=True)
+                               loader=file_loader, transform=transform, return_uid=True)
 indices = list(range(len(train_dir)))
 random.shuffle(indices)
 indices = indices[:args.sample_utt]
