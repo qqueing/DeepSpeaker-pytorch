@@ -97,9 +97,12 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 
 # Training options
 # Model options
+
+parser.add_argument('--resnet-size', default=8, type=int,
+                    metavar='RES', help='The channels of convs layers)')
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
-parser.add_argument('--feat-dim', default=161, type=int, metavar='N',
+parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
@@ -271,7 +274,7 @@ def main():
     channels = args.channels.split(',')
     channels = [int(x) for x in channels]
 
-    model = LocalResNet(resnet_size=10, embedding_size=args.embedding_size,
+    model = LocalResNet(resnet_size=args.resnet_size, embedding_size=args.embedding_size,
                         num_classes=train_dir.num_spks, dropout_p=args.dropout_p,
                         channels=channels, kernal_size=kernel_size, padding=padding)
 
@@ -291,10 +294,8 @@ def main():
             model_dict.update(filtered)
 
             model.load_state_dict(model_dict)
-            # optimizer.load_state_dict(checkpoint['optimizer'])
-            # scheduler.load_state_dict(checkpoint['scheduler'])
-            # if 'criterion' in checkpoint.keys():
-            #     ce = checkpoint['criterion']
+            #
+            model.dropout_p = args.dropout_p
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
