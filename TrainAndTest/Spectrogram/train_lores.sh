@@ -110,7 +110,7 @@ if [ $stage -le 5 ]; then
       --nj 12 \
       --epochs 10 \
       --milestones 4,7 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33_0.1 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_20.pth \
       --kernel-size 3,3 \
       --loss-type ${loss} \
