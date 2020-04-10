@@ -791,7 +791,6 @@ class LocalResNet(nn.Module):
         self.conv1 = nn.Conv2d(1, channels[0], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
         self.bn1 = nn.BatchNorm2d(channels[0])
         # self.maxpool = nn.MaxPool2d(kernel_size=(1, 3), stride=1, padding=1)
-
         self.layer1 = self._make_layer(block, channels[0], layers[0])
 
         self.inplanes = channels[1]
@@ -807,10 +806,10 @@ class LocalResNet(nn.Module):
         if layers[3] != 0:
             assert len(channels) == 4
             self.in_planes = channels[3]
-            self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size,
-                                   stride=2, padding=padding, bias=False)
+            self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size, stride=2, padding=padding,
+                                   bias=False)
             self.bn4 = nn.BatchNorm2d(channels[3])
-            self.layer4 = self._make_layer(block, channels[3], layers[3])
+            self.layer4 = self._make_layer(block=block, planes=channels[3], blocks=layers[3])
 
         # self.avg_pool = nn.AdaptiveAvgPool2d([4, 1])
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
