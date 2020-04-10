@@ -16,6 +16,9 @@ if [ $stage -le 0 ]; then
       --epochs 24 \
       --milestones 10,15,20 \
       --lr 0.1 \
+      --margin 0.35 \
+      --s 30 \
+      --m 4 \
       --veri-pairs 12800 \
       --check-path Data/checkpoint/ResNet/18/spect/${loss} \
       --resume Data/checkpoint/ResNet/18/spect/${loss}/checkpoint_1.pth \
