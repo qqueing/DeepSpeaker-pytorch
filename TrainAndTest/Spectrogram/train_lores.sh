@@ -179,6 +179,9 @@ if [ $stage -le 8 ]; then
       --channels 32,128,256,512 \
       --kernel-size 3,3 \
       --loss-type ${loss} \
+      --margin 0.35 \
+      --s 30 \
+      --m 4 \
       --num-valid 2 \
       --dropout-p 0.25
   done
