@@ -11,7 +11,7 @@
 """
 import torch.optim as optim
 
-from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet
+from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet, ResNet
 
 
 def create_optimizer(parameters, optimizer, **kwargs):
@@ -44,6 +44,7 @@ __factory = {
     'LoResNet10': LocalResNet,
     'ResNet20': ResNet20,
     'ExResNet34': ExporingResNet,
+    'ResNet': ResNet,
 }
 
 
