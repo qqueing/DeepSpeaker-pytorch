@@ -805,7 +805,7 @@ class LocalResNet(nn.Module):
 
         if layers[3] != 0:
             assert len(channels) == 4
-            self.in_planes = channels[3]
+            self.inplanes = channels[3]
             self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size, stride=2, padding=padding,
                                    bias=False)
             self.bn4 = nn.BatchNorm2d(channels[3])

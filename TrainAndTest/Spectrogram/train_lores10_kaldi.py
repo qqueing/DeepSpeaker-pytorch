@@ -14,7 +14,6 @@ from __future__ import print_function
 import argparse
 import os
 import os.path as osp
-import pdb
 import sys
 import time
 # Version conflict
@@ -353,7 +352,7 @@ def main():
                 ce[i] = ce[i].cuda()
 
     for epoch in range(start, end):
-        pdb.set_trace()
+        # pdb.set_trace()
         print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
             print('{:.5f} '.format(param_group['lr']), end='')
