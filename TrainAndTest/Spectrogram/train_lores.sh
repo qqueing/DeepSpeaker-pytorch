@@ -132,11 +132,29 @@ fi
 
 if [ $stage -le 6 ]; then
   for loss in soft ; do
+    echo -e "\n\033[1;4;31m Continue Training with ${loss} kernel 3x3\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --nj 12 \
+      --epochs 4 \
+      --resnet-size 10 \
+      --check-path Data/checkpoint/LoResNet10/spectrogram/${loss} \
+      --resume Data/checkpoint/LoResNet10/spectrogram/${loss}/checkpoint_20.pth \
+      --channels 32,128,256,512 \
+      --kernel-size 3,3 \
+      --lr 0.0001 \
+      --loss-type ${loss} \
+      --num-valid 2 \
+      --dropout-p 0.5
+  done
+fi
+
+if [ $stage -le 7 ]; then
+  for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --epochs 20 \
-      --milestones 10,15 \
+      --epochs 24 \
+      --milestones 10,15,20 \
       --resnet-size 10 \
       --check-path Data/checkpoint/LoResNet10/spectrogram/${loss} \
       --resume Data/checkpoint/LoResNet10/spectrogram/${loss}/checkpoint_20.pth \
@@ -144,6 +162,6 @@ if [ $stage -le 6 ]; then
       --kernel-size 3,3 \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.5
+      --dropout-p 0.25
   done
 fi
