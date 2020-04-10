@@ -36,7 +36,7 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-stage=6
+#stage=6
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
   for loss in center ; do
