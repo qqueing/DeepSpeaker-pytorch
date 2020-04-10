@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 # encoding: utf-8
-import numpy as np
-from python_speech_features import fbank, delta, sigproc
-from speechpy.processing import cmvn, cmvnw
-from Process_Data import constants as c
-import torch
-import librosa
-from speechpy.feature import mfe
-
-from scipy import signal
-from scipy.io import wavfile
-import soundfile as sf
-from pydub import AudioSegment
 import os
 import pathlib
-import math
 import pdb
-import torch.nn.utils.rnn as rnn_utils
 
+import librosa
+import numpy as np
+import soundfile as sf
+import torch
+import torch.nn.utils.rnn as rnn_utils
+from pydub import AudioSegment
+from python_speech_features import fbank, delta, sigproc
+from scipy import signal
+from scipy.io import wavfile
+from speechpy.feature import mfe
+from speechpy.processing import cmvn, cmvnw
+
+from Process_Data import constants as c
 from Process_Data.Compute_Feat.compute_vad import ComputeVadEnergy
 from Process_Data.xfcc.common import local_fbank
 
@@ -204,7 +203,8 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
     # return spectrogram
 
 
-def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, duration=False, nfft=None):
+def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
+               preemph=0.97, duration=False, nfft=None, normalize=True):
     """
     read wav as float type. [-1.0 ,1.0]
     :param wav_path:
@@ -231,11 +231,13 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming, preemph=0.97, du
     # feature = np.log1p(feature)  # log1p操作
     feature = np.log(pspec)
     # feature = feature.transpose()
+    if normalize:
+        feature = normalize_frames(feature)
 
     if duration:
-        return normalize_frames(feature), len(samples) / samplerate
+        return feature, len(samples) / samplerate
 
-    return normalize_frames(feature)
+    return feature
 
 
 
