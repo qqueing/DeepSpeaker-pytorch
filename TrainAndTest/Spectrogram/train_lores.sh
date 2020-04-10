@@ -2,12 +2,12 @@
 
 stage=5
 #stage=10
-waited=0
-while [ `ps 105999 | wc -l` -eq 2 ]; do
-  sleep 60
-  waited=$(expr $waited + 1)
-  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
-done
+#waited=0
+#while [ `ps 105999 | wc -l` -eq 2 ]; do
+#  sleep 60
+#  waited=$(expr $waited + 1)
+#  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
+#done
 
 if [ $stage -le 0 ]; then
   for loss in soft ; do
@@ -108,8 +108,8 @@ if [ $stage -le 5 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --epochs 20 \
-      --milestones 10,15 \
+      --epochs 10 \
+      --milestones 4,7 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_20.pth \
       --kernel-size 3,3 \
@@ -120,8 +120,8 @@ if [ $stage -le 5 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --epochs 20 \
-      --milestones 10,15 \
+      --epochs 10 \
+      --milestones 4,7 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp01 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}/checkpoint_1.pth \
       --loss-type ${loss} \
