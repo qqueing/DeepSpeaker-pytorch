@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=5
 #stage=10
 waited=0
 while [ `ps 105999 | wc -l` -eq 2 ]; do
@@ -17,7 +17,7 @@ if [ $stage -le 0 ]; then
       --epochs 20 \
       --milestones 10,15 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_1.pth \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_20.pth \
       --kernel-size 3,3 \
       --loss-type ${loss} \
       --num-valid 2 \
@@ -87,7 +87,7 @@ if [ $stage -le 3 ]; then
       --epochs 8
   done
 fi
-stage=10
+stage=5
 # kernel size trianing
 if [ $stage -le 4 ]; then
   for kernel in '3,3' '3,7' '5,7' ; do
@@ -101,4 +101,31 @@ if [ $stage -le 4 ]; then
       --kernel-size ${kernel}
   done
 
+fi
+
+if [ $stage -le 5 ]; then
+  for loss in soft ; do
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --nj 12 \
+      --epochs 20 \
+      --milestones 10,15 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_20.pth \
+      --kernel-size 3,3 \
+      --loss-type ${loss} \
+      --num-valid 2 \
+      --dropout-p 0.1
+
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --nj 12 \
+      --epochs 20 \
+      --milestones 10,15 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp01 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}/checkpoint_1.pth \
+      --loss-type ${loss} \
+      --num-valid 2 \
+      --dropout-p 0.1
+  done
 fi
