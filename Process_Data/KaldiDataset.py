@@ -897,9 +897,11 @@ class ScriptTestDataset(data.Dataset):
             label = False
 
         if self.return_uid:
+            # pdb.set_trace()
+            # print(uid_a, uid_b)
             return data_a, data_b, label, uid_a, uid_b
-        else:
-            return data_a, data_b, label
+
+        return data_a, data_b, label
 
     def partition(self, num):
         if num > len(self.trials_pair):
@@ -1012,8 +1014,8 @@ class SitwTestDataset(data.Dataset):
 
         if self.return_uid:
             return data_a, data_b, label, uid_a, uid_b
-        else:
-            return data_a, data_b, label
+
+        return data_a, data_b, label
 
     def partition(self, num):
         if num > self.pairs:
