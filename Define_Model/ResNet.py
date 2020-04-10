@@ -460,14 +460,26 @@ class AttenSiResNet(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block=BasicBlock, layers=[1, 1, 1, 1],
+    def __init__(self, resnet_size=18, embedding_size=512, block=BasicBlock,
+                 kernel_size=7,
                  channels=[64, 128, 256, 512], num_classes=1000,
-                 expansion=2, embedding=512, zero_init_residual=False):
+                 expansion=4, zero_init_residual=False):
         super(ResNet, self).__init__()
+
+        resnet_layer = {10: [1, 1, 1, 1],
+                        18: [2, 2, 2, 2],
+                        34: [3, 4, 6, 3],
+                        50: [3, 4, 6, 3],
+                        101: [3, 4, 23, 3]}
+
+        layers = resnet_layer[resnet_size]
+        self.layers = layers
+
         self.expansion = expansion
         self.channels = channels
         self.inplanes = self.channels[0]
-        self.conv1 = nn.Conv2d(1, self.channels[0], kernel_size=7, stride=2, padding=3,
+        self.conv1 = nn.Conv2d(1, self.channels[0], kernel_size=kernel_size, stride=2,
+                               padding=int((kernel_size - 1) / 2),
                                bias=False)
         self.bn1 = nn.BatchNorm2d(self.channels[0])
         self.relu = nn.ReLU(inplace=True)
@@ -481,12 +493,18 @@ class ResNet(nn.Module):
 
         self.avgpool = nn.AdaptiveAvgPool2d((expansion, 1))
 
-        if self.channels[3] == 0:
-            self.fc1 = nn.Linear(self.channels[2] * expansion, embedding)
+        if self.layers[3] == 0:
+            self.fc1 = nn.Sequential(
+                nn.Linear(self.channels[2] * expansion, embedding_size),
+                nn.BatchNorm1d(embedding_size)
+            )
         else:
-            self.fc1 = nn.Linear(self.channels[3] * expansion, embedding)
+            self.fc1 = nn.Sequential(
+                nn.Linear(self.channels[3] * expansion, embedding_size),
+                nn.BatchNorm1d(embedding_size)
+            )
 
-        self.fc2 = nn.Linear(embedding, num_classes)
+        self.fc2 = nn.Linear(embedding_size, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -495,8 +513,8 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-        # Zero-initialize the last BN in each residual branch,
-        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        # Zero-initialize the last BN in each residual branch, so that the residual
+        # branch starts with zeros, and each residual block behaves like an identity.
         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
@@ -521,7 +539,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def pre_forward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -530,19 +548,17 @@ class ResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        x = self.layer4(x)
+
+        if self.layers[3] != 0:
+            x = self.layer4(x)
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-        x = self.fc1(x)
 
-        return x
+        feat = self.fc1(x)
+        logits = self.fc2(feat)
 
-    def forward(self, x):
-
-        x = self.fc2(x)
-
-        return x
+        return logits, feat
 
 class AResNet(nn.Module):
 
@@ -752,17 +768,19 @@ class LocalResNet(nn.Module):
     """
 
     def __init__(self, embedding_size, num_classes, block=BasicBlock,
-                 resnet_size=10,
+                 resnet_size=8,
                  channels=[64, 128, 256], dropout_p=0.,
                  kernal_size=5, padding=2, **kwargs):
         super(LocalResNet, self).__init__()
-        resnet_type = {10: [1, 1, 1, 1],
+        resnet_type = {8: [1, 1, 1, 0],
+                       10: [1, 1, 1, 1],
                        18: [2, 2, 2, 2],
                        34: [3, 4, 6, 3],
                        50: [3, 4, 6, 3],
                        101: [3, 4, 23, 3]}
 
         layers = resnet_type[resnet_size]
+        self.layers = layers
         self.dropout_p = dropout_p
 
         self.embedding_size = embedding_size
@@ -786,14 +804,16 @@ class LocalResNet(nn.Module):
         self.bn3 = nn.BatchNorm2d(channels[2])
         self.layer3 = self._make_layer(block, channels[2], layers[2])
 
-        # self.in_planes = 512
-        # self.conv4 = nn.Conv2d(256, 512, kernel_size=5, stride=2, padding=2, bias=False)
-        # self.bn4 = nn.BatchNorm2d(512)
-        # self.layer4 = self._make_layer(block, 512, layers[3])
+        if layers[3] != 0:
+            assert len(channels) == 4
+            self.in_planes = channels[3]
+            self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size,
+                                   stride=2, padding=padding, bias=False)
+            self.bn4 = nn.BatchNorm2d(channels[3])
+            self.layer4 = self._make_layer(block, channels[3], layers[3])
+
         # self.avg_pool = nn.AdaptiveAvgPool2d([4, 1])
-
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
-
         self.dropout = nn.Dropout(self.dropout_p)
 
         self.fc = nn.Sequential(
@@ -807,13 +827,10 @@ class LocalResNet(nn.Module):
             if isinstance(m, nn.Conv2d):  # 以2/n的开方为标准差，做均值为0的正态分布
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):  # weight设置为1，bias为0
+                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='leaky_relu')
+            elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.GroupNorm)):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-            elif isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
         # self.weight = nn.Parameter(torch.Tensor(embedding_size, num_classes))  # 本层权重
         # self.weight.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)  # 初始化权重，在第一维度上做normalize
 
@@ -861,16 +878,17 @@ class LocalResNet(nn.Module):
         x = self.relu(x)
         x = self.layer3(x)
 
-        # x = self.conv4(x)
-        # x = self.bn4(x)
-        # x = self.relu(x)
-        # x = self.layer4(x)
+        if self.layers[3] != 0:
+            x = self.conv4(x)
+            x = self.bn4(x)
+            x = self.relu(x)
+            x = self.layer4(x)
+
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
         if self.dropout_p > 0:
             x = self.dropout(x)
 
-        x = self.avg_pool(x)
-
-        x = x.view(x.size(0), -1)
         x = self.fc(x)
         x = self.l2_norm(x, alpha=12)
 
