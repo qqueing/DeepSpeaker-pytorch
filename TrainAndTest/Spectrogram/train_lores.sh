@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=6
 #stage=10
 #waited=0
 #while [ `ps 105999 | wc -l` -eq 2 ]; do
@@ -36,7 +36,7 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-stage=10
+stage=6
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
   for loss in center ; do
@@ -87,7 +87,7 @@ if [ $stage -le 3 ]; then
       --epochs 8
   done
 fi
-stage=5
+stage=6
 # kernel size trianing
 if [ $stage -le 4 ]; then
   for kernel in '3,3' '3,7' '5,7' ; do
