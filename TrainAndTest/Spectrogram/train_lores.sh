@@ -162,6 +162,6 @@ if [ $stage -le 7 ]; then
       --kernel-size 3,3 \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.25
+      --dropout-p 0.2
   done
 fi
