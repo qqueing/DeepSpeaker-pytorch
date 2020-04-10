@@ -2,7 +2,7 @@
 
 stage=0
 if [ $stage -le 0 ]; then
-  for loss in soft ; do
+  for loss in soft asoft amsoft center; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_resnet.py \
       --model ResNet \
@@ -13,12 +13,14 @@ if [ $stage -le 0 ]; then
       --batch-size 128 \
       --test-batch-size 32 \
       --nj 12 \
-      --epochs 22 \
-      --milestones 10,15 \
+      --epochs 24 \
+      --milestones 10,15,20 \
       --lr 0.1 \
       --veri-pairs 12800 \
-      --check-path Data/checkpoint/ResNet/18/spect/${loss}_ \
+      --check-path Data/checkpoint/ResNet/18/spect/${loss} \
       --resume Data/checkpoint/ResNet/18/spect/${loss}/checkpoint_1.pth \
       --loss-type ${loss}
   done
 fi
+
+TrainAndTest/Spectrogram/train_lores.sh
