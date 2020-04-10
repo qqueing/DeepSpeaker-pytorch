@@ -12,7 +12,6 @@ This file define resnet in 'Deep Residual Learning for Image Recognition'
 
 For all model, the pre_forward function is for extract vectors and forward for classification.
 """
-import math
 
 import numpy as np
 import torch
@@ -788,7 +787,7 @@ class LocalResNet(nn.Module):
         # self.relu = ReLU(inplace=True)
 
         self.inplanes = channels[0]
-        self.conv1 = nn.Conv2d(1, channels[0], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
+        self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(channels[0])
         # self.maxpool = nn.MaxPool2d(kernel_size=(1, 3), stride=1, padding=1)
         self.layer1 = self._make_layer(block, channels[0], layers[0])
@@ -824,9 +823,9 @@ class LocalResNet(nn.Module):
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.Conv2d):  # 以2/n的开方为标准差，做均值为0的正态分布
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='leaky_relu')
+                # n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                # m.weight.data.normal_(0, math.sqrt(2. / n))
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='leaky_relu')
             elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.GroupNorm)):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
