@@ -295,7 +295,7 @@ def main():
 
             model.load_state_dict(model_dict)
             #
-            model.dropout_p = args.dropout_p
+            model.dropout.p = args.dropout_p
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
