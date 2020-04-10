@@ -137,6 +137,7 @@ if [ $stage -le 6 ]; then
       --nj 12 \
       --epochs 20 \
       --milestones 10,15 \
+      --resnet-size 10 \
       --check-path Data/checkpoint/LoResNet10/spectrogram/${loss} \
       --resume Data/checkpoint/LoResNet10/spectrogram/${loss}/checkpoint_20.pth \
       --channels 32,128,256,512 \
