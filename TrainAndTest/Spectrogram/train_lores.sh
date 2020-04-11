@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=7
+stage=8
 #stage=10
 #waited=0
 #while [ `ps 105999 | wc -l` -eq 2 ]; do
@@ -166,6 +166,26 @@ if [ $stage -le 7 ]; then
   done
 fi
 
+if [ $stage -le 8 ]; then
+  for loss in soft ; do
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --nj 12 \
+      --epochs 12 \
+      --milestones 4,8 \
+      --resnet-size 10 \
+      --check-path Data/checkpoint/LoResNet10/spectrogram/${loss}_64 \
+      --resume Data/checkpoint/LoResNet10/spectrogram/${loss}_64/checkpoint_20.pth \
+      --channels 64,128,256,512 \
+      --kernel-size 3,3 \
+      --loss-type ${loss} \
+      --lr 0.01 \
+      --num-valid 2 \
+      --dropout-p 0.5
+  done
+fi
+
+
 stage=11
 if [ $stage -le 8 ]; then
   for loss in asoft amsoft center ; do
@@ -187,3 +207,5 @@ if [ $stage -le 8 ]; then
       --dropout-p 0.25
   done
 fi
+
+
