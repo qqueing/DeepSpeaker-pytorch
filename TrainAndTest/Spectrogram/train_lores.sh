@@ -175,7 +175,7 @@ if [ $stage -le 8 ]; then
       --milestones 4,8 \
       --resnet-size 10 \
       --check-path Data/checkpoint/LoResNet10/spectrogram/${loss}_64 \
-      --resume Data/checkpoint/LoResNet10/spectrogram/${loss}_64/checkpoint_20.pth \
+      --resume Data/checkpoint/LoResNet10/spectrogram/${loss}_64/checkpoint_24.pth \
       --channels 64,128,256,512 \
       --kernel-size 3,3 \
       --loss-type ${loss} \
