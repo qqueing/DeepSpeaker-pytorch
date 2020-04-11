@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=8
+stage=7
 #stage=10
 #waited=0
 #while [ `ps 105999 | wc -l` -eq 2 ]; do
@@ -156,9 +156,9 @@ if [ $stage -le 7 ]; then
       --epochs 24 \
       --milestones 10,15,20 \
       --resnet-size 10 \
-      --check-path Data/checkpoint/LoResNet10/spectrogram/${loss} \
-      --resume Data/checkpoint/LoResNet10/spectrogram/${loss}/checkpoint_20.pth \
-      --channels 32,128,256,512 \
+      --check-path Data/checkpoint/LoResNet10/spectrogram/${loss}_64 \
+      --resume Data/checkpoint/LoResNet10/spectrogram/${loss}_64/checkpoint_20.pth \
+      --channels 64,128,256,512 \
       --kernel-size 3,3 \
       --loss-type ${loss} \
       --num-valid 2 \
@@ -166,6 +166,7 @@ if [ $stage -le 7 ]; then
   done
 fi
 
+stage=11
 if [ $stage -le 8 ]; then
   for loss in asoft amsoft center ; do
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
@@ -176,7 +177,7 @@ if [ $stage -le 8 ]; then
       --resnet-size 10 \
       --check-path Data/checkpoint/LoResNet10/spectrogram/${loss} \
       --resume Data/checkpoint/LoResNet10/spectrogram/${loss}/checkpoint_20.pth \
-      --channels 32,128,256,512 \
+      --channels 64,128,256,512 \
       --kernel-size 3,3 \
       --loss-type ${loss} \
       --margin 0.35 \
