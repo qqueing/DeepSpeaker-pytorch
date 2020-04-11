@@ -140,7 +140,7 @@ parser.add_argument('--m', type=int, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=float, default=0.2, metavar='S',
+parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
