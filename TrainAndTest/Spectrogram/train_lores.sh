@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=8
+stage=0
 #stage=10
 #waited=0
 #while [ `ps 105999 | wc -l` -eq 2 ]; do
@@ -14,15 +14,19 @@ if [ $stage -le 0 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --epochs 20 \
-      --milestones 10,15 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp33 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp33/checkpoint_20.pth \
-      --kernel-size 3,3 \
+      --epochs 24 \
+      --resnet-size 8 \
+      --milestones 10,15,20 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.5
+      --dropout-p 0.25
+    done
+fi
 
+stage=3
+if [ $stage -le 1 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
@@ -33,11 +37,10 @@ if [ $stage -le 0 ]; then
       --loss-type ${loss} \
       --num-valid 2 \
       --dropout-p 0.5
-  done
 fi
 
 #stage=6
-if [ $stage -le 1 ]; then
+if [ $stage -le 2 ]; then
 #  for loss in center amsoft ; do/
   for loss in center ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
@@ -54,40 +57,26 @@ if [ $stage -le 1 ]; then
 fi
 
 
-if [ $stage -le 2 ]; then
+if [ $stage -le 3 ]; then
 #  for loss in center amsoft ; do/
-  for loss in amsoft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+  for loss in asoft amsoft center; do
+    echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_s30 \
-      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_18.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
+      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
-      --margin 0.35 \
-      --s 30 \
+      --margin 0.3 \
+      --s 15 \
+      --m 3 \
       --loss-ratio 0.01 \
       --lr 0.01 \
-      --milestones 4 \
-      --epochs 8
+      --milestones 5,9 \
+      --epochs 12
   done
 fi
 
-if [ $stage -le 3 ]; then
-#  for loss in center amsoft ; do/
-  for loss in asoft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --nj 12 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_m4 \
-      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_18.pth \
-      --loss-type ${loss} \
-      --m 4 \
-      --lambda-max 1000 \
-      --milestones 4 \
-      --epochs 8
-  done
-fi
-#stage=6
+stage=12
 # kernel size trianing
 if [ $stage -le 4 ]; then
   for kernel in '3,3' '3,7' '5,7' ; do
