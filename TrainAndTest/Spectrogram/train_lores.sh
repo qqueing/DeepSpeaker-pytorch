@@ -63,9 +63,11 @@ if [ $stage -le 3 ]; then
     echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
+      --resnet-size 8 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
       --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
+      --num-valid 2 \
       --margin 0.3 \
       --s 15 \
       --m 3 \
