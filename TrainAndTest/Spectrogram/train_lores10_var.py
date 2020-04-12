@@ -114,9 +114,9 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--accumulation-steps', type=int, default=2, metavar='ACC',
+parser.add_argument('--accumulation-steps', type=int, default=1, metavar='ACC',
                     help='number of epochs to train (default: 10)')
 
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
