@@ -467,7 +467,6 @@ class PadCollate:
         self.fix_len = fix_len
         self.normlize = normlize
 
-
         if self.fix_len:
             self.frame_len = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
@@ -486,7 +485,7 @@ class PadCollate:
             frame_len = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
 
         # pad according to max_len
-        map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
+        map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim - 1), x_y[1]), batch)
         pad_batch = list(map_batch)
         print(frame_len)
         # stack all
