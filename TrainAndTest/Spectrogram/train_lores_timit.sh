@@ -13,8 +13,8 @@ if [ $stage -le 0 ]; then
       --epochs 15 \
       --lr 0.001 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sta \
-      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sta/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_fcle \
+      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_fcle/checkpoint_1.pth \
       --channels 4,16,64 \
       --statis-pooling \
       --embedding-size 128 \
