@@ -817,6 +817,7 @@ class LocalResNet(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
+            nn.LeakyReLU(),
             nn.BatchNorm1d(embedding_size)
         )
 
@@ -886,18 +887,18 @@ class LocalResNet(nn.Module):
         if self.dropout_p > 0:
             x = self.dropout(x)
 
-        # if self.statis_pooling:
-        #     mean_x = self.avg_pool(x)
-        #     mean_x = mean_x.view(mean_x.size(0), -1)
-        #
-        #     std_x = self.std_pool(x)
-        #     std_x = std_x.view(std_x.size(0), -1)
-        #
-        #     x = torch.cat((mean_x, std_x), dim=1)
-        #
-        # else:
-        x = self.avg_pool(x)
-        x = x.view(x.size(0), -1)
+        if self.statis_pooling:
+            mean_x = self.avg_pool(x)
+            mean_x = mean_x.view(mean_x.size(0), -1)
+
+            std_x = self.std_pool(x)
+            std_x = std_x.view(std_x.size(0), -1)
+
+            x = torch.cat((mean_x, std_x), dim=1)
+
+        else:
+            x = self.avg_pool(x)
+            x = x.view(x.size(0), -1)
 
         x = self.fc(x)
         x = self.l2_norm(x, alpha=12)
