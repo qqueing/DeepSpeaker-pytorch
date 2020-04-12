@@ -488,14 +488,13 @@ class PadCollate:
         # pad according to max_len
         map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
         pad_batch = list(map_batch)
-        pdb.set_trace()
+        print(frame_len)
         # stack all
         if self.normlize:
-            xs = torch.stack(list(map(lambda x: (x[0] - torch.mean(x[0], dim=0)) / torch.std(x[0], dim=0), pad_batch)),
+            xs = torch.stack(list(map(lambda x: (x[0] - torch.mean(x[0], dim=1)) / torch.std(x[0], dim=1), pad_batch)),
                              dim=0)
         else:
             xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
-
 
         ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
 
