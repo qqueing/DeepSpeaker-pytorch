@@ -256,7 +256,7 @@ else:
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                               transform=transform_T)
+                               transform=transform)
 
 
 def main():
@@ -346,7 +346,7 @@ def main():
                                                collate_fn=PadCollate(dim=2, fix_len=False),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
-                                               # collate_fn=PadCollate(dim=2, normlize=args.normlize, fix_len=False),
+                                               collate_fn=PadCollate(dim=2, fix_len=False),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
