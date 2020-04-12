@@ -489,11 +489,11 @@ class PadCollate:
         pad_batch = list(map_batch)
         # print(frame_len)
         # stack all
-        if self.normlize:
-            xs = torch.stack(list(map(lambda x: (x[0] - torch.mean(x[0], dim=1)) / torch.std(x[0], dim=1), pad_batch)),
-                             dim=0)
-        else:
-            xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+        # if self.normlize:
+        #     xs = torch.stack(list(map(lambda x: (x[0] - torch.mean(x[0], dim=1)) / torch.std(x[0], dim=1), pad_batch)),
+        #                      dim=0)
+        # else:
+        xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
 
         ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
 

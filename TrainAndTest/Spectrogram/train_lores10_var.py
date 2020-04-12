@@ -36,7 +36,7 @@ from Define_Model.ResNet import LocalResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, tonormal, concateinputfromMFB
+from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, concateinputfromMFB
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -222,7 +222,7 @@ if args.acoustic_feature == 'fbank':
         concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
         # varLengthFeat(),
         to2tensor(),
-        tonormal()
+        # tonormal()
     ])
 
 else:
@@ -230,7 +230,7 @@ else:
         truncatedinput(),
         toMFB(),
         totensor(),
-        tonormal()
+        # tonormal()
     ])
     file_loader = read_audio
 
