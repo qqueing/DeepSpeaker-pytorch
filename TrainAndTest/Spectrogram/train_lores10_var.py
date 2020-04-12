@@ -256,7 +256,7 @@ else:
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                               transform=transform)
+                               transform=transform_T)
 
 
 def main():
