@@ -114,8 +114,11 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
+parser.add_argument('--batch-size', type=int, default=32, metavar='BS',
                     help='input batch size for training (default: 128)')
+parser.add_argument('--accumulation-steps', type=int, default=2, metavar='ACC',
+                    help='number of epochs to train (default: 10)')
+
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
@@ -419,11 +422,18 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
             predicted_one_labels)
         correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
         total_datasize += len(predicted_one_labels)
-        total_loss += loss.item()
+        total_loss += float(loss.item())
 
         # compute gradient and update weights
-        optimizer.zero_grad()
+        loss = loss / args.accumulation_steps
+        # 2.2 back propagation
         loss.backward()
+
+        # 3. update parameters of net
+        if ((batch_idx + 1) % args.accumulation_steps) == 0:
+            # optimizer the net
+            optimizer.step()  # update parameters of net
+            optimizer.zero_grad()
 
         if args.loss_type == 'center' and args.loss_ratio != 0:
             for param in xe_criterion.parameters():
