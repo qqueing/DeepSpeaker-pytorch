@@ -879,10 +879,11 @@ class LocalResNet(nn.Module):
             x = self.relu(x)
             x = self.layer4(x)
 
-        x = self.avg_pool(x)
-        x = x.view(x.size(0), -1)
         if self.dropout_p > 0:
             x = self.dropout(x)
+
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
 
         x = self.fc(x)
         x = self.l2_norm(x, alpha=12)
