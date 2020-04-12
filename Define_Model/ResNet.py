@@ -809,11 +809,11 @@ class LocalResNet(nn.Module):
 
         self.dropout = nn.Dropout(self.dropout_p)
 
-        self.statis_pooling = statis_pooling
+        # self.statis_pooling = statis_pooling
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
-        if self.statis_pooling:
-            self.inplanes *= 2
-            self.std_pool = AdaptiveStdPooling2d((1, 4))
+        # if self.statis_pooling:
+        #     self.inplanes *= 2
+        #     self.std_pool = AdaptiveStdPooling2d((1, 4))
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
@@ -887,18 +887,18 @@ class LocalResNet(nn.Module):
         if self.dropout_p > 0:
             x = self.dropout(x)
 
-        if self.statis_pooling:
-            mean_x = self.avg_pool(x)
-            mean_x = mean_x.view(mean_x.size(0), -1)
-
-            std_x = self.std_pool(x)
-            std_x = std_x.view(std_x.size(0), -1)
-
-            x = torch.cat((mean_x, std_x), dim=1)
-
-        else:
-            x = self.avg_pool(x)
-            x = x.view(x.size(0), -1)
+        # if self.statis_pooling:
+        #     mean_x = self.avg_pool(x)
+        #     mean_x = mean_x.view(mean_x.size(0), -1)
+        #
+        #     std_x = self.std_pool(x)
+        #     std_x = std_x.view(std_x.size(0), -1)
+        #
+        #     x = torch.cat((mean_x, std_x), dim=1)
+        #
+        # else:
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
 
         x = self.fc(x)
         x = self.l2_norm(x, alpha=12)
