@@ -20,6 +20,7 @@ from torchvision.models.resnet import BasicBlock
 from torchvision.models.resnet import Bottleneck
 
 from Define_Model.SoftmaxLoss import AngleLinear
+from Define_Model.model import ReLU
 
 
 def conv1x1(in_planes, out_planes, stride=1):
@@ -780,8 +781,8 @@ class LocalResNet(nn.Module):
         self.dropout_p = dropout_p
 
         self.embedding_size = embedding_size
-        self.relu = nn.LeakyReLU()
-        # self.relu = ReLU(inplace=True)
+        # self.relu = nn.LeakyReLU()
+        self.relu = ReLU(inplace=True)
 
         self.inplanes = channels[0]
         self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2, padding=2, bias=False)
@@ -817,6 +818,7 @@ class LocalResNet(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
+            ReLU(inplace=True),
             nn.BatchNorm1d(embedding_size)
         )
 
