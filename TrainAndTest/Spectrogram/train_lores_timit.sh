@@ -132,7 +132,7 @@ fi
 if [ $stage -le 5 ]; then
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+    python TrainAndTest/Spectrogram/train_lores10_var.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc \
       --nj 14 \
