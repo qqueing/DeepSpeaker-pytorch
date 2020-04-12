@@ -36,7 +36,7 @@ from Define_Model.ResNet import LocalResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, concateinputfromMFB
+from Process_Data.audio_processing import to2tensor, concateinputfromMFB
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -214,8 +214,8 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
-        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
-        varLengthFeat(),
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
+        # varLengthFeat(),
         to2tensor()
     ])
     transform_T = transforms.Compose([
@@ -347,10 +347,10 @@ def main():
     end = start + args.epochs
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
-                                               collate_fn=PadCollate(dim=2, normlize=args.normlize, fix_len=False),
+                                               # collate_fn=PadCollate(dim=2, normlize=args.normlize, fix_len=False),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
-                                               collate_fn=PadCollate(dim=2, normlize=args.normlize, fix_len=False),
+                                               # collate_fn=PadCollate(dim=2, normlize=args.normlize, fix_len=False),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
