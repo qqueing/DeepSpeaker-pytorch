@@ -16,7 +16,7 @@ if [ $stage -le 0 ]; then
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sta \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sta/checkpoint_1.pth \
       --channels 4,16,64 \
-      --statis-pooling True \
+      --statis-pooling \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 2 \
