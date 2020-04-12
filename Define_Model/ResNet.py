@@ -942,8 +942,10 @@ class AdaptiveStdPooling2d(nn.Module):
                 x_output.append(torch.std(input[:, :, y_start:y_end, x_start:x_end], dim=(2, 3), keepdim=True))
 
             output.append(torch.cat(x_output, dim=2))
+        output = torch.cat(output, dim=3)
+        # print(output.isnan())
 
-        return torch.cat(output, dim=3)
+        return output.clamp(min=-5.0, max=5.0)
 
 # from Define_Model.ResNet import AdaptiveStdPooling2d
 # st = AdaptiveStdPooling2d((None, 3))
