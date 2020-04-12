@@ -938,8 +938,10 @@ class AdaptiveStdPooling2d(nn.Module):
             for y_idx in range(output_shape[0]):
                 y_start = int(np.floor(y_idx * y_stride))
                 y_end = int(np.ceil((y_idx + 1) * y_stride))
+                stds = torch.std(input[:, :, y_start:y_end, x_start:x_end], dim=2, keepdim=True)
+                sum_std = torch.mean(stds, dim=3, keepdim=True)
 
-                x_output.append(torch.std(input[:, :, y_start:y_end, x_start:x_end], dim=(2, 3), keepdim=True))
+                x_output.append(sum_std)
 
             output.append(torch.cat(x_output, dim=2))
         output = torch.cat(output, dim=3)
