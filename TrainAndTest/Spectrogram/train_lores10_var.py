@@ -70,8 +70,6 @@ parser.add_argument('--test-dir', type=str,
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--normlize', action='store_true', default=True, help='using Cosine similarity')
-
 parser.add_argument('--nj', default=0, type=int, metavar='NJOB', help='num of job')
 
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/timit_spect/soft_var',
@@ -116,8 +114,6 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
-parser.add_argument('--accumulation-steps', type=int, default=1, metavar='ACC',
-                    help='number of epochs to train (default: 10)')
 
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -426,15 +422,10 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         total_loss += float(loss.item())
 
         # compute gradient and update weights
-        loss = loss / args.accumulation_steps
+        loss = loss  # / args.accumulation_steps
         # 2.2 back propagation
+        optimizer.zero_grad()
         loss.backward()
-
-        # 3. update parameters of net
-        if ((batch_idx + 1) % args.accumulation_steps) == 0:
-            # optimizer the net
-            optimizer.step()  # update parameters of net
-            optimizer.zero_grad()
 
         if args.loss_type == 'center' and args.loss_ratio != 0:
             for param in xe_criterion.parameters():
