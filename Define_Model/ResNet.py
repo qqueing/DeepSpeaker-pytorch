@@ -818,7 +818,6 @@ class LocalResNet(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
-            ReLU(inplace=True),
             nn.BatchNorm1d(embedding_size)
         )
 
