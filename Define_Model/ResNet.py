@@ -891,3 +891,39 @@ class LocalResNet(nn.Module):
         logits = self.classifier(x)
 
         return logits, x
+
+
+class AdaptiveStdPooling2d(nn.Module):
+    def __init__(self, output_size):
+        super(AdaptiveStdPooling2d, self).__init__()
+        self.output_size = output_size
+
+    def forward(self, input):
+
+        input_shape = input.shape
+        assert len(input_shape) == 4
+        kernel_y = (input_shape[3] + self.output_size[3] - 1) // self.output_size[3]
+        stride = input_shape[3] / self.output_size[3]
+
+        b_std = []
+        for b in range(input_shape[0]):
+            b_c_std = []
+            b_input = input[b]
+            for c in range(input_shape[1]):
+                c_std = []
+                c_input = b_input[c]
+                for i in range(self.output_size[-1]):
+                    start = int(i * stride)
+                    end = int((i + 1) * stride)
+
+                    assert (end - start) == kernel_y
+                    i_std = torch.std(c_input[:, start:end], dim=1, keepdim=True)
+                    c_std.append(i_std)
+
+                c_std = torch.cat(c_std, dim=1).unsqueeze(0)
+                b_c_std.append(c_std)
+
+            b_c_std = torch.cat(b_c_std, dim=0).unsqueeze(0)
+            b_std.append(b_c_std)
+
+        return torch.cat(b_std, dim=0)
