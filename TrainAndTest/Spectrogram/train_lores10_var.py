@@ -74,11 +74,11 @@ parser.add_argument('--normlize', action='store_true', default=True, help='using
 
 parser.add_argument('--nj', default=0, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
+parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/timit_spect/soft_var',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='need to make mfb file')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LoResNet10/spect/soft/checkpoint_10.pth', type=str,
+                    default='Data/checkpoint/LoResNet10/timit_spect/soft_var/checkpoint_10.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
