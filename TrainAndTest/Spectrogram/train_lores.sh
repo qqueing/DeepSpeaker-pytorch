@@ -2,16 +2,16 @@
 
 stage=0
 #stage=10
-#waited=0
-#while [ `ps 105999 | wc -l` -eq 2 ]; do
-#  sleep 60
-#  waited=$(expr $waited + 1)
-#  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
-#done
+waited=0
+while [ `ps 71363 | wc -l` -eq 2 ]; do
+  sleep 60
+  waited=$(expr $waited + 1)
+  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
+done
 
 if [ $stage -le 0 ]; then
   for loss in soft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
       --epochs 24 \
@@ -25,37 +25,24 @@ if [ $stage -le 0 ]; then
     done
 fi
 
-stage=3
+stage=2
 if [ $stage -le 1 ]; then
+    for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
-      --epochs 20 \
-      --milestones 10,15 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp/checkpoint_1.pth \
+      --epochs 24 \
+      --resnet-size 8 \
+      --milestones 10,15,20 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.5
-fi
-
-#stage=6
-if [ $stage -le 2 ]; then
-#  for loss in center amsoft ; do/
-  for loss in center ; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --nj 12 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_18.pth \
-      --loss-type ${loss} \
-      --lr 0.01 \
-      --loss-ratio 0.01 \
-      --milestones 4 \
-      --epochs 10
+      --dropout-p 0.0
   done
 fi
 
+stage=3
 
 if [ $stage -le 3 ]; then
 #  for loss in center amsoft ; do/
