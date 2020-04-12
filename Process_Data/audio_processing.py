@@ -455,7 +455,8 @@ class PadCollate:
     a variant of callate_fn that pads according to the longest sequence in
     a batch of sequences
     """
-    def __init__(self, dim=0, fix_len=False):
+
+    def __init__(self, dim=0, normlize=True, fix_len=False):
         """
         args:
             dim - the dimension to be padded (dimension of time in sequences)
@@ -464,6 +465,8 @@ class PadCollate:
         self.min_chunk_size = 300
         self.max_chunk_size = 800
         self.fix_len = fix_len
+        self.normlize = normlize
+
 
         if self.fix_len:
             self.frame_len = np.random.randint(low=self.min_chunk_size, high=self.max_chunk_size)
@@ -485,8 +488,15 @@ class PadCollate:
         # pad according to max_len
         map_batch = map(lambda x_y: (pad_tensor(x_y[0], pad=frame_len, dim=self.dim), x_y[1]), batch)
         pad_batch = list(map_batch)
+        pdb.set_trace()
         # stack all
-        xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+        if self.normlize:
+            xs = torch.stack(list(map(lambda x: (x[0] - torch.mean(x[0], dim=0)) / torch.std(x[0], dim=0), pad_batch)),
+                             dim=0)
+        else:
+            xs = torch.stack(list(map(lambda x: x[0], pad_batch)), dim=0)
+
+
         ys = torch.LongTensor(list(map(lambda x: x[1], pad_batch)))
 
         return xs, ys
