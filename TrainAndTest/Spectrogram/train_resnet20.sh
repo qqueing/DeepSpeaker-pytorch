@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 waited=0
-while [ `ps 24181 | wc -l` -eq 2 ]; do
+while [ `ps 26375 | wc -l` -eq 2 ]; do
   sleep 60
   waited=$(expr $waited + 1)
   echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
@@ -55,7 +55,8 @@ if [ $stage -le 1 ]; then
 fi
 
 if [ $stage -le 2 ]; then
-  for loss in amsoft ; do
+#  for loss in amsoft asoft ; do
+  for loss in asoft ; do
     echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_resnet20_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257 \
@@ -72,6 +73,7 @@ if [ $stage -le 2 ]; then
       --check-path Data/checkpoint/ResNet20/spect_257/${loss}_fine \
       --resume Data/checkpoint/ResNet20/spect_257/soft_dp0.5/checkpoint_20.pth \
       --loss-type ${loss} \
+      --m 3 \
       --margin 0.3 \
       --s 30 \
       --dropout-p 0.5
