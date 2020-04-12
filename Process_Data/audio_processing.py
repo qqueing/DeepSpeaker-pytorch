@@ -829,11 +829,6 @@ class to2tensor(object):
 
 class tonormal(object):
 
-
-    def __init__(self):
-        self.mean = 0.013987
-        self.var = 1.008
-
     def __call__(self, tensor):
         """
         Args:
@@ -843,9 +838,6 @@ class tonormal(object):
             Tensor: Normalized image.
         """
         # TODO: make efficient
+        tensor = (tensor - torch.mean(tensor, dim=-2, keepdim=True)) / torch.std(tensor, dim=-2, keepdim=True)
 
-        print(self.mean)
-        self.mean+=1
-        #for t, m, s in zip(tensor, self.mean, self.std):
-        #    t.sub_(m).div_(s)
         return tensor
