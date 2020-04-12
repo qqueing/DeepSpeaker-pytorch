@@ -422,7 +422,6 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
         total_loss += float(loss.item())
 
         # compute gradient and update weights
-        loss = loss  # / args.accumulation_steps
         # 2.2 back propagation
         optimizer.zero_grad()
         loss.backward()
