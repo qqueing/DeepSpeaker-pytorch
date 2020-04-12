@@ -100,6 +100,8 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
+parser.add_argument('--statis-pooling', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
@@ -276,6 +278,7 @@ def main():
 
     model = LocalResNet(resnet_size=args.resnet_size, embedding_size=args.embedding_size,
                         num_classes=train_dir.num_spks, dropout_p=args.dropout_p,
+                        statis_pooling=args.statis_pooling,
                         channels=channels, kernal_size=kernel_size, padding=padding)
 
     start_epoch = 0
