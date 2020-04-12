@@ -30,12 +30,13 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR
 from tqdm import tqdm
 
+import Process_Data.constants as c
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.ResNet import LocalResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, tonormal
+from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, tonormal, concateinputfromMFB
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -218,9 +219,10 @@ if args.acoustic_feature == 'fbank':
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
-        varLengthFeat(),
-        to2tensor()
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
+        # varLengthFeat(),
+        to2tensor(),
+        tonormal()
     ])
 
 else:
