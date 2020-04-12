@@ -817,7 +817,8 @@ class LocalResNet(nn.Module):
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
-            nn.BatchNorm1d(embedding_size)
+            nn.BatchNorm1d(embedding_size),
+            nn.LeakyReLU()
         )
 
         self.classifier = nn.Linear(self.embedding_size, num_classes)
@@ -939,7 +940,7 @@ class AdaptiveStdPooling2d(nn.Module):
                 y_start = int(np.floor(y_idx * y_stride))
                 y_end = int(np.ceil((y_idx + 1) * y_stride))
                 stds = torch.std(input[:, :, y_start:y_end, x_start:x_end], dim=2, keepdim=True)
-                sum_std = torch.mean(stds, dim=3, keepdim=True)
+                sum_std = torch.sum(stds, dim=3, keepdim=True)
 
                 x_output.append(sum_std)
 
@@ -947,7 +948,7 @@ class AdaptiveStdPooling2d(nn.Module):
         output = torch.cat(output, dim=3)
         # print(output.isnan())
 
-        return output.clamp(min=-5.0, max=5.0)
+        return output
 
 # from Define_Model.ResNet import AdaptiveStdPooling2d
 # st = AdaptiveStdPooling2d((None, 3))
