@@ -69,7 +69,6 @@ if [ $stage -eq 5 ]; then
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
       --out-set ${name}_spect_noc \
-      --normalize False \
       --feat-type spectrogram
   done
 fi
