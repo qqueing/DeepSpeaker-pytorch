@@ -49,7 +49,7 @@ if [ $stage -le 3 ]; then
       --feat-type spectrogram
   done
 fi
-stage=100
+#stage=100
 
 # sitw
 if [ $stage -le 4 ]; then
