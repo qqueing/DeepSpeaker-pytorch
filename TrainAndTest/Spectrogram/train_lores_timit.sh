@@ -11,7 +11,7 @@ if [ $stage -le 0 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect \
       --nj 14 \
       --epochs 15 \
-      --lr 0.01 \
+      --lr 0.001 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sta \
       --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sta/checkpoint_1.pth \
