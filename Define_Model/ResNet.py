@@ -764,9 +764,9 @@ class LocalResNet(nn.Module):
     """
 
     def __init__(self, embedding_size, num_classes, block=BasicBlock,
-                 resnet_size=8,
-                 channels=[64, 128, 256], dropout_p=0.,
-                 kernal_size=5, padding=2, **kwargs):
+                 resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
+                 statis_pooling=False, kernal_size=5, padding=2, **kwargs):
+
         super(LocalResNet, self).__init__()
         resnet_type = {8: [1, 1, 1, 0],
                        10: [1, 1, 1, 1],
@@ -807,9 +807,13 @@ class LocalResNet(nn.Module):
             self.bn4 = nn.BatchNorm2d(channels[3])
             self.layer4 = self._make_layer(block=block, planes=channels[3], blocks=layers[3])
 
-        # self.avg_pool = nn.AdaptiveAvgPool2d([4, 1])
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
         self.dropout = nn.Dropout(self.dropout_p)
+
+        self.statis_pooling = statis_pooling
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
+        if self.statis_pooling:
+            self.inplanes *= 2
+            self.std_pool = AdaptiveStdPooling2d((1, 4))
 
         self.fc = nn.Sequential(
             nn.Linear(self.inplanes * 4, embedding_size),
@@ -882,8 +886,18 @@ class LocalResNet(nn.Module):
         if self.dropout_p > 0:
             x = self.dropout(x)
 
-        x = self.avg_pool(x)
-        x = x.view(x.size(0), -1)
+        if self.statis_pooling:
+            mean_x = self.avg_pool(x)
+            mean_x = mean_x.view(mean_x.size(0), -1)
+
+            std_x = self.std_pool(x)
+            std_x = std_x.view(std_x.size(0), -1)
+
+            x = torch.cat((mean_x, std_x), dim=1)
+
+        else:
+            x = self.avg_pool(x)
+            x = x.view(x.size(0), -1)
 
         x = self.fc(x)
         x = self.l2_norm(x, alpha=12)
@@ -902,28 +916,37 @@ class AdaptiveStdPooling2d(nn.Module):
 
         input_shape = input.shape
         assert len(input_shape) == 4
-        kernel_y = (input_shape[3] + self.output_size[3] - 1) // self.output_size[3]
-        stride = input_shape[3] / self.output_size[3]
+        output_shape = list(self.output_size)
 
-        b_std = []
-        for b in range(input_shape[0]):
-            b_c_std = []
-            b_input = input[b]
-            for c in range(input_shape[1]):
-                c_std = []
-                c_input = b_input[c]
-                for i in range(self.output_size[-1]):
-                    start = int(i * stride)
-                    end = int((i + 1) * stride)
+        if output_shape[1] == None:
+            output_shape[1] = input.shape[3]
 
-                    assert (end - start) == kernel_y
-                    i_std = torch.std(c_input[:, start:end], dim=1, keepdim=True)
-                    c_std.append(i_std)
+        if output_shape[0] == None:
+            output_shape[0] = input.shape[2]
 
-                c_std = torch.cat(c_std, dim=1).unsqueeze(0)
-                b_c_std.append(c_std)
+        # kernel_y = (input_shape[3] + self.output_size[1] - 1) // self.output_size[1]
+        x_stride = input_shape[3] / output_shape[1]
+        y_stride = input_shape[2] / output_shape[0]
 
-            b_c_std = torch.cat(b_c_std, dim=0).unsqueeze(0)
-            b_std.append(b_c_std)
+        output = []
 
-        return torch.cat(b_std, dim=0)
+        for x_idx in range(output_shape[1]):
+            x_output = []
+            x_start = int(np.floor(x_idx * x_stride))
+
+            x_end = int(np.ceil((x_idx + 1) * x_stride))
+            for y_idx in range(output_shape[0]):
+                y_start = int(np.floor(y_idx * y_stride))
+                y_end = int(np.ceil((y_idx + 1) * y_stride))
+
+                x_output.append(torch.std(input[:, :, y_start:y_end, x_start:x_end], dim=(2, 3), keepdim=True))
+
+            output.append(torch.cat(x_output, dim=2))
+
+        return torch.cat(output, dim=3)
+
+# from Define_Model.ResNet import AdaptiveStdPooling2d
+# st = AdaptiveStdPooling2d((None, 3))
+# import torch
+# a = torch.rand(12, 1, 300, 14)
+# st(a).shape

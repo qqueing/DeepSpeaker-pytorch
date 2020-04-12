@@ -13,9 +13,10 @@ if [ $stage -le 0 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet10/timit_spect/${loss}_sta \
+      --resume Data/checkpoint/LoResNet10/timit_spect/${loss}_sta/checkpoint_1.pth \
       --channels 4,16,64 \
+      --statis-pooling True \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 2 \
@@ -24,7 +25,7 @@ if [ $stage -le 0 ]; then
       --loss-type ${loss}
   done
 fi
-
+stage=10
 if [ $stage -le 1 ]; then
   for loss in asoft amsoft center ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
@@ -53,7 +54,7 @@ if [ $stage -le 1 ]; then
 fi
 
 
-stage=2
+#stage=2
 if [ $stage -le 2 ]; then
 #  for loss in center amsoft amsoft ; do/
   for loss in amsoft ; do
@@ -103,11 +104,11 @@ if [ $stage -le 3 ]; then
   done
 fi
 
-stage=5
+#stage=5
 if [ $stage -le 4 ]; then
 #  for loss in center amsoft ; do/
 #  for p in 0.1 0.2 0.5 ; do
-  for p in 0.0 0.1 0.2 0.5 ; do
+  for p in 0.1 0.2 0.5 ; do
     echo -e "\n\033[1;4;31m Training with dropout-${p} \033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect \
