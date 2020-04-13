@@ -37,10 +37,10 @@ if [ $stage -le 1 ]; then
       --input-per-spks 384 \
       --nj 12 \
       --epochs 17 \
-      --resnet-size 8 \
+      --resnet-size 10 \
       --embedding-size 256 \
       --milestones 5,9,13 \
-      --channels 32,128,512 \
+      --channels 32,64,128,256 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_256 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_256/checkpoint_20.pth \
       --loss-type ${loss} \
