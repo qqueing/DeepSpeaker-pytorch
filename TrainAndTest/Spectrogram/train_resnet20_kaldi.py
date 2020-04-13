@@ -122,7 +122,7 @@ parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--m', type=float, default=3, metavar='M',
+parser.add_argument('--m', type=int, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
