@@ -40,7 +40,7 @@ if [ $stage -le 1 ]; then
       --resnet-size 8 \
       --embedding-size 256 \
       --milestones 5,9,13 \
-      --channels 16,64,256 \
+      --channels 32,128,512 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_256 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_256/checkpoint_20.pth \
       --loss-type ${loss} \
