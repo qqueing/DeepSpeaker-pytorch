@@ -37,16 +37,16 @@ if [ $stage -le 1 ]; then
       --input-per-spks 384 \
       --batch-size 192 \
       --nj 12 \
-      --epochs 17 \
-      --resnet-size 10 \
-      --embedding-size 256 \
-      --milestones 5,9,13 \
-      --channels 32,64,128,256 \
-      --check-path Data/checkpoint/LoResNet10/spect/192_${loss}_1256 \
-      --resume Data/checkpoint/LoResNet10/spect/192_${loss}_256/checkpoint_20.pth \
+      --epochs 24 \
+      --resnet-size 8 \
+      --embedding-size 1024 \
+      --milestones 10,15,20 \
+      --channels 64,128,256 \
+      --check-path Data/checkpoint/LoResNet10/spect/192_${loss} \
+      --resume Data/checkpoint/LoResNet10/spect/192_${loss}/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.5
+      --dropout-p 0.25
   done
 fi
 
