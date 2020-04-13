@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=4
+stage=3
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -49,7 +49,7 @@ if [ $stage -le 3 ]; then
       --feat-type spectrogram
   done
 fi
-
+stage=100
 #vox1 spectrogram 161
 if [ $stage -le 4 ]; then
   for name in dev test ; do
@@ -62,7 +62,7 @@ if [ $stage -le 4 ]; then
       --feat-type spectrogram
   done
 fi
-stage=100
+
 
 # sitw
 if [ $stage -le 5 ]; then
