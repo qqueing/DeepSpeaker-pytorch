@@ -29,7 +29,7 @@ fi
 
 #stage=1
 if [ $stage -le 1 ]; then
-    for loss in soft ; do
+    for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
@@ -40,7 +40,7 @@ if [ $stage -le 1 ]; then
       --resnet-size 8 \
       --embedding-size 256 \
       --milestones 5,9,13 \
-      --channels 64,128,256 \
+      --channels 16,64,256 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_256 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_256/checkpoint_20.pth \
       --loss-type ${loss} \
