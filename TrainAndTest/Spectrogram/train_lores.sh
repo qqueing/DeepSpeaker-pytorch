@@ -38,14 +38,14 @@ if [ $stage -le 1 ]; then
       --nj 12 \
       --epochs 17 \
       --resnet-size 8 \
-      --embedding-size 512 \
+      --embedding-size 256 \
       --milestones 5,9,13 \
       --channels 64,128,256 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_512 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_512/checkpoint_20.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_256 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_256/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.25
+      --dropout-p 0.5
   done
 fi
 
