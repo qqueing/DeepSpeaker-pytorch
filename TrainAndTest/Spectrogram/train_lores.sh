@@ -17,6 +17,8 @@ if [ $stage -le 0 ]; then
       --epochs 24 \
       --resnet-size 8 \
       --milestones 10,15,20 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
       --loss-type ${loss} \
@@ -51,12 +53,14 @@ if [ $stage -le 3 ]; then
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --nj 12 \
       --resnet-size 8 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
       --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
       --num-valid 2 \
       --margin 0.3 \
-      --s 15 \
+      --s 30 \
       --m 3 \
       --loss-ratio 0.01 \
       --lr 0.01 \
