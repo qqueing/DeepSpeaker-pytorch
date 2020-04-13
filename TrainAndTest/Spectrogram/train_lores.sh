@@ -1,34 +1,16 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=0
 #stage=10
-waited=0
-while [ `ps 71363 | wc -l` -eq 2 ]; do
-  sleep 60
-  waited=$(expr $waited + 1)
-  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
-done
-
-if [ $stage -le 0 ]; then
-  for loss in soft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --nj 12 \
-      --epochs 24 \
-      --resnet-size 8 \
-      --milestones 10,15,20 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
-      --loss-type ${loss} \
-      --num-valid 2 \
-      --dropout-p 0.25
-    done
-fi
+#waited=0
+#while [ `ps 71363 | wc -l` -eq 2 ]; do
+#  sleep 60
+#  waited=$(expr $waited + 1)
+#  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
+#done
 
 #stage=1
-if [ $stage -le 1 ]; then
+if [ $stage -le 0 ]; then
     for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
@@ -37,10 +19,10 @@ if [ $stage -le 1 ]; then
       --input-per-spks 384 \
       --batch-size 192 \
       --nj 12 \
-      --epochs 24 \
+      --epochs 20 \
       --resnet-size 8 \
       --embedding-size 1024 \
-      --milestones 10,15,20 \
+      --milestones 5,10,15 \
       --channels 64,128,256 \
       --check-path Data/checkpoint/LoResNet10/spect/192_${loss} \
       --resume Data/checkpoint/LoResNet10/spect/192_${loss}/checkpoint_20.pth \
@@ -50,28 +32,30 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=12
-
-if [ $stage -le 3 ]; then
+if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
   for loss in asoft amsoft center; do
     echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --nj 12 \
-      --resnet-size 8 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
+      --nj 12 \
+      --resnet-size 8 \
+      --epochs 12 \
+      --milestones 4,8 \
+      --input-per-spks 384 \
+      --batch-size 192 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
+      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_20.pth \
       --loss-type ${loss} \
-      --num-valid 2 \
+      --loss-ratio 0.01 \
+      --lr 0.01 \
       --margin 0.3 \
       --s 30 \
       --m 3 \
-      --loss-ratio 0.01 \
-      --lr 0.01 \
-      --milestones 5,9 \
-      --epochs 12
+      --num-valid 2 \
+      --dropout-p 0.25
+
   done
 fi
 
