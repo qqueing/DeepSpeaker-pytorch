@@ -35,14 +35,15 @@ if [ $stage -le 1 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
       --input-per-spks 384 \
+      --batch-size 192 \
       --nj 12 \
       --epochs 17 \
       --resnet-size 10 \
       --embedding-size 256 \
       --milestones 5,9,13 \
       --channels 32,64,128,256 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_256 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_256/checkpoint_20.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/192_${loss}_1256 \
+      --resume Data/checkpoint/LoResNet10/spect/192_${loss}_256/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
       --dropout-p 0.5
