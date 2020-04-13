@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=1
 #stage=10
 waited=0
 while [ `ps 71363 | wc -l` -eq 2 ]; do
@@ -27,24 +27,28 @@ if [ $stage -le 0 ]; then
     done
 fi
 
-stage=2
+#stage=1
 if [ $stage -le 1 ]; then
     for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
+      --input-per-spks 384 \
       --nj 12 \
-      --epochs 24 \
+      --epochs 22 \
       --resnet-size 8 \
-      --milestones 10,15,20 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}/checkpoint_20.pth \
+      --embedding-size 128 \
+      --milestones 8,13,18 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_128 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_128/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.0
+      --dropout-p 2.5
   done
 fi
 
-stage=3
+stage=12
 
 if [ $stage -le 3 ]; then
 #  for loss in center amsoft ; do/
