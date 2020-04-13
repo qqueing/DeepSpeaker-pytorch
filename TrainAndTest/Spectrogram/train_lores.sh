@@ -44,7 +44,7 @@ if [ $stage -le 1 ]; then
       --resume Data/checkpoint/LoResNet10/spect/${loss}_128/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 2.5
+      --dropout-p 0.25
   done
 fi
 
