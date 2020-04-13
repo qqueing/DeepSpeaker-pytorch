@@ -36,15 +36,16 @@ if [ $stage -le 1 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
       --input-per-spks 384 \
       --nj 12 \
-      --epochs 22 \
-      --resnet-size 8 \
+      --epochs 16 \
+      --resnet-size 10 \
       --embedding-size 128 \
-      --milestones 8,13,18 \
+      --milestones 4,8,12 \
+      --channels 64,128,256,512 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_128 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_128/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
-      --dropout-p 0.25
+      --dropout-p 0.5
   done
 fi
 
