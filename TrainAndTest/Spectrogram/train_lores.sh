@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=1
 #stage=10
 #waited=0
 #while [ `ps 71363 | wc -l` -eq 2 ]; do
@@ -46,7 +46,7 @@ if [ $stage -le 1 ]; then
       --input-per-spks 384 \
       --batch-size 192 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_20.pth \
+      --resume Data/checkpoint/LoResNet10/spect/192_${loss}/checkpoint_20.pth \
       --loss-type ${loss} \
       --loss-ratio 0.01 \
       --lr 0.01 \
@@ -55,7 +55,6 @@ if [ $stage -le 1 ]; then
       --m 3 \
       --num-valid 2 \
       --dropout-p 0.25
-
   done
 fi
 
