@@ -194,8 +194,8 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=250):
 
         classifed[0][label.long()].backward()
 
-        data = data.data.cpu().numpy().squeeze().astype(np.float32)
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
+        data = data.data.cpu().numpy().squeeze().astype(np.float32)
 
         input_grads.append([data, grad])
         inputs_uids.append(uid)
