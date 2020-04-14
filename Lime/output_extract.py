@@ -225,7 +225,8 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=250):
 
     print('Saving pairs in %s.\n' % file_dir)
 
-def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
+
+def test_extract(test_loader, model, file_dir, set_name, save_per_num=250):
     # switch to evaluate mode
     model.eval()
 
@@ -247,8 +248,10 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
 
         grad_a = data_a.grad.cpu().numpy().squeeze().astype(np.float32)
         grad_b = data_a.grad.cpu().numpy().squeeze().astype(np.float32)
+        data_a = data_a.data.cpu().numpy().squeeze().astype(np.float32)
+        data_b = data_b.data.cpu().numpy().squeeze().astype(np.float32)
 
-        input_grads.append((label, grad_a, grad_b))
+        input_grads.append((label, grad_a, grad_b, data_a, data_b))
         inputs_uids.append([uid_a, uid_b])
 
         model.zero_grad()
