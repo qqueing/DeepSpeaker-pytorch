@@ -46,7 +46,7 @@ if [ $stage -le 1 ]; then
       --input-per-spks 384 \
       --batch-size 192 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/192_${loss}/checkpoint_20.pth \
+      --resume Data/checkpoint/LoResNet10/spect/192_soft/checkpoint_20.pth \
       --loss-type ${loss} \
       --loss-ratio 0.01 \
       --lr 0.01 \
