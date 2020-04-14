@@ -32,7 +32,7 @@ from tqdm import tqdm
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import concateinputfromMFB, varLengthFeat, to2tensor
+from Process_Data.audio_processing import varLengthFeat, to2tensor
 from TrainAndTest.common_func import create_model
 
 # Version conflict
@@ -123,8 +123,8 @@ kwargs = {'num_workers': 12, 'pin_memory': False} if args.cuda else {}
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
 transform = transforms.Compose([
-    concateinputfromMFB(remove_vad=False),
-    # varLengthFeat(),
+    # concateinputfromMFB(remove_vad=False),
+    varLengthFeat(),
     to2tensor()
 ])
 transform_T = transforms.Compose([
@@ -166,7 +166,7 @@ valid_part = torch.utils.data.Subset(valid_dir, indices)
 # sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 
-def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
+def train_extract(train_loader, model, file_dir, set_name, save_per_num=250):
     # switch to evaluate mode
     model.eval()
 
@@ -193,9 +193,11 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
         # relu1 = relu1.cpu().detach().numpy().squeeze().astype(np.float32)
 
         classifed[0][label.long()].backward()
+
+        data = data.data.cpu().numpy().squeeze().astype(np.float32)
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
 
-        input_grads.append(grad)
+        input_grads.append([data, grad])
         inputs_uids.append(uid)
 
         model.zero_grad()
