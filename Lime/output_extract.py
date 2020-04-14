@@ -117,7 +117,7 @@ if args.cuda:
     cudnn.benchmark = True
 
 # Define visulaize SummaryWriter instance
-kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': 12, 'pin_memory': False} if args.cuda else {}
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
 transform = transforms.Compose([
@@ -296,7 +296,7 @@ def main():
     # sitw_dev_loader = DataLoader(sitw_dev_part, batch_size=args.batch_size, shuffle=False, **kwargs)
 
     resume_path = args.check_path + '/checkpoint_{}.pth'
-    epochs = np.arange(0, args.epochs)
+    epochs = np.arange(args.start_epochs, args.epochs + 1)
 
     for e in epochs:
         # Load model from Checkpoint file
@@ -313,12 +313,15 @@ def main():
             model_dict = model.state_dict()
             model_dict.update(filtered)
             model.load_state_dict(model_dict)
+
+            if isinstance(model.dropout_p, float):
+                args.dropout_p = model.dropout_p
         else:
             print('=> no checkpoint found at %s' % resume_path.format(e))
             continue
         model.cuda()
 
-        file_dir = args.extract_path + '/epoch_%d' % e
+        file_dir = args.extract_path + '/%s/%s_dp%.2f/epoch_%d' % (args.model, args.loss_type, args.dropout_p, e)
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
 
