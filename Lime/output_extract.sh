@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+stage=1
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
