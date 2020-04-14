@@ -27,7 +27,7 @@ if [ $stage -le 1 ]; then
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/center_dp25 \
-    --extract-path Lime/LoResNet10 \
+    --extract-path Lime \
     --dropout-p 0 \
     --sample-utt 500
 
