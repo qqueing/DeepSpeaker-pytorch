@@ -65,7 +65,9 @@ parser.add_argument('--extract-path', help='folder to output model grads, etc')
 # ALSTM  ASiResNet34  ExResNet34  LoResNet10  ResNet20  SiResNet34  SuResCNN10  TDNN
 parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiResNet34', 'SuResCNN10'],
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--epochs', type=int, default=20, metavar='E',
+parser.add_argument('--start-epochs', type=int, default=36, metavar='E',
+                    help='number of epochs to train (default: 10)')
+parser.add_argument('--epochs', type=int, default=36, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
@@ -286,8 +288,6 @@ def main():
     print('Model options: {}'.format(model_kwargs))
 
     model = create_model(args.model, **model_kwargs)
-
-    # model = SuperficialResCNN(layers=[1, 1, 1, 0], embedding_size=args.embedding_size, n_classes=len(class_to_idx), m=3)
 
     train_loader = DataLoader(train_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     valid_loader = DataLoader(valid_part, batch_size=args.batch_size, shuffle=False, **kwargs)
