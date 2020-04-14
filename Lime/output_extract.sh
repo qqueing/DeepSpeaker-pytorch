@@ -26,6 +26,7 @@ if [ $stage -le 1 ]; then
     --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --loss-type center \
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/center_dp25 \
     --extract-path Lime \
     --dropout-p 0 \
