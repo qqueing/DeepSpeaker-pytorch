@@ -310,7 +310,7 @@ class XVectorTDNN(nn.Module):
 
 class ASTDNN(nn.Module):
     def __init__(self, num_spk, input_dim=24, dropout_p=0.0):
-        super(XVectorTDNN, self).__init__()
+        super(ASTDNN, self).__init__()
         self.num_spk = num_spk
         self.dropout_p = dropout_p
         self.input_dim = input_dim
