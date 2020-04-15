@@ -11,33 +11,29 @@
 """
 # from __future__ import print_function
 import argparse
+import os
 import pathlib
-import pdb
 import random
 import time
-
-from tensorboardX import SummaryWriter
-from Process_Data import constants as c
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
-import os
+import warnings
 
 import numpy as np
-from torch.optim.lr_scheduler import StepLR, MultiStepLR
+import torch
+import torch.backends.cudnn as cudnn
+import torch.nn as nn
+import torchvision.transforms as transforms
+from tensorboardX import SummaryWriter
+from torch.autograd import Variable
+from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from Define_Model.TDNN import XVectorTDNN
+from Define_Model.model import PairwiseDistance
+from Process_Data import constants as c
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB, to2tensor
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
-from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat, to2tensor
-import warnings
 
 warnings.filterwarnings("ignore")
 # Version conflict
@@ -70,6 +66,8 @@ parser.add_argument('--test-dir', type=str,
 
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
+parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
+                    help='Dimensionality of the embedding')
 parser.add_argument('--check-path',
                     default='Data/checkpoint/TDNN/XVextor/soft/kaldi',
                     help='folder to output model checkpoints')
@@ -238,6 +236,7 @@ def main():
         # pdb.set_trace()
         train(train_loader, model, optimizer, criterion, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
+
         scheduler.step()
         # break
 

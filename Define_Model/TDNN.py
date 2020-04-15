@@ -313,17 +313,23 @@ class XVectorTDNN(nn.Module):
 
 
 class ASTDNN(nn.Module):
-    def __init__(self, num_spk, input_dim=24, dropout_p=0.0):
+    def __init__(self, num_spk, input_dim=24, embedding_size=512,
+                 dropout_p=0.0):
         super(ASTDNN, self).__init__()
         self.num_spk = num_spk
         self.dropout_p = dropout_p
         self.input_dim = input_dim
 
-        self.frame1 = NewTDNN(input_dim=self.input_dim, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
-        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
-        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
-        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
-        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame1 = NewTDNN(input_dim=self.input_dim, output_dim=512, context_size=5, dilation=1,
+                              dropout_p=dropout_p)
+        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2,
+                              dropout_p=dropout_p)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3,
+                              dropout_p=dropout_p)
+        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
+                              dropout_p=dropout_p)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1,
+                              dropout_p=dropout_p)
 
         self.attention_statistic = AttentionStatisticPooling(input_dim=1500, hidden_dim=64)
 
@@ -334,12 +340,12 @@ class ASTDNN(nn.Module):
         )
 
         self.segment7 = nn.Sequential(
-            nn.Linear(512, 512),
+            nn.Linear(512, embedding_size),
             nn.ReLU(),
-            nn.BatchNorm1d(512)
+            nn.BatchNorm1d(embedding_size)
         )
 
-        self.classifier = nn.Linear(512, num_spk)
+        self.classifier = nn.Linear(embedding_size, num_spk)
         self.drop = nn.Dropout(p=self.dropout_p)
 
         # self.out_act = nn.Sigmoid()
@@ -492,13 +498,12 @@ class ETDNN(nn.Module):
         self.classifier = nn.Linear(embedding_size, num_spk)
         self.drop = nn.Dropout(p=self.dropout_p)
 
-
-        # self.relu = nn.LeakyReLU()
-
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+            elif isinstance(m, NewTDNN):
+                nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='leaky_relu')
 
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=1)
@@ -514,7 +519,7 @@ class ETDNN(nn.Module):
             if isinstance(m, NewTDNN):
                 m.set_dropout(dropout_p)
 
-    def pre_forward(self, x):
+    def forward(self, x):
         # pdb.set_trace()
         x = x.squeeze(1).float()
 
