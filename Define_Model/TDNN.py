@@ -163,7 +163,8 @@ class Time_Delay(nn.Module):
 # Implement of 'https://github.com/cvqluu/TDNN/blob/master/tdnn.py'
 class NewTDNN(nn.Module):
 
-    def __init__(self, input_dim=23, output_dim=512, context_size=5, stride=1, dilation=1, batch_norm=True, dropout_p=0.0):
+    def __init__(self, input_dim=23, output_dim=512, context_size=5, stride=1, dilation=1,
+                 batch_norm=True, dropout_p=0.0, activation='relu'):
         '''
         TDNN as defined by https://www.danielpovey.com/files/2015_interspeech_multisplice.pdf
         Affine transformation not applied globally to all frames but smaller windows with local context
@@ -186,7 +187,10 @@ class NewTDNN(nn.Module):
         self.batch_norm = batch_norm
 
         self.kernel = nn.Linear(input_dim * context_size, output_dim)
-        self.nonlinearity = nn.ReLU()
+        if activation == 'relu':
+            self.nonlinearity = nn.ReLU()
+        elif activation == 'leakyrelu':
+            self.nonlinearity = nn.LeakyReLU()
 
         if self.batch_norm:
             self.bn = nn.BatchNorm1d(output_dim)
@@ -454,32 +458,41 @@ class TDNNLeaky(nn.Module):
 
         return x
 
+
 class ETDNN(nn.Module):
-    def __init__(self, num_spk, input_dim=80, dropout_p=0.0):
+    def __init__(self, num_spk, embedding_size=256,
+                 input_dim=80, dropout_p=0.0):
         super(ETDNN, self).__init__()
         self.num_spk = num_spk
         self.input_dim = input_dim
         self.dropout_p = dropout_p
 
-        self.frame1 = NewTDNN(input_dim=input_dim, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
-        self.affine2 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
-        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
-        self.affine4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
-        self.frame5 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
-        self.affine6 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
-        self.frame7 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=4, dropout_p=dropout_p)
-        self.frame8 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
-        self.frame9 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame1 = NewTDNN(input_dim=input_dim, output_dim=512, context_size=5, dilation=1,
+                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.affine2 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
+                               activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2,
+                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.affine4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
+                               activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3,
+                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.affine6 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
+                               activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.frame7 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=4,
+                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.frame8 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
+                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+        self.frame9 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1,
+                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
 
-        self.segment10 = nn.Linear(3000, 512)
-        self.segment11 = nn.Linear(512, 512)
-        self.segment12 = nn.Linear(512, num_spk)
+        self.segment11 = nn.Linear(3000, embedding_size)
+        self.leakyrelu = nn.LeakyReLU()
+
+        self.classifier = nn.Linear(embedding_size, num_spk)
         self.drop = nn.Dropout(p=self.dropout_p)
 
-        self.batch_norm10 = nn.BatchNorm1d(512)
-        self.batch_norm11 = nn.BatchNorm1d(512)
 
-        self.relu = nn.LeakyReLU(negative_slope=0.1)
         # self.relu = nn.LeakyReLU()
 
         for m in self.modules():  # 对于各层参数的初始化
@@ -516,22 +529,9 @@ class ETDNN(nn.Module):
         x = self.frame9(x)
 
         x = self.statistic_pooling(x)
-        x = self.segment10(x)
+        embeddings = self.segment11(x)
 
-        embedding_a = self.batch_norm10(self.relu(x))
+        x = self.leakyrelu(embeddings)
+        logits = self.classifier(x)
 
-        if self.dropout_p:
-            embedding_a = self.drop(embedding_a)
-
-        x = self.segment11(embedding_a)
-        embedding_b = self.batch_norm11(self.relu(x))
-
-        if self.dropout_p:
-            embedding_b = self.drop(embedding_b)
-
-        return embedding_a, embedding_b
-
-    def forward(self, x):
-        x = self.segment12(x)
-
-        return x
+        return logits, embeddings

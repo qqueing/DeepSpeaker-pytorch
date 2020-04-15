@@ -22,7 +22,6 @@ from multiprocessing import Pool, Manager
 import kaldi_io
 import numpy as np
 
-import Process_Data.constants as c
 from Process_Data.audio_augment.common import RunCommand
 from Process_Data.audio_processing import Make_Fbank, Make_Spect
 
@@ -46,6 +45,9 @@ parser.add_argument('--feat-type', type=str,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--filter-type', type=str,
                     default='mel', choices=['mel', 'linear', 'dnn'],
+                    help='number of jobs to make feats (default: 10)')
+
+parser.add_argument('--filters', type=int, default=24,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--windowsize', type=float, default=0.02, choices=[0.02, 0.025],
                     help='number of jobs to make feats (default: 10)')
@@ -99,7 +101,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                         wav_f.write(stdout)
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=temp_wav, filtertype=args.filter_type, use_energy=True,
-                                                    nfilt=c.FILTER_BANK,
+                                                    nfilt=args.filters, normalize=args.normalize,
                                                     duration=True)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=temp_wav, windowsize=args.windowsize,
@@ -111,7 +113,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                 else:
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=pair[1], filtertype=args.filter_type, use_energy=True,
-                                                    nfilt=c.FILTER_BANK, duration=True)
+                                                    nfilt=args.filters, duration=True, normalize=args.normalize)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=pair[1], windowsize=args.windowsize,
                                                     stride=args.stride, duration=True, nfft=args.nfft,

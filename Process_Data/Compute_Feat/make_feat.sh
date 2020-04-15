@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=3
+stage=1
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -19,6 +19,21 @@ if [ $stage -le 1 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb80 \
+      --out-set ${name}_kaldi \
+      --feat-type fbank \
+      --filter-type mel \
+      --filters 80 \
+      --windowsize 0.025
+  done
+fi
+
+stage=100
+if [ $stage -le 2 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --nj 16 \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64 \
       --out-set ${name}_linear \
       --feat-type fbank \
@@ -27,7 +42,7 @@ if [ $stage -le 1 ]; then
 fi
 
 #stage=4
-if [ $stage -le 2 ]; then
+if [ $stage -le 3 ]; then
   for name in reverb babble noise music ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_${name}_fb64/dev \
@@ -37,7 +52,7 @@ if [ $stage -le 2 ]; then
 fi
 
 # vox1 spectrogram 257
-if [ $stage -le 3 ]; then
+if [ $stage -le 4 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
@@ -51,7 +66,7 @@ if [ $stage -le 3 ]; then
 fi
 stage=100
 #vox1 spectrogram 161
-if [ $stage -le 4 ]; then
+if [ $stage -le 5 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
@@ -65,7 +80,7 @@ fi
 
 
 # sitw
-if [ $stage -le 5 ]; then
+if [ $stage -le 6 ]; then
   for name in dev eval ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw/${name} \
@@ -76,7 +91,7 @@ if [ $stage -le 5 ]; then
 fi
 
 # timit
-if [ $stage -eq 6 ]; then
+if [ $stage -eq 7 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
@@ -87,7 +102,7 @@ if [ $stage -eq 6 ]; then
 fi
 
 stage=11
-if [ $stage -le 7 ]; then
+if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
