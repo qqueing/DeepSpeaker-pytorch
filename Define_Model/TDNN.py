@@ -12,18 +12,16 @@
 fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
-import pdb
 from Define_Model.model import ReLU
 __author__ = 'Jonas Van Der Donckt'
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 import math
+from Define_Model.Pooling import AttentionStatisticPooling
 
 """Time Delay Neural Network as mentioned in the 1989 paper by Waibel et al. (Hinton) and the 2015 paper by Peddinti et al. (Povey)"""
-
 class TDNN(nn.Module):
     def __init__(self, context, input_dim, output_dim, full_context=True):
         """
@@ -188,7 +186,7 @@ class NewTDNN(nn.Module):
         self.batch_norm = batch_norm
 
         self.kernel = nn.Linear(input_dim * context_size, output_dim)
-        self.nonlinearity = ReLU()
+        self.nonlinearity = nn.ReLU()
 
         if self.batch_norm:
             self.bn = nn.BatchNorm1d(output_dim)
@@ -199,7 +197,7 @@ class NewTDNN(nn.Module):
 
     def set_dropout(self, dropout_p):
         self.dropout_p = dropout_p
-        self.drop = nn.Dropout(p=self.dropout_p)
+        self.drop.p = self.dropout_p
 
     def forward(self, x):
         '''
@@ -308,6 +306,82 @@ class XVectorTDNN(nn.Module):
         x = self.segment8(x)
 
         return x
+
+
+class ASTDNN(nn.Module):
+    def __init__(self, num_spk, input_dim=24, dropout_p=0.0):
+        super(XVectorTDNN, self).__init__()
+        self.num_spk = num_spk
+        self.dropout_p = dropout_p
+        self.input_dim = input_dim
+
+        self.frame1 = NewTDNN(input_dim=self.input_dim, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
+        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
+        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1, dropout_p=dropout_p)
+
+        self.attention_statistic = AttentionStatisticPooling(input_dim=1500, hidden_dim=64)
+
+        self.segment6 = nn.Sequential(
+            nn.Linear(3000, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512)
+        )
+
+        self.segment7 = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512)
+        )
+
+        self.classifier = nn.Linear(512, num_spk)
+        self.drop = nn.Dropout(p=self.dropout_p)
+
+        # self.out_act = nn.Sigmoid()
+        # self.relu = nn.LeakyReLU()
+
+        for m in self.modules():  # 对于各层参数的初始化
+            if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, NewTDNN):
+                nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
+
+    def set_global_dropout(self, dropout_p):
+        self.dropout_p = dropout_p
+        self.drop.p = self.dropout_p
+
+        self.frame1.set_dropout(dropout_p)
+        self.frame2.set_dropout(dropout_p)
+        self.frame3.set_dropout(dropout_p)
+        self.frame4.set_dropout(dropout_p)
+        self.frame5.set_dropout(dropout_p)
+
+    def forward(self, x):
+        # pdb.set_trace()
+        x = x.squeeze(1).float()
+        x = self.frame1(x)
+        x = self.frame2(x)
+        x = self.frame3(x)
+        x = self.frame4(x)
+        x = self.frame5(x)
+
+        x = self.statistic_pooling(x)
+        embedding_a = self.segment6(x)
+
+        if self.dropout_p:
+            embedding_a = self.drop(embedding_a)
+
+        embedding_b = self.segment7(embedding_a)
+
+        if self.dropout_p:
+            embedding_b = self.drop(embedding_b)
+
+        logits = self.classifier(embedding_b)
+
+        return logits, embedding_b
+
 
 class TDNNLeaky(nn.Module):
 
@@ -443,13 +517,14 @@ class ETDNN(nn.Module):
 
         x = self.statistic_pooling(x)
         x = self.segment10(x)
-        embedding_a = self.relu(self.batch_norm10(x))
+
+        embedding_a = self.batch_norm10(self.relu(x))
 
         if self.dropout_p:
             embedding_a = self.drop(embedding_a)
 
         x = self.segment11(embedding_a)
-        embedding_b = self.relu(self.batch_norm11(x))
+        embedding_b = self.batch_norm11(self.relu(x))
 
         if self.dropout_p:
             embedding_b = self.drop(embedding_b)
