@@ -367,7 +367,7 @@ class ASTDNN(nn.Module):
         x = self.frame4(x)
         x = self.frame5(x)
 
-        x = self.statistic_pooling(x)
+        x = self.attention_statistic(x)
         embedding_a = self.segment6(x)
 
         if self.dropout_p:
