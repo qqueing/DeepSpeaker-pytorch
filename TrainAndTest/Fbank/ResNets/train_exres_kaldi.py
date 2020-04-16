@@ -114,7 +114,7 @@ parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO'
 # args for a-softmax
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=int, default=10500, metavar='S',
+parser.add_argument('--lambda-max', type=int, default=1000, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
@@ -261,10 +261,7 @@ def main():
     elif args.loss_type == 'asoft':
         ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-
-        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
-        lambda_max = int(all_iteration * 0.3) // 500 * 500
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':

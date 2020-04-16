@@ -8,9 +8,10 @@ if [ $stage -le 0 ]; then
 #  for loss in soft asoft ; do
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-    python TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
+    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_kaldi \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_kaldi \
+      --feat-dim 64 \
       --nj 12 \
       --epochs 30 \
       --milestones 14,20,25 \
@@ -23,17 +24,20 @@ fi
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
-  for loss in amsoft center asoft; do
+  for loss in center asoft; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-    python TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
+    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_kaldi \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_kaldi \
       --nj 12 \
+      --feat-dim 64 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
       --loss-type ${loss} \
       --lr 0.01 \
       --loss-ratio 0.1 \
-      --milestones 5 \
-      --epochs 10
+      --milestones 5,9 \
+      --epochs 12
   done
 
 fi
