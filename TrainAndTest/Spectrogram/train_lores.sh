@@ -39,8 +39,8 @@ if [ $stage -le 1 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
       --nj 12 \
       --resnet-size 8 \
-      --epochs 12 \
-      --milestones 5,9 \
+      --epochs 14 \
+      --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
       --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
