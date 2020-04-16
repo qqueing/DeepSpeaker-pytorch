@@ -17,6 +17,7 @@ if [ $stage -le 0 ]; then
       --milestones 14,20,25 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
+      --input-per-spks 240 \
       --loss-type ${loss}
   done
 fi
@@ -33,6 +34,7 @@ if [ $stage -le 1 ]; then
       --feat-dim 64 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
+      --input-per-spks 240 \
       --loss-type ${loss} \
       --lr 0.01 \
       --loss-ratio 0.01 \
