@@ -313,9 +313,9 @@ class XVectorTDNN(nn.Module):
 
 
 class ASTDNN(nn.Module):
-    def __init__(self, num_spk, input_dim=24, embedding_size=512, dropout_p=0.0):
+    def __init__(self, num_classes, input_dim=24, embedding_size=512, dropout_p=0.0, **kwargs):
         super(ASTDNN, self).__init__()
-        self.num_spk = num_spk
+        self.num_classes = num_classes
         self.dropout_p = dropout_p
         self.input_dim = input_dim
 
@@ -344,7 +344,7 @@ class ASTDNN(nn.Module):
             nn.BatchNorm1d(embedding_size)
         )
 
-        self.classifier = nn.Linear(embedding_size, num_spk)
+        self.classifier = nn.Linear(embedding_size, num_classes)
         self.drop = nn.Dropout(p=self.dropout_p)
 
         # self.out_act = nn.Sigmoid()
