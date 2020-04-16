@@ -42,12 +42,12 @@ if [ $stage -le 1 ]; then
       --epochs 12 \
       --milestones 5,9 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_20.pth \
+      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
       --loss-ratio 0.01 \
       --lr 0.01 \
       --margin 0.3 \
-      --s 15 \
+      --s 30 \
       --m 3 \
       --num-valid 2 \
       --dropout-p 0.25
