@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=2
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -25,6 +25,18 @@ if [ $stage -le 1 ]; then
       --filter-type mel \
       --filters 80 \
       --windowsize 0.025
+  done
+fi
+
+if [ $stage -le 2 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --nj 16 \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pymfcc40 \
+      --out-set ${name}_kaldi \
+      --feat-type mfcc \
+      --filters 40
   done
 fi
 

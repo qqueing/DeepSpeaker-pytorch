@@ -23,7 +23,7 @@ import kaldi_io
 import numpy as np
 
 from Process_Data.audio_augment.common import RunCommand
-from Process_Data.audio_processing import Make_Fbank, Make_Spect
+from Process_Data.audio_processing import Make_Fbank, Make_Spect, Make_MFCC
 
 parser = argparse.ArgumentParser(description='Computing Filter banks!')
 parser.add_argument('--nj', type=int, default=16, metavar='E',
@@ -41,7 +41,7 @@ parser.add_argument('--out-set', type=str, default='dev_reverb',
                     help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--feat-type', type=str,
-                    default='fbank', choices=['fbank', 'spectrogram'],
+                    default='fbank', choices=['fbank', 'spectrogram', 'mfcc'],
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--filter-type', type=str,
                     default='mel', choices=['mel', 'linear', 'dnn'],
@@ -107,6 +107,9 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                         feat, duration = Make_Spect(wav_path=temp_wav, windowsize=args.windowsize,
                                                     stride=args.stride, duration=True, nfft=args.nfft,
                                                     normalize=args.normalize)
+                    elif args.feat_type == 'mfcc':
+                        feat, duration = Make_MFCC(filename=temp_wav, numcep=args.filters, nfilt=args.filters,
+                                                   normalize=args.normalize, duration=True, use_energy=True)
 
                     os.remove(temp_wav)
 
@@ -118,6 +121,10 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                         feat, duration = Make_Spect(wav_path=pair[1], windowsize=args.windowsize,
                                                     stride=args.stride, duration=True, nfft=args.nfft,
                                                     normalize=args.normalize)
+                    elif args.feat_type == 'mfcc':
+                        feat, duration = Make_MFCC(filename=pair[1], numcep=args.filters, nfilt=args.filters,
+                                                   normalize=args.normalize, duration=True, use_energy=True)
+
                     # feat = np.load(pair[1]).astype(np.float32)
 
                 feat = feat.astype(np.float32)
