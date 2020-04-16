@@ -7,14 +7,14 @@ model=ExResNet
 if [ $stage -le 0 ]; then
 #  for loss in soft asoft ; do
   for loss in soft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_kaldi \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_kaldi \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
       --feat-dim 64 \
       --nj 12 \
       --epochs 30 \
-      --batch-size 80 \
+      --batch-size 64 \
       --lr 0.1 \
       --milestones 14,20,25 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
@@ -29,13 +29,13 @@ fi
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
   for loss in center asoft; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    echo -e "\n\033[1;4;31m Finetuning ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_kaldi \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_kaldi \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
       --nj 12 \
       --feat-dim 64 \
-      --batch-size 80 \
+      --batch-size 64 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
       --input-per-spks 240 \
