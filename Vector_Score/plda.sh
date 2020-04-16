@@ -3,7 +3,7 @@
 
 
 model=SuResCNN10
-train_cmd="Vector_Score/run.pl --mem 4G"
+train_cmd="Vector_Score/run.pl --mem 8G"
 logdir=Log/PLDA/${model}
 
 feat_dir=Data/checkpoint/${model}/soft/kaldi_feat
