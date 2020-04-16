@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=0
 #stage=10
 #waited=0
 #while [ `ps 71363 | wc -l` -eq 2 ]; do
