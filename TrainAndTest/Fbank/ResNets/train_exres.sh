@@ -2,6 +2,7 @@
 
 stage=0
 #stage=10
+model=ExResNet
 
 if [ $stage -le 0 ]; then
 #  for loss in soft asoft ; do
@@ -13,8 +14,8 @@ if [ $stage -le 0 ]; then
       --nj 12 \
       --epochs 30 \
       --milestones 14,20,25 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/spect/${loss} \
+      --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
       --loss-type ${loss}
   done
 fi
@@ -22,12 +23,12 @@ fi
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
-  for loss in amsoft center ; do
+  for loss in amsoft center asoft; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
       --nj 12 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss} \
-      --resume Data/checkpoint/LoResNet10/spect/soft/checkpoint_30.pth \
+      --check-path Data/checkpoint/${model}/spect/${loss} \
+      --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
       --loss-type ${loss} \
       --lr 0.01 \
       --loss-ratio 0.1 \

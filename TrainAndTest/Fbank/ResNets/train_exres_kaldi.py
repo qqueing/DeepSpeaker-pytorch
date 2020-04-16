@@ -11,33 +11,31 @@
 """
 # from __future__ import print_function
 import argparse
-import pdb
+import os
 import random
 import sys
 import time
-from kaldi_io import read_mat
-from tensorboardX import SummaryWriter
+import warnings
+
+import numpy as np
 import torch
+import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
-
+from kaldi_io import read_mat
+from tensorboardX import SummaryWriter
 from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
-import os
-import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
-from Define_Model.ResNet import ExporingResNet
 from Define_Model.LossFunction import CenterLoss
+from Define_Model.ResNet import ExporingResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
+from Define_Model.model import PairwiseDistance
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
-import warnings
-
 from logger import NewLogger
 
 warnings.filterwarnings("ignore")
@@ -469,14 +467,14 @@ def test(test_loader, valid_loader, model, epoch):
     writer.add_scalar('Test/EER', 100. * eer, epoch)
     writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    # mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
-    # writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
-    # writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+    mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
+    writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
 
     dist_type = 'cos' if args.cos_sim else 'l2'
     print('\nFor %s_distance, ' % dist_type)
     print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
-    # print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
+    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
     print('  Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
 
 
