@@ -124,7 +124,6 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     elif args.feat_type == 'mfcc':
                         feat, duration = Make_MFCC(filename=pair[1], numcep=args.filters, nfilt=args.filters,
                                                    normalize=args.normalize, duration=True, use_energy=True)
-
                     # feat = np.load(pair[1]).astype(np.float32)
 
                 feat = feat.astype(np.float32)

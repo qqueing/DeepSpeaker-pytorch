@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=0
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -8,12 +8,13 @@ if [ $stage -le 0 ]; then
       --nj 16 \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64 \
-      --out-set ${name}_kaldi \
-      --feat-type fbank \
-      --filter-type mel
+      --out-set ${name}_noc \
+      --windowsize 0.025 \
+      --filters 64 \
+      --feat-type fbank
   done
 fi
-
+stage=100
 if [ $stage -le 1 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -40,7 +41,7 @@ if [ $stage -le 2 ]; then
   done
 fi
 
-stage=100
+
 if [ $stage -le 2 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
