@@ -62,10 +62,10 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Data options
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb24/dev_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb80/dev_kaldi',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb24/test_no_sil',
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb80/test_kaldi',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
@@ -97,11 +97,11 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 
 # Training options
 # Model options
-parser.add_argument('--feat-dim', default=24, type=int, metavar='FEAT',
+parser.add_argument('--feat-dim', default=80, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=256, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
@@ -256,7 +256,8 @@ def main():
     print('Parsed options: {}'.format(vars(args)))
     print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
-    model = ETDNN(num_spk=train_dir.num_spks, input_dim=args.feat_dim, dropout_p=args.dropout_p)
+    model = ETDNN(num_spk=train_dir.num_spks, embedding_size=args.embedding_size,
+                  input_dim=args.feat_dim, dropout_p=args.dropout_p)
 
     start_epoch = 0
     if args.save_init:
