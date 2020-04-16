@@ -313,8 +313,7 @@ class XVectorTDNN(nn.Module):
 
 
 class ASTDNN(nn.Module):
-    def __init__(self, num_spk, input_dim=24, embedding_size=512,
-                 dropout_p=0.0):
+    def __init__(self, num_spk, input_dim=24, embedding_size=512, dropout_p=0.0):
         super(ASTDNN, self).__init__()
         self.num_spk = num_spk
         self.dropout_p = dropout_p
@@ -350,7 +349,6 @@ class ASTDNN(nn.Module):
 
         # self.out_act = nn.Sigmoid()
         # self.relu = nn.LeakyReLU()
-
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
