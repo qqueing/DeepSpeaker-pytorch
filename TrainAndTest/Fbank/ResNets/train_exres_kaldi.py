@@ -97,7 +97,7 @@ parser.add_argument('--test-batch-size', type=int, default=8, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--input-per-spks', type=int, default=240, metavar='IPFT',
+parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 
 # loss configure

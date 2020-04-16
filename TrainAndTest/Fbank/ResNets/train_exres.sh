@@ -35,7 +35,7 @@ if [ $stage -le 1 ]; then
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
       --loss-type ${loss} \
       --lr 0.01 \
-      --loss-ratio 0.1 \
+      --loss-ratio 0.01 \
       --milestones 5,9 \
       --epochs 12
   done
