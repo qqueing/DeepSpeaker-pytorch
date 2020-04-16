@@ -243,7 +243,7 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
 
 def Make_Fbank(filename,
                # sample_rate=c.SAMPLE_RATE,
-               filtertype='dnn',
+               filtertype='mel',
                use_delta=c.USE_DELTA,
                use_scale=c.USE_SCALE,
                nfilt=c.FILTER_BANK,
