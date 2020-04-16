@@ -10,7 +10,7 @@ import soundfile as sf
 import torch
 import torch.nn.utils.rnn as rnn_utils
 from pydub import AudioSegment
-from python_speech_features import fbank, delta, sigproc
+from python_speech_features import fbank, delta, sigproc, mfcc
 from scipy import signal
 from scipy.io import wavfile
 from speechpy.feature import mfe
@@ -296,6 +296,46 @@ def Make_Fbank(filename,
 
     # np.save(filename.replace('.wav', '.npy'), frames_features)
     return frames_features
+
+
+def Make_MFCC(filename, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE,
+              nfilt=c.FILTER_BANK, numcep=c.FILTER_BANK,
+              use_energy=c.USE_ENERGY,
+              normalize=c.NORMALIZE,
+              duration=False):
+    if not os.path.exists(filename):
+        raise ValueError('wav file does not exist.')
+
+    # sample_rate, audio = wavfile.read(filename)
+    audio, sample_rate = sf.read(filename, dtype='int16')
+    # audio, sample_rate = librosa.load(filename, sr=None)
+    # audio = audio.flatten()
+    feats = mfcc(audio, samplerate=sample_rate,
+                 nfilt=nfilt, winlen=0.025,
+                 winstep=0.01, numcep=numcep,
+                 nfft=512, lowfreq=0,
+                 highfreq=None, preemph=0.97,
+                 ceplifter=0, appendEnergy=use_energy,
+                 winfunc=np.hamming)
+
+    if use_delta:
+        delta_1 = delta(feats, N=1)
+        delta_2 = delta(delta_1, N=1)
+
+        filter_banks = normalize_frames(feats, Scale=use_scale)
+        delta_1 = normalize_frames(delta_1, Scale=use_scale)
+        delta_2 = normalize_frames(delta_2, Scale=use_scale)
+
+        feats = np.hstack([filter_banks, delta_1, delta_2])
+
+    if normalize:
+        feats = normalize_frames(feats, Scale=use_scale)
+
+    if duration:
+        return feats, len(audio) / sample_rate
+
+    # np.save(filename.replace('.wav', '.npy'), frames_features)
+    return feats
 
 
 def conver_to_wav(filename, write_path, format='m4a'):
