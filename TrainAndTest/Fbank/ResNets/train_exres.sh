@@ -14,7 +14,8 @@ if [ $stage -le 0 ]; then
       --feat-dim 64 \
       --nj 12 \
       --epochs 30 \
-      --lr 0.01 \
+      --batch-size 80 \
+      --lr 0.1 \
       --milestones 14,20,25 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
@@ -34,6 +35,7 @@ if [ $stage -le 1 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_kaldi \
       --nj 12 \
       --feat-dim 64 \
+      --batch-size 80 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
       --input-per-spks 240 \
