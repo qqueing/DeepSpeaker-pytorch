@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: extract_kaldi.py
+@File: extract_xvector_kaldi.py
 @Time: 2019/12/10 下午10:32
 @Overview: Exctract speakers vectors for kaldi PLDA.
 """
@@ -63,11 +63,12 @@ parser.add_argument('--extract-path', help='folder to output model grads, etc')
 # Model options
 parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiResNet34', 'SuResCNN10'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--feat-dim', default=24, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
-                    help='input batch size for testing (default: 64)')
+                    help='model global dropout p)')
 parser.add_argument('--epoch', type=int, default=36, metavar='E',
                     help='number of epochs to train (default: 10)')
-
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 
@@ -180,12 +181,13 @@ def main():
     # Views the training images and displays the distance on anchor-negative and anchor-positive
 
     # print the experiment configuration
-    print('\33[91m\nCurrent time is {}.\33[0m'.format(str(time.asctime())))
+    print('\nCurrent time is\33[91m {}\33[0m.'.format(str(time.asctime())))
     print('Parsed options: {}'.format(vars(args)))
     print('Number of Speakers: {}\n'.format(len(train_dir.classes)))
 
     # instantiate model and initialize weights
-    model_kwargs = {'embedding_size': args.embedding_size,
+    model_kwargs = {'input_dim': args.feat_dim,
+                    'embedding_size': args.embedding_size,
                     'num_classes': args.num_classes,
                     'dropout_p': args.dropout_p}
 
@@ -202,7 +204,10 @@ def main():
         print('=> loading checkpoint {}'.format(resume))
         checkpoint = torch.load(resume)
         filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-        model.load_state_dict(filtered)
+        model_dict = model.state_dict()
+        model_dict.update(filtered)
+
+        model.load_state_dict(model_dict)
 
     else:
         raise Exception('=> no checkpoint found at {}'.format(resume))
