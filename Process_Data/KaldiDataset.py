@@ -526,7 +526,7 @@ class KaldiTupleDataset(data.Dataset):
 
 
 class KaldiExtractDataset(data.Dataset):
-    def __init__(self, dir, samples_per_speaker, transform, num_valid=5):
+    def __init__(self, dir, transform, filer_loader):
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
@@ -569,45 +569,26 @@ class KaldiExtractDataset(data.Dataset):
         for idx, (utt_id, feat) in pbar:
             uid2feat[utt_id] = feat
 
-        print('==> There are {} utterances in Train Dataset.'.format(len(uid2feat)))
-        valid_set = {}
-        valid_uid2feat = {}
-        valid_utt2spk_dict = {}
+        print('==> There are {} utterances in the Dataset.'.format(len(uid2feat)))
 
-        for spk in speakers:
-            if spk not in valid_set.keys():
-                valid_set[spk] = []
-                for i in range(num_valid):
-                    if len(dataset[spk]) <= 1:
-                        break
-                    j = np.random.randint(len(dataset[spk]))
-                    utt = dataset[spk].pop(j)
-                    utt2spk_dict.pop(utt)
-                    valid_set[spk].append(utt)
-
-                    valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
-                    valid_utt2spk_dict[utt] = utt2spk_dict[utt]
-
-        print('==> Spliting {} utterances for Validation.\n'.format(len(valid_uid2feat)))
-
-        self.feat_dim = uid2feat[dataset[speakers[0]][0]].shape[1]
+        self.filer_loader = filer_loader
+        self.feat_dim = filer_loader(uid2feat[dataset[speakers[0]][0]].shape[1])
         self.speakers = speakers
         self.dataset = dataset
-        self.valid_set = valid_set
-        self.valid_uid2feat = valid_uid2feat
-        self.valid_utt2spk_dict = valid_utt2spk_dict
+
         self.uid2feat = uid2feat
         self.spk_to_idx = spk_to_idx
         self.idx_to_spk = idx_to_spk
         self.num_spks = len(speakers)
         self.transform = transform
-        self.samples_per_speaker = samples_per_speaker
+
         self.uids = list(self.uid2feat.keys())
         self.utt2spk_dict = utt2spk_dict
 
     def __getitem__(self, index):
         uid = self.uids[index]
-        y = self.uid2feat[uid]
+        y = self.filer_loader(self.uid2feat[uid])
+
         feature = self.transform(y)
 
         spk = self.utt2spk[uid]

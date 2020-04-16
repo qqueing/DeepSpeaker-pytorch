@@ -1,9 +1,12 @@
 #!/bin/bash
 # Yangwenhao 2019-12-16 20:27
-train_cmd="Vector_Score/run.pl --mem 4G"
-logdir=Log/PLDA/SuResCNN10
 
-feat_dir=Data/checkpoint/SuResCNN10/soft/kaldi_feat
+
+model=SuResCNN10
+train_cmd="Vector_Score/run.pl --mem 4G"
+logdir=Log/PLDA/${model}
+
+feat_dir=Data/checkpoint/${model}/soft/kaldi_feat
 data_dir=Data/dataset/voxceleb1/kaldi_feat/voxceleb1_test
 
 trials=$data_dir/trials
@@ -26,8 +29,6 @@ $train_cmd $logdir/ivector-plda-scoring.log \
     "ark:ivector-subtract-global-mean $feat_dir/mean.vec scp:$feat_dir/test_xvector.scp ark:- | transform-vec $feat_dir/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
     "ark:ivector-subtract-global-mean $feat_dir/mean.vec scp:$feat_dir/test_xvector.scp ark:- | transform-vec $feat_dir/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
     "cat '$trials' | cut -d\  --fields=1,2 |" $feat_dir/scores_voxceleb1_test || exit 1;
-
-
 
 eer=`compute-eer <(Vector_Score/prepare_for_eer.py $trials $test_score) 2> /dev/null`
 mindcf1=`Vector_Score/compute_min_dcf.py --p-target 0.01 $test_score $trials 2> /dev/null`
