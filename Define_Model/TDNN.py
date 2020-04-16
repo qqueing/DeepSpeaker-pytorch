@@ -466,7 +466,7 @@ class TDNNLeaky(nn.Module):
 
 
 class ETDNN(nn.Module):
-    def __init__(self, num_spk, embedding_size=256,
+    def __init__(self, num_spk, embedding_size=256, batch_norm=True,
                  input_dim=80, dropout_p=0.0):
         super(ETDNN, self).__init__()
         self.num_spk = num_spk
@@ -474,26 +474,27 @@ class ETDNN(nn.Module):
         self.dropout_p = dropout_p
 
         self.frame1 = NewTDNN(input_dim=input_dim, output_dim=512, context_size=5, dilation=1,
-                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                              activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.affine2 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
-                               activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                               activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2,
-                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                              activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.affine4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
-                               activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                               activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.frame5 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3,
-                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                              activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.affine6 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
-                               activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                               activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.frame7 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=4,
-                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                              activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.frame8 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1,
-                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                              activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
         self.frame9 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1,
-                              activation='leakyrelu', batch_norm=False, dropout_p=dropout_p)
+                              activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
 
         self.segment11 = nn.Linear(3000, embedding_size)
         self.leakyrelu = nn.LeakyReLU()
+        self.batchnorm = nn.BatchNorm1d(embedding_size)
 
         self.classifier = nn.Linear(embedding_size, num_spk)
         self.drop = nn.Dropout(p=self.dropout_p)
@@ -537,6 +538,7 @@ class ETDNN(nn.Module):
         embeddings = self.segment11(x)
 
         x = self.leakyrelu(embeddings)
+        x = self.batchnorm(x)
         logits = self.classifier(x)
 
         return logits, embeddings
