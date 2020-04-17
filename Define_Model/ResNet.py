@@ -189,10 +189,21 @@ class SimpleResNet(nn.Module):
 # https://arxiv.org/abs/1806.03209
 class ExporingResNet(nn.Module):
 
-    def __init__(self, layers, block=BasicBlock, input_frames=300, num_classes=1000, embedding_size=128,
-                 zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
+    def __init__(self, resnet_size=34, block=BasicBlock,
+                 kernel_size=5, stride=1, padding=2,
+                 num_classes=1000, embedding_size=128,
+                 zero_init_residual=False, groups=1, width_per_group=64,
+                 replace_stride_with_dilation=None,
                  norm_layer=None, **kwargs):
         super(ExporingResNet, self).__init__()
+        resnet_type = {8: [1, 1, 1, 0],
+                       10: [1, 1, 1, 1],
+                       18: [2, 2, 2, 2],
+                       34: [3, 4, 6, 3],
+                       50: [3, 4, 6, 3],
+                       101: [3, 4, 23, 3]}
+
+        layers = resnet_type[resnet_size]
 
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -212,7 +223,8 @@ class ExporingResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=3, stride=1, padding=2, bias=False)
+
+        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=kernel_size, stride=stride, padding=padding, bias=False)
         self.bn1 = norm_layer(num_filter[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)

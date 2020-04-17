@@ -17,12 +17,16 @@ if [ $stage -le 0 ]; then
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
-      --feat-dim 64 \
       --nj 12 \
       --epochs 30 \
+      --milestones 14,20,25 \
+      --model ExResNet34 \
+      --resnet-size 34 \
+      --feat-dim 64 \
+      --stride 2 \
+      --kernel-size 5,5 \
       --batch-size 64 \
       --lr 0.1 \
-      --milestones 14,20,25 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
       --input-per-spks 240 \
@@ -40,7 +44,11 @@ if [ $stage -le 1 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
       --nj 12 \
+      --model ExResNet34 \
+      --resnet-size 34 \
       --feat-dim 64 \
+      --stride 2 \
+      --kernel-size 5,5 \
       --batch-size 64 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \

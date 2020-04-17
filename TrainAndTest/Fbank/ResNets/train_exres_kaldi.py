@@ -29,12 +29,11 @@ from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from Define_Model.LossFunction import CenterLoss
-from Define_Model.ResNet import ExporingResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
-from TrainAndTest.common_func import create_optimizer
+from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -66,8 +65,20 @@ parser.add_argument('--test-dir', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
+# Model options
+parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'ExResNet34', 'SuResCNN10'],
+                    help='path to voxceleb1 test dataset')
+parser.add_argument('--resnet-size', default=34, type=int,
+                    metavar='RES', help='The channels of convs layers)')
+parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
+                    help='kernel size of conv filters')
+parser.add_argument('--stride', default=2, type=int, metavar='ST',
+                    help='kernel size of conv filters')
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
+parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
+                    help='input batch size for testing (default: 64)')
+
 parser.add_argument('--check-path', default='Data/checkpoint/ExResNet34/soft/dnn_cmvn_80',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True,
@@ -226,8 +237,29 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers),
-                           embedding_size=args.embedding_size)
+    # instantiate model and initialize weights
+    kernel_size = args.kernel_size.split(',')
+    kernel_size = [int(x) for x in kernel_size]
+    padding = [int((x - 1) / 2) for x in kernel_size]
+
+    kernel_size = tuple(kernel_size)
+    padding = tuple(padding)
+
+    model_kwargs = {'input_dim': args.feat_dim,
+                    'kernel_size': kernel_size,
+                    'stride': args.stride,
+                    'padding': padding,
+                    'resnet_size': args.resnet_size,
+                    'embedding_size': args.embedding_size,
+                    'num_classes': args.num_classes,
+                    'dropout_p': args.dropout_p}
+
+    print('Model options: {}'.format(model_kwargs))
+
+    model = create_model(args.model, **model_kwargs)
+
+    # model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers),
+    #                        embedding_size=args.embedding_size)
 
     if args.cuda:
         model.cuda()
