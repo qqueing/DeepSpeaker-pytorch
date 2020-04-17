@@ -23,7 +23,7 @@ if [ $stage -le 0 ]; then
       --model ExResNet34 \
       --resnet-size 34 \
       --feat-dim 64 \
-      --stride 1 \
+      --stride 2 \
       --kernel-size 5,5 \
       --batch-size 64 \
       --lr 0.1 \
