@@ -289,7 +289,7 @@ class ExporingResNet(nn.Module):
         x = self.bn1(x)
         x = self.relu(x)
         # x = self.maxpool(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
