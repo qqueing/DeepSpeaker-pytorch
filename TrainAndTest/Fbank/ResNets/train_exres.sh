@@ -29,7 +29,7 @@ if [ $stage -le 0 ]; then
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
-      --input-per-spks 224 \
+      --input-per-spks 30 \
       --num-valid 2 \
       --loss-type ${loss}
   done
