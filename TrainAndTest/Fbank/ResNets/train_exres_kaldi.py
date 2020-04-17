@@ -251,7 +251,7 @@ def main():
                     'padding': padding,
                     'resnet_size': args.resnet_size,
                     'embedding_size': args.embedding_size,
-                    'num_classes': args.num_classes,
+                    'num_classes': len(train_dir.speakers),
                     'dropout_p': args.dropout_p}
 
     print('Model options: {}'.format(model_kwargs))
