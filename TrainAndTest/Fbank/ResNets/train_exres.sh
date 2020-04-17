@@ -23,13 +23,14 @@ if [ $stage -le 0 ]; then
       --model ExResNet34 \
       --resnet-size 34 \
       --feat-dim 64 \
-      --stride 2 \
+      --stride 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
       --input-per-spks 30 \
+      --veri-pairs 1280 \
       --num-valid 2 \
       --loss-type ${loss}
   done
