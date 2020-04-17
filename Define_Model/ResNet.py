@@ -228,11 +228,11 @@ class ExporingResNet(nn.Module):
         time_dim = 8
         self.avgpool = nn.AdaptiveAvgPool2d((1, time_dim))
         # 300 is the length of features
-        # self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
-        self.fc1 = nn.Sequential(
-            nn.Linear(num_filter[3] * time_dim, embedding_size),
-            nn.BatchNorm1d(embedding_size)
-        )
+        self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
+        # self.fc1 = nn.Sequential(
+        #     nn.Linear(num_filter[3] * time_dim, embedding_size),
+        #     nn.BatchNorm1d(embedding_size)
+        # )
         self.alpha = 12
         self.classifier = nn.Linear(embedding_size, num_classes)
 
