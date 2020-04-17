@@ -21,7 +21,7 @@ if [ $stage -le 0 ]; then
       --nj 12 \
       --epochs 30 \
       --batch-size 64 \
-      --lr 0.1 \
+      --lr 0.01 \
       --milestones 14,20,25 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
