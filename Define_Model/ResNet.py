@@ -298,13 +298,15 @@ class ExporingResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        # x = self.maxpool(x)
+        x = self.maxpool(x)
+
         # print(x.shape)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
         # print(x.shape)
+
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
