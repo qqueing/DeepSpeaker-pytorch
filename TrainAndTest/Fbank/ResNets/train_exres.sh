@@ -15,8 +15,8 @@ if [ $stage -le 0 ]; then
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
       --nj 12 \
       --epochs 30 \
       --milestones 14,20,25 \
