@@ -34,7 +34,7 @@ fi
 if [ $stage -le 1 ]; then
   for loss in amsoft asoft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-    python TrainAndTest/Spectrogram/train_resnet20_kaldi.py \
+    python -W ignore TrainAndTest/Spectrogram/train_resnet20_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257 \
       --embedding-size 128 \

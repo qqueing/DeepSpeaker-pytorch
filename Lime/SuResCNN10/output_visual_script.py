@@ -76,7 +76,7 @@ cValue_1 = ['#15b01a', '#ff796c', '#7e1e9c', '#ff81c0', '#96f97b', '#e50000', '#
             '#3d1c02', '#5d06e9', '#6a79f7', '#ffb7ce', '#343837', '#0a481e', '#e17701', '#696112', '#8b2e16',
             '#6a6e09', '#ff9408', '#fe7b7c', '#12e193', '#b00149', '#887191', '#f7879a', '#fe019a', '#030aa7',
             '#be6400', '#9a0200', '#fd411e', '#cdc50a']
-marker = ['.', 'x']
+marker = ['.', '*']
 
 def main():
     # conv1s = np.array([]).reshape((0, 64, 5, 5))
@@ -158,62 +158,62 @@ def main():
         np.save(args.extract_path + '/input_grads.npy', input_grads)
 
     # plotting filters distributions
-    fig = plt.figure(figsize=(10, 10))
-    plt.title('Convergence of 16 Filters')
-    # pdb.set_trace()
-
-    max_x = max(np.max(conv1s_means[0][1]), np.max(conv1s_means[1][1]))
-    min_x = min(np.min(conv1s_means[0][1]), np.min(conv1s_means[1][1]))
-    max_y = max(np.max(conv1s_std[0][1]), np.max(conv1s_std[1][1]))
-    min_y = min(np.min(conv1s_std[0][1]), np.min(conv1s_std[1][1]))
-
-    plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
-    plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
-    plt.xlabel('Means of Abs')
-    plt.ylabel('Std')
+    # fig = plt.figure(figsize=(10, 10))
+    # plt.title('Convergence of 16 Filters')
+    # # pdb.set_trace()
+    #
+    # max_x = max(np.max(conv1s_means[0][1]), np.max(conv1s_means[1][1]))
+    # min_x = min(np.min(conv1s_means[0][1]), np.min(conv1s_means[1][1]))
+    # max_y = max(np.max(conv1s_std[0][1]), np.max(conv1s_std[1][1]))
+    # min_y = min(np.min(conv1s_std[0][1]), np.min(conv1s_std[1][1]))
+    #
+    # plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
+    # plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
+    # plt.xlabel('Means of Abs')
+    # plt.ylabel('Std')
 
     # fig, ax = plt.subplots()
-    means_shape = conv1s_means.shape  # 2,21,16
-    set_dots = []
-    text_e = plt.text(max_x, max_y, 'Epoch 0')
-
-    for i in range(means_shape[0]):  # aug, kaldi
-        dots = []
-        for j in range(means_shape[2]):
-            dot_x = conv1s_means[i][0][j]
-            dot_y = conv1s_std[i][0][i]
-
-            dot, = plt.plot(dot_x, dot_y, color=cValue_1[j], marker=marker[i])
-            text_p = plt.text(dot_x, dot_y, '%d' % j)
-            dots.append([dot, text_p])
-        set_dots.append(dots)
-
-    plt.legend([set_dots[0][0][0], set_dots[1][0][0]], ['aug', 'kaldi'], loc='lower right', scatterpoints=1)
-
-    def gen_dot():
-        for i in range(means_shape[1]):
-            text_e.set_text('Epoch %2s' % str(i))
-            newdot = [conv1s_means[:, i], conv1s_std[:, i]]
-            yield newdot
-
-    def update_dot(newd):
-        # pdb.set_trace()
-        for i in range(means_shape[0]):
-            dots = set_dots[i]
-            for j in range(means_shape[2]):
-                dot, text_p = dots[j]
-
-                dot_x = newd[0][i][j]
-                dot_y = newd[1][i][j]
-
-                dot.set_data(dot_x, dot_y)
-                text_p.set_position((dot_x, dot_y))
-
-        return set_dots
-
-    ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
-    ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=2)
-    print('Saving %s' % args.extract_path + "/conv1s.gif")
+    # means_shape = conv1s_means.shape  # 2,21,16
+    # set_dots = []
+    # text_e = plt.text(max_x, max_y, 'Epoch 0')
+    #
+    # for i in range(means_shape[0]):  # aug, kaldi
+    #     dots = []
+    #     for j in range(means_shape[2]):
+    #         dot_x = conv1s_means[i][0][j]
+    #         dot_y = conv1s_std[i][0][i]
+    #
+    #         dot, = plt.plot(dot_x, dot_y, color=cValue_1[j], marker=marker[i])
+    #         text_p = plt.text(dot_x, dot_y, '%d' % j)
+    #         dots.append([dot, text_p])
+    #     set_dots.append(dots)
+    #
+    # plt.legend([set_dots[0][0][0], set_dots[1][0][0]], ['aug', 'kaldi'], loc='lower right', scatterpoints=1)
+    #
+    # def gen_dot():
+    #     for i in range(means_shape[1]):
+    #         text_e.set_text('Epoch %2s' % str(i))
+    #         newdot = [conv1s_means[:, i], conv1s_std[:, i]]
+    #         yield newdot
+    #
+    # def update_dot(newd):
+    #     # pdb.set_trace()
+    #     for i in range(means_shape[0]):
+    #         dots = set_dots[i]
+    #         for j in range(means_shape[2]):
+    #             dot, text_p = dots[j]
+    #
+    #             dot_x = newd[0][i][j]
+    #             dot_y = newd[1][i][j]
+    #
+    #             dot.set_data(dot_x, dot_y)
+    #             text_p.set_position((dot_x, dot_y))
+    #
+    #     return set_dots
+    #
+    # ani = animation.FuncAnimation(fig, update_dot, frames=gen_dot, interval=800)
+    # ani.save(args.extract_path + "/conv1s.gif", writer='pillow', fps=2)
+    # print('Saving %s' % args.extract_path + "/conv1s.gif")
 
     fig = plt.figure(figsize=(10, 8))
     plt.title('Filting over 8000Hz')
@@ -228,7 +228,7 @@ def main():
     max_y = np.max(y[0][0][0] / y[0][0][0].sum())
     min_y = np.min(y)
     plt.xlim(min_x - 0.15 * np.abs(max_x), max_x + 0.15 * np.abs(max_x))
-    plt.ylim(min_y - 0.15 * np.abs(max_y), max_y + 0.15 * np.abs(max_y))
+    plt.ylim(min_y, max_y + 0.15 * np.abs(max_y))
     # pdb.set_trace()
     # print(y.shape)
     text_e = plt.text(min_x, max_y, 'Epoch 0')
@@ -238,7 +238,9 @@ def main():
     for j in range(y_shape[0]):  # aug and kaldi
         dots = []
         for h in range(y_shape[2]):  # train and valid
-            dot, = plt.plot(x, y[j][0][h] / y[j][0][h].sum(), marker=marker[j], color=cValue_1[j + h * 4])
+            # dot, = plt.plot(x, y[j][0][h] / y[j][0][h].sum(), marker=marker[j], color=cValue_1[j + h * 4])
+            # dot, = plt.plot(x, y[j][0][h] / y[j][0][h].sum(), marker=marker[j], alpha=0.8)
+            dot, = plt.plot(x, y[j][0][h] / y[j][0][h].sum(), alpha=0.7)
             dots.append(dot)
 
         set_dots.append(dots)

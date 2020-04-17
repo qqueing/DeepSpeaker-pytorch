@@ -7,8 +7,8 @@ if [ $stage -le 0 ]; then
     python TrainAndTest/Spectrogram/train_resnet.py \
       --model ResNet \
       --resnet-size 18 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257 \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257 \
       --embedding-size 512 \
       --batch-size 128 \
       --test-batch-size 32 \

@@ -57,3 +57,6 @@ sgd lr=0.05, epoch=[15, 24, 32], dropout=0.0, embedding_dim=128
         
         Voxceleb 1
         Voxceleb 1 Augmented
+
+###2020.04.06
+##### train resnet with greater filter kernels

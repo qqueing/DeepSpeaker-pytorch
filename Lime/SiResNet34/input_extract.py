@@ -5,31 +5,22 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: input_extract.py
+@File: input_compare.py
 @Time: 2020/3/25 5:30 PM
 @Overview:
 """
 import argparse
+import json
 import os
-import pdb
+import pathlib
 import pickle
 import random
-import torch
 
-import numpy as np
-import pathlib
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
 from kaldi_io import read_mat
-
-from Process_Data import constants as c
-from matplotlib import animation
 from scipy import interpolate
-from torch import nn
-import torchvision.transforms as transforms
-import json
-
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset
-from Process_Data.audio_processing import concateinputfromMFB, to2tensor
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options

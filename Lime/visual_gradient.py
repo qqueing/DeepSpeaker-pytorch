@@ -11,26 +11,13 @@
 """
 import argparse
 import os
-import pdb
+import pathlib
 import pickle
 import random
-import torch
 
-import numpy as np
-import pathlib
 import matplotlib.pyplot as plt
-from kaldi_io import read_mat
-
-from Process_Data import constants as c
-from matplotlib import animation
+import numpy as np
 from scipy import interpolate
-from torch import nn
-import torchvision.transforms as transforms
-import json
-from Lime import cValue_1, marker
-
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset
-from Process_Data.audio_processing import concateinputfromMFB, to2tensor
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
@@ -65,7 +52,7 @@ def main():
         valid_lst = list(dir_path.glob('*valid*bin'))
         test_lst = list(dir_path.glob('*test*bin'))
 
-        train_data = np.zeros(2, 161) # [data/grad]
+        train_data = np.zeros((2, 161))  # [data/grad]
         num_utt = 0
         for t in train_lst:
             p = str(t)
@@ -77,7 +64,7 @@ def main():
                     num_utt += 1
         train_data = train_data / num_utt
 
-        valid_data = np.zeros(2, 161)  # [data/grad]
+        valid_data = np.zeros((2, 161))  # [data/grad]
         num_utt = 0
         for t in valid_lst:
             p = str(t)
@@ -89,7 +76,7 @@ def main():
                     num_utt += 1
         valid_data = valid_data / num_utt
 
-        test_data = np.zeros(2, 2, 161)  # [data/grad, utt_a, utt_b]
+        test_data = np.zeros((2, 2, 161))  # [data/grad, utt_a, utt_b]
         num_utt = 0
         for t in test_lst:
             p = str(t)
@@ -119,11 +106,6 @@ def main():
     # all_data [5, 2, 120, 161]
     # plotting filters distributions
 
-    plt.figure(figsize=(10, 8))
-    plt.title('Data distributions', fontsize=25)
-    plt.xlabel('Frequency', fontsize=18)
-    plt.ylabel('Log Power Energy (CMVN)', fontsize=18)
-
     # train_data [numofutt, feats[N, 161]]
     train_set_input = train_data[0]
     valid_set_input = valid_data[0]
@@ -137,16 +119,46 @@ def main():
 
     x = np.arange(161) * 8000 / 161  # [0-8000]
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
+    plt.rc('font', family='Times New Roman')
 
+    plt.figure(figsize=(8, 6))
+    plt.title('Gradient Distributions', fontsize=25)
+    plt.xlabel('Frequency (Hz)', fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.ylabel('Weight', fontsize=18)
+    plt.yticks(fontsize=16)
 
-    y1 = y[0] # original data
-    y2 = np.mean(y[1:], axis=0) # augmented
+    # m = np.arange(0, 2840)
+    # m = 700 * (10 ** (m / 2595.0) - 1)
+    # n = np.array([m[i] - m[i - 1] for i in range(1, len(m) - 1)])
+    # n = 1/n
+    #
+    # f = interpolate.interp1d(m[1:-1], n)
+    # xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), 161)
+    # ynew = f(xnew)
+    # plt.plot(xnew, ynew/ynew.sum())
 
-    y_shape = y.shape  # 5, 161
-    # 插值平滑 ？？？
-    for s in train_set_grad,valid_set_grad,test_a_set_grad,test_b_set_grad :
+    for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
+        # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), 500)
+        xnew = np.arange(np.min(x), np.max(x), 161)
+        ynew = f(xnew)
+        plt.plot(xnew, ynew / ynew.sum())
+
+    # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
+    plt.legend(['Train', 'Test'], loc='upper right', fontsize=18)
+    plt.savefig(args.extract_path + "/inputs.png")
+    plt.show()
+
+    plt.figure(figsize=(8, 6))
+    plt.title('Data distributions', fontsize=25)
+    plt.xlabel('Frequency (Hz)', fontsize=18)
+    plt.ylabel('Log Power Energy (CMVN)', fontsize=18)
+    # 插值平滑 ？？？
+    for s in train_set_input, valid_set_input, test_a_set_input, test_b_set_input:
+        # for s in test_a_set_grad, test_b_set_grad:
+        f = interpolate.interp1d(x, s)
+        xnew = np.arange(np.min(x), np.max(x), 50)
         ynew = f(xnew)
         plt.plot(xnew, ynew)
 

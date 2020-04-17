@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 for loss in asoft soft ; do
+  echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+
   python TrainAndTest/test_sitw.py \
     --nj 12 \
     --check-path Data/checkpoint/LoResNet10/spect/${loss} \
@@ -16,3 +18,4 @@ done
 #    --loss-type amsoft \
 #    --lr 0.01 \
 #    --epochs 10
+
