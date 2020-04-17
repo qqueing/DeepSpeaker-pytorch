@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=2
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -14,7 +14,7 @@ if [ $stage -le 0 ]; then
       --feat-type fbank
   done
 fi
-stage=100
+
 if [ $stage -le 1 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -40,8 +40,7 @@ if [ $stage -le 2 ]; then
       --filters 40
   done
 fi
-
-
+stage=100
 if [ $stage -le 2 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
