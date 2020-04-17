@@ -30,7 +30,7 @@ if [ $stage -le 1 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pymfcc40/dev_kaldi \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pymfcc40/test_kaldi \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth
+      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --epochs 20 \
       --milestones 10,15  \
       --feat-dim 40 \
