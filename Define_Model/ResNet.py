@@ -225,7 +225,7 @@ class ExporingResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
         # [64, 128, 8, 37]
-        time_dim = int(np.ceil(input_frames / 8))
+        time_dim = 16
         self.avgpool = nn.AdaptiveAvgPool2d((1, time_dim))
         # 300 is the length of features
         # self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
