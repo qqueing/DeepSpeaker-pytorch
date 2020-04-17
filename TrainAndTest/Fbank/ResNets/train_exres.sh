@@ -52,7 +52,7 @@ if [ $stage -le 1 ]; then
       --batch-size 64 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/soft/checkpoint_30.pth \
-      --input-per-spks 192 \
+      --input-per-spks 30 \
       --loss-type ${loss} \
       --lr 0.01 \
       --loss-ratio 0.01 \
