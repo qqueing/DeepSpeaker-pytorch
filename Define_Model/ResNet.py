@@ -235,7 +235,7 @@ class ExporingResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
         # [64, 128, 8, 37]
-        freq_dim = 1
+        freq_dim = 4
         time_dim = 1
         self.avgpool = nn.AdaptiveAvgPool2d((freq_dim, time_dim))
         # 300 is the length of features
@@ -312,7 +312,7 @@ class ExporingResNet(nn.Module):
         x = self.l2_norm(x)
         feat = x * self.alpha
 
-        x = self.classifier(x)
+        x = self.classifier(feat)
 
         return x, feat
 
