@@ -33,7 +33,7 @@ from Define_Model.ResNet import ExporingResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB, tonormal
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -184,12 +184,14 @@ if args.mfb:
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
-        totensor()
+        totensor(),
+        tonormal()
     ])
     transform_T = transforms.Compose([
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
-        totensor()
+        totensor(),
+        tonormal()
     ])
     file_loader = read_mat
 
@@ -363,12 +365,12 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description(
-                'Train Epoch: {:3d} [{:8d}/{:8d} ({:3.0f}%)] Loss: {:.6f} Batch Accuracy: {:.4f}%'.format(
+                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.4f} Batch Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100. * batch_idx / len(train_loader),
-                    loss.item(),
+                    total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
 
     # options for vox1
