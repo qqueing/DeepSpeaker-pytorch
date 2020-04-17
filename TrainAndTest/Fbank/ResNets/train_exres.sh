@@ -24,7 +24,7 @@ if [ $stage -le 0 ]; then
       --resnet-size 34 \
       --feat-dim 64 \
       --stride 1 \
-      --kernel-size 5,5 \
+      --kernel-size 3,3 \
       --batch-size 64 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
