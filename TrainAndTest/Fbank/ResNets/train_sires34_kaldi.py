@@ -11,41 +11,27 @@
 """
 # from __future__ import print_function
 import argparse
-import pathlib
-import pdb
+import os
 import random
 import time
-
-from tensorboardX import SummaryWriter
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchvision.transforms as transforms
-
-from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
-import os
+import warnings
 
 import numpy as np
-from torch.optim.lr_scheduler import StepLR, MultiStepLR
+import torch
+import torch.backends.cudnn as cudnn
+import torch.nn as nn
+import torchvision.transforms as transforms
+from tensorboardX import SummaryWriter
+from torch.autograd import Variable
+from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from Define_Model.ResNet import SimpleResNet
-from Define_Model.model import ResSpeakerModel, ResCNNSpeaker
-from Process_Data.VoxcelebTestset import VoxcelebTestset
-from Process_Data.voxceleb2_wav_reader import voxceleb2_list_reader
+from Define_Model.model import PairwiseDistance
+from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
-
-from Process_Data.DeepSpeakerDataset_dynamic import ValidationDataset
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
-from Process_Data.voxceleb_wav_reader import wav_list_reader, wav_duration_reader, dic_dataset
-
-from Define_Model.model import PairwiseDistance
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_MFB, read_audio, \
-    mk_MFB, concateinputfromMFB, PadCollate, varLengthFeat
-import warnings
 
 warnings.filterwarnings("ignore")
 # Version conflict
@@ -80,10 +66,10 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34_test/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34/soft/kaldi/checkpoint_1.pth',
+                    default='Data/checkpoint/SiResNet34_test/soft/kaldi/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
