@@ -241,7 +241,7 @@ class ExporingResNet(nn.Module):
         # 300 is the length of features
         # self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
         self.fc1 = nn.Sequential(
-            nn.Linear(num_filter[3] * time_dim, embedding_size),
+            nn.Linear(num_filter[3] * freq_dim * time_dim, embedding_size),
             nn.BatchNorm1d(embedding_size)
         )
         self.alpha = 12
