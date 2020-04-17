@@ -212,7 +212,7 @@ class ExporingResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=5, stride=1, padding=2, bias=False)
         self.bn1 = norm_layer(num_filter[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
@@ -225,7 +225,7 @@ class ExporingResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
         # [64, 128, 8, 37]
-        time_dim = 16
+        time_dim = 8
         self.avgpool = nn.AdaptiveAvgPool2d((1, time_dim))
         # 300 is the length of features
         # self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
