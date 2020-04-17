@@ -67,7 +67,7 @@ class SimpleResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
 
-        num_filter = [16, 32, 64, 128]
+        # num_filter = [16, 32, 64, 128]
 
         self.layer1 = self._make_layer(block, num_filter[0], layers[0])
         self.layer2 = self._make_layer(block, num_filter[1], layers[1], stride=2)
@@ -212,12 +212,10 @@ class ExporingResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(1, num_filter[0], kernel_size=5, stride=1, padding=1, bias=False)
         self.bn1 = norm_layer(num_filter[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
-
-        num_filter = [16, 32, 64, 128]
 
         self.layer1 = self._make_layer(block, num_filter[0], layers[0])
         self.layer2 = self._make_layer(block, num_filter[1], layers[1], stride=2)
@@ -238,8 +236,8 @@ class ExporingResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                # nn.init.normal(m.weight, mean=0., std=1.)
+                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.normal(m.weight, mean=0., std=1.)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant(m.weight, 1)
                 nn.init.constant(m.bias, 0)
