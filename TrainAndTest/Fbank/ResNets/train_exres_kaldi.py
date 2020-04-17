@@ -253,8 +253,8 @@ def main():
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
