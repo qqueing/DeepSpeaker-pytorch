@@ -228,15 +228,19 @@ class ExporingResNet(nn.Module):
         time_dim = int(np.ceil(input_frames / 8))
         self.avgpool = nn.AdaptiveAvgPool2d((1, time_dim))
         # 300 is the length of features
-        self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
-
+        # self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
+        self.fc1 = nn.Sequential(
+            nn.Linear(num_filter[3] * time_dim, embedding_size),
+            nn.ReLU(),
+            nn.BatchNorm1d(embedding_size)
+        )
         self.alpha = 12
         self.classifier = nn.Linear(embedding_size, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                # nn.init.normal(m.weight, mean=0., std=1.)
+                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.normal(m.weight, mean=0., std=1.)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant(m.weight, 1)
                 nn.init.constant(m.bias, 0)
@@ -284,7 +288,7 @@ class ExporingResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        # x = self.maxpool(x)
         # print(x.shape)
         x = self.layer1(x)
         x = self.layer2(x)
