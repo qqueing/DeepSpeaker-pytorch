@@ -33,7 +33,7 @@ from Define_Model.ResNet import ExporingResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB, tonormal
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -185,13 +185,13 @@ if args.mfb:
         concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
         totensor(),
-        # tonormal()
+        tonormal()
     ])
     transform_T = transforms.Compose([
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
         totensor(),
-        # tonormal()
+        tonormal()
     ])
     file_loader = read_mat
 
