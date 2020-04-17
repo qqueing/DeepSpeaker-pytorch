@@ -23,7 +23,7 @@ if [ $stage -le 0 ]; then
       --model ExResNet34 \
       --resnet-size 34 \
       --feat-dim 64 \
-      --stride 2 \
+      --stride 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
       --lr 0.1 \
@@ -47,7 +47,7 @@ if [ $stage -le 1 ]; then
       --model ExResNet34 \
       --resnet-size 34 \
       --feat-dim 64 \
-      --stride 2 \
+      --stride 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
       --check-path Data/checkpoint/${model}/spect/${loss} \
