@@ -76,7 +76,7 @@ parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'a
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--cos-sim', action='store_true', default=True, help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES', help='Dimensionality of the embedding')
+parser.add_argument('--embedding-size', type=int, metavar='ES', help='Dimensionality of the embedding')
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
                     help='Dimensionality of the embedding')
 
