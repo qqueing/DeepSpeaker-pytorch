@@ -44,10 +44,12 @@ parser.add_argument('--feat-type', type=str,
                     default='fbank', choices=['fbank', 'spectrogram', 'mfcc'],
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--filter-type', type=str,
-                    default='mel', choices=['mel', 'linear', 'dnn'],
+                    default='mel', choices=['mel', 'linear', 'dnn', 'dnn.timit'],
                     help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--filters', type=int, default=24,
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--numcep', type=int, default=24,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--windowsize', type=float, default=0.02, choices=[0.02, 0.025],
                     help='number of jobs to make feats (default: 10)')
@@ -101,14 +103,14 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                         wav_f.write(stdout)
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=temp_wav, filtertype=args.filter_type, use_energy=True,
-                                                    nfilt=args.filters, normalize=args.normalize,
+                                                    nfft=args.nfft, nfilt=args.filters, normalize=args.normalize,
                                                     duration=True)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=temp_wav, windowsize=args.windowsize,
                                                     stride=args.stride, duration=True, nfft=args.nfft,
                                                     normalize=args.normalize)
                     elif args.feat_type == 'mfcc':
-                        feat, duration = Make_MFCC(filename=temp_wav, numcep=args.filters, nfilt=args.filters,
+                        feat, duration = Make_MFCC(filename=temp_wav, numcep=args.numcep, nfilt=args.filters,
                                                    normalize=args.normalize, duration=True, use_energy=True)
 
                     os.remove(temp_wav)
@@ -116,13 +118,14 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                 else:
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=pair[1], filtertype=args.filter_type, use_energy=True,
+                                                    nfft=args.nfft,
                                                     nfilt=args.filters, duration=True, normalize=args.normalize)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=pair[1], windowsize=args.windowsize,
                                                     stride=args.stride, duration=True, nfft=args.nfft,
                                                     normalize=args.normalize)
                     elif args.feat_type == 'mfcc':
-                        feat, duration = Make_MFCC(filename=pair[1], numcep=args.filters, nfilt=args.filters,
+                        feat, duration = Make_MFCC(filename=pair[1], numcep=args.numcep, nfilt=args.filters,
                                                    normalize=args.normalize, duration=True, use_energy=True)
                     # feat = np.load(pair[1]).astype(np.float32)
 

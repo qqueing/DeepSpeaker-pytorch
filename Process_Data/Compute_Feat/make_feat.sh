@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=11
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -121,5 +121,32 @@ if [ $stage -le 8 ]; then
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
       --out-set ${name}_fb64 \
       --feat-type fbank
+  done
+fi
+
+stage=9
+if [ $stage -le 9 ]; then
+  for name in train test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+      --out-set ${name}_fb64_20 \
+      --filter-type mel \
+      --feat-type fbank \
+      --nfft 320 \
+      --filters 64
+  done
+fi
+
+if [ $stage -le 10 ]; then
+  for name in train test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+      --out-set ${name}_fb64_dnn_20 \
+      --filter-type dnn.timit \
+      --feat-type fbank \
+      --nfft 320 \
+      --filters 64
   done
 fi

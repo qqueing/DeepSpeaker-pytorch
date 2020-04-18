@@ -10,7 +10,7 @@ import soundfile as sf
 import torch
 import torch.nn.utils.rnn as rnn_utils
 from pydub import AudioSegment
-from python_speech_features import fbank, delta, sigproc, mfcc
+from python_speech_features import fbank, delta, sigproc
 from scipy import signal
 from scipy.io import wavfile
 from speechpy.feature import mfe
@@ -18,7 +18,7 @@ from speechpy.processing import cmvn, cmvnw
 
 from Process_Data import constants as c
 from Process_Data.Compute_Feat.compute_vad import ComputeVadEnergy
-from Process_Data.xfcc.common import local_fbank
+from Process_Data.xfcc.common import local_fbank, local_mfcc
 
 
 def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE, use_logscale=c.USE_LOGSCALE):
@@ -244,6 +244,8 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
 def Make_Fbank(filename,
                # sample_rate=c.SAMPLE_RATE,
                filtertype='mel',
+               winlen=0.025,
+               nfft=512,
                use_delta=c.USE_DELTA,
                use_scale=c.USE_SCALE,
                nfilt=c.FILTER_BANK,
@@ -263,7 +265,8 @@ def Make_Fbank(filename,
     filter_banks, energies = local_fbank(audio,
                                          samplerate=sample_rate,
                                          nfilt=nfilt,
-                                         winlen=0.025,
+                                         nfft=nfft,
+                                         winlen=winlen,
                                          filtertype=filtertype,
                                          winfunc=np.hamming)
 
@@ -298,9 +301,11 @@ def Make_Fbank(filename,
     return frames_features
 
 
-def Make_MFCC(filename, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE,
+def Make_MFCC(filename,
+              filtertype='mel', winlen=0.025, winstep=0.01,
+              use_delta=c.USE_DELTA, use_scale=c.USE_SCALE,
               nfilt=c.FILTER_BANK, numcep=c.FILTER_BANK,
-              use_energy=c.USE_ENERGY,
+              use_energy=c.USE_ENERGY, lowfreq=0, nfft=512,
               normalize=c.NORMALIZE,
               duration=False):
     if not os.path.exists(filename):
@@ -310,13 +315,13 @@ def Make_MFCC(filename, use_delta=c.USE_DELTA, use_scale=c.USE_SCALE,
     audio, sample_rate = sf.read(filename, dtype='int16')
     # audio, sample_rate = librosa.load(filename, sr=None)
     # audio = audio.flatten()
-    feats = mfcc(audio, samplerate=sample_rate,
-                 nfilt=nfilt, winlen=0.025,
-                 winstep=0.01, numcep=numcep,
-                 nfft=512, lowfreq=0,
-                 highfreq=None, preemph=0.97,
-                 ceplifter=0, appendEnergy=use_energy,
-                 winfunc=np.hamming)
+    feats = local_mfcc(audio, samplerate=sample_rate,
+                       nfilt=nfilt, winlen=winlen,
+                       winstep=winstep, numcep=numcep,
+                       nfft=nfft, lowfreq=lowfreq,
+                       highfreq=None, preemph=0.97,
+                       ceplifter=0, appendEnergy=use_energy,
+                       winfunc=np.hamming, filtertype=filtertype)
 
     if use_delta:
         delta_1 = delta(feats, N=1)
