@@ -10,12 +10,14 @@
 @Overview:
 """
 import numpy as np
-import Process_Data.constants as c
-from scipy import interpolate
 # from speechpy.functions import frequency_to_mel, mel_to_frequency, triangle
 # import soundfile as sf
 # import matplotlib.pyplot as plt
-from python_speech_features import sigproc, hz2mel, mel2hz
+from python_speech_features import sigproc, hz2mel, mel2hz, lifter
+from scipy import interpolate
+from scipy.fft import dct
+
+import Process_Data.constants as c
 
 
 def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
@@ -48,16 +50,19 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
         bin = np.floor((nfft + 1) * linearpoints / samplerate)
 
     elif filtertype == 'dnn':
-        x = np.arange(161) * samplerate / 2 / 160
+        x = np.arange(0, 161) * samplerate / 2 / 160
         y = np.array(c.DNN_FILTER)
         f = interpolate.interp1d(x, y)
 
         x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
+        lowfreq_idx = np.where(x_new >= lowfreq)
         ynew = f(x_new)  # 计算插值结果
+        ynew[:lowfreq_idx[0]] = 0
         weight = ynew / np.sum(ynew)
 
         bin = []
-        bin.append(0)
+        bin.append(lowfreq_idx[0])
+
         for j in range(nfilt):
             num_wei = 0.
             for i in range(nfft // 2 + 1):
@@ -84,7 +89,7 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
 
 def local_fbank(signal, samplerate=16000, winlen=0.025, winstep=0.01,
                 nfilt=26, nfft=512, lowfreq=0, highfreq=None, preemph=0.97,
-                filtertype='mel', winfunc=lambda x: np.ones((x,))):
+                filtertype='mel', winfunc=lambda x: np.hamming((x,))):
     """Compute Mel-filterbank energy features from an audio signal.
 
     :param signal: the audio signal from which to compute features. Should be an N*1 array
@@ -114,6 +119,38 @@ def local_fbank(signal, samplerate=16000, winlen=0.025, winstep=0.01,
     # feat = np.log1p(feat)
 
     return feat, energy
+
+
+def local_mfcc(signal, samplerate=16000, winlen=0.025, winstep=0.01, numcep=13,
+               nfilt=26, nfft=512, lowfreq=0, highfreq=None, preemph=0.97,
+               ceplifter=22, filtertype='mel',
+               appendEnergy=True, winfunc=lambda x: np.hamming((x,))):
+    """Compute MFCC features from an audio signal.
+
+    :param signal: the audio signal from which to compute features. Should be an N*1 array
+    :param samplerate: the samplerate of the signal we are working with.
+    :param winlen: the length of the analysis window in seconds. Default is 0.025s (25 milliseconds)
+    :param winstep: the step between successive windows in seconds. Default is 0.01s (10 milliseconds)
+    :param numcep: the number of cepstrum to return, default 13
+    :param nfilt: the number of filters in the filterbank, default 26.
+    :param nfft: the FFT size. Default is 512.
+    :param lowfreq: lowest band edge of mel filters. In Hz, default is 0.
+    :param highfreq: highest band edge of mel filters. In Hz, default is samplerate/2
+    :param preemph: apply preemphasis filter with preemph as coefficient. 0 is no filter. Default is 0.97.
+    :param ceplifter: apply a lifter to final cepstral coefficients. 0 is no lifter. Default is 22.
+    :param appendEnergy: if this is true, the zeroth cepstral coefficient is replaced with the log of the total frame energy.
+    :param winfunc: the analysis window to apply to each frame. By default no window is applied. You can use numpy window functions here e.g. winfunc=numpy.hamming
+    :returns: A numpy array of size (NUMFRAMES by numcep) containing features. Each row holds 1 feature vector.
+    """
+    feat, energy = local_fbank(signal=signal, samplerate=samplerate, winlen=winlen,
+                               winstep=winstep, nfilt=nfilt, nfft=nfft,
+                               lowfreq=lowfreq, highfreq=highfreq, preemph=preemph,
+                               winfunc=winfunc, filtertype=filtertype)
+    feat = np.log(feat)
+    feat = dct(feat, type=2, axis=1, norm='ortho')[:, :numcep]
+    feat = lifter(feat, ceplifter)
+    if appendEnergy: feat[:, 0] = np.log(energy)  # replace first cepstral coefficient with log of frame energy
+    return feat
 
 # filters = get_filterbanks(nfilt=24, nfft=512, samplerate=16000, lowfreq=0, highfreq=None, filtertype='dnn')
 # plt.show()
