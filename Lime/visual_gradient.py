@@ -21,11 +21,11 @@ from scipy import interpolate
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Model options
-parser.add_argument('--extract-path', default='Lime/LoResNet10/center_dp0.00',
+parser.add_argument('--extract-path',
                     help='folder to output model checkpoints')
 # Training options
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
-                    help='Dimensionality of the embedding')
+parser.add_argument('--feat-dim', type=int, default=161, metavar='ES',
+                    help='Dimensionality of the features')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
 
@@ -52,7 +52,7 @@ def main():
         valid_lst = list(dir_path.glob('*valid*bin'))
         test_lst = list(dir_path.glob('*test*bin'))
 
-        train_data = np.zeros((2, 161))  # [data/grad]
+        train_data = np.zeros((2, args.feat_dim))  # [data/grad]
         num_utt = 0
         for t in train_lst:
             p = str(t)
@@ -64,7 +64,7 @@ def main():
                     num_utt += 1
         train_data = train_data / num_utt
 
-        valid_data = np.zeros((2, 161))  # [data/grad]
+        valid_data = np.zeros((2, args.feat_dim))  # [data/grad]
         num_utt = 0
         for t in valid_lst:
             p = str(t)
@@ -76,7 +76,7 @@ def main():
                     num_utt += 1
         valid_data = valid_data / num_utt
 
-        test_data = np.zeros((2, 2, 161))  # [data/grad, utt_a, utt_b]
+        test_data = np.zeros((2, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
         num_utt = 0
         for t in test_lst:
             p = str(t)
@@ -117,7 +117,7 @@ def main():
     test_a_set_grad = test_data[1][0]
     test_b_set_grad = test_data[1][1]
 
-    x = np.arange(161) * 8000 / 161  # [0-8000]
+    x = np.arange(args.feat_dim) * 8000 / args.feat_dim  # [0-8000]
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
     plt.rc('font', family='Times New Roman')
 
@@ -141,7 +141,7 @@ def main():
     for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), 161)
+        xnew = np.arange(np.min(x), np.max(x), args.feat_dim)
         ynew = f(xnew)
         plt.plot(xnew, ynew / ynew.sum())
 
