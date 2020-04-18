@@ -46,12 +46,12 @@ if [ $stage -le 2 ]; then
     --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc \
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc \
     --start-epochs 15 \
-    --check-path Data/checkpoint/LoResNet10/timit_spect/soft_fix \
+    --check-path Data/checkpoint/LoResNet10/timit_spect/soft_var \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --sample-utt 500 \
     --embedding-size 128 \
-    --extract-path Data/xvector/${model}/${dataset}/${feat}/${loss} \
+    --extract-path Data/gradient/${model}/${dataset}/${feat}/${loss}_var \
     --model ${model} \
     --channels 4,16,64 \
     --dropout-p 0.0 \
