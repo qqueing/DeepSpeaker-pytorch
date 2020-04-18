@@ -159,9 +159,10 @@ if [ $stage -le 10 ]; then
       --filter-type mel \
       --feat-type mfcc \
       --nfft 320 \
+      --lowfreq 20 \
       --windowsize 0.02 \
       --filters 30 \
-      --numcep 24
+      --numcep 30
 
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
@@ -170,9 +171,10 @@ if [ $stage -le 10 ]; then
       --filter-type dnn.timit \
       --feat-type mfcc \
       --nfft 320 \
+      --lowfreq 20 \
       --windowsize 0.02 \
       --filters 30 \
-      --numcep 24
+      --numcep 30
   done
 fi
 
