@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=10
+stage=9
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -40,7 +40,7 @@ if [ $stage -le 2 ]; then
       --filters 40
   done
 fi
-stage=100
+#stage=100
 if [ $stage -le 2 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -127,15 +127,15 @@ fi
 #stage=9
 if [ $stage -le 9 ]; then
   for name in train test ; do
-    python Process_Data/Compute_Feat/make_feat_kaldi.py \
-      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_fb40_20 \
-      --filter-type mel \
-      --feat-type fbank \
-      --nfft 320 \
-      --windowsize 0.02 \
-      --filters 40
+#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+#      --out-set ${name}_fb40_20 \
+#      --filter-type mel \
+#      --feat-type fbank \
+#      --nfft 320 \
+#      --windowsize 0.02 \
+#      --filters 40
 
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
@@ -146,10 +146,20 @@ if [ $stage -le 9 ]; then
       --nfft 320 \
       --windowsize 0.02 \
       --filters 40
+
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+      --out-set ${name}_fb24_dnn_20 \
+      --filter-type dnn.timit \
+      --feat-type fbank \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --filters 24
   done
 fi
 
-stage=10
+#stage=100
 if [ $stage -le 10 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -162,7 +172,7 @@ if [ $stage -le 10 ]; then
       --lowfreq 20 \
       --windowsize 0.02 \
       --filters 30 \
-      --numcep 30
+      --numcep 24
 
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
@@ -174,7 +184,7 @@ if [ $stage -le 10 ]; then
       --lowfreq 20 \
       --windowsize 0.02 \
       --filters 30 \
-      --numcep 30
+      --numcep 24
   done
 fi
 
