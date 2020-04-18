@@ -46,6 +46,7 @@ if [ $stage -le 2 ]; then
     --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc \
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc \
     --start-epochs 15 \
+    --check-path Data/checkpoint/LoResNet10/timit_spect/soft_fix \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --sample-utt 500 \
