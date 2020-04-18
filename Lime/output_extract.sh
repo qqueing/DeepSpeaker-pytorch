@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=2
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -33,4 +33,26 @@ if [ $stage -le 1 ]; then
     --sample-utt 500
 
 #  done
+fi
+
+if [ $stage -le 2 ]; then
+  model=LoResNet10
+  dataset=timit
+  feat=spect_161
+  loss=soft
+
+  python Lime/output_extract.py \
+    --model LoResNet10 \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc \
+    --start-epochs 15 \
+    --epochs 15 \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --sample-utt 500 \
+    --embedding-size 128 \
+    --extract-path Data/xvector/${model}/${dataset}/${feat}/${loss} \
+    --model ${model} \
+    --dropout-p 0.0 \
+    --epoch 20 \
+    --embedding-size 1024
 fi
