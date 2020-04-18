@@ -298,7 +298,7 @@ def main():
     milestones = args.milestones.split(',')
     milestones = [int(x) for x in milestones]
     milestones.sort()
-    print('Scheduler options: {}'.format(milestones))
+    # print('Scheduler options: {}'.format(milestones))
     scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
 
     if args.save_init:
@@ -329,8 +329,8 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        # train(train_loader, model, optimizer, ce, scheduler, epoch)
-        # test(test_loader, valid_loader, model, epoch)
+        train(train_loader, model, optimizer, ce, scheduler, epoch)
+        test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
         # break
