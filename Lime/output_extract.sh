@@ -55,6 +55,5 @@ if [ $stage -le 2 ]; then
     --model ${model} \
     --channels 4,16,64 \
     --dropout-p 0.0 \
-    --epoch 20 \
-    --embedding-size 1024
+    --epoch 20
 fi
