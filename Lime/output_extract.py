@@ -65,6 +65,8 @@ parser.add_argument('--extract-path', help='folder to output model grads, etc')
 # ALSTM  ASiResNet34  ExResNet34  LoResNet10  ResNet20  SiResNet34  SuResCNN10  TDNN
 parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiResNet34', 'SuResCNN10'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--channels', default='64,128,256', type=str,
+                    metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--start-epochs', type=int, default=36, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--epochs', type=int, default=36, metavar='E',
@@ -287,9 +289,14 @@ def main():
     print('Parsed options: {}'.format(vars(args)))
 
     # instantiate model and initialize weights
+    channels = args.channels.split(',')
+    channels = [int(x) for x in channels]
+
     model_kwargs = {'embedding_size': args.embedding_size,
                     'num_classes': len(class_to_idx),
+                    'channels': channels,
                     'dropout_p': args.dropout_p}
+
     print('Model options: {}'.format(model_kwargs))
 
     model = create_model(args.model, **model_kwargs)
