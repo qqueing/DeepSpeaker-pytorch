@@ -53,6 +53,7 @@ if [ $stage -le 2 ]; then
     --embedding-size 128 \
     --extract-path Data/xvector/${model}/${dataset}/${feat}/${loss} \
     --model ${model} \
+    --channels 4,16,64 \
     --dropout-p 0.0 \
     --epoch 20 \
     --embedding-size 1024
