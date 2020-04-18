@@ -124,7 +124,7 @@ if [ $stage -le 8 ]; then
   done
 fi
 
-stage=9
+#stage=9
 if [ $stage -le 9 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -152,3 +152,68 @@ if [ $stage -le 10 ]; then
       --filters 40
   done
 fi
+
+stage=11
+# libri
+if [ $stage -le 11 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
+      --out-set ${name}_spect_161 \
+      --filter-type mel \
+      --feat-type spectrogram \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --filters 40
+  done
+fi
+
+if [ $stage -le 12 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
+      --out-set ${name}_fb40_20 \
+      --filter-type mel \
+      --feat-type fbank \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --filters 40
+
+#     python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
+#      --out-set ${name}_fb40_dnn_20 \
+#      --filter-type dnn.timit \
+#      --feat-type fbank \
+#      --nfft 320 \
+#      --windowsize 0.02 \
+#      --filters 40
+  done
+fi
+
+if [ $stage -le 13 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
+      --out-set ${name}_fb24_20 \
+      --filter-type mel \
+      --feat-type fbank \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --filters 24
+
+#     python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
+#      --out-set ${name}_fb24_dnn_20 \
+#      --filter-type dnn.timit \
+#      --feat-type fbank \
+#      --nfft 320 \
+#      --windowsize 0.02 \
+#      --filters 24
+  done
+fi
+
