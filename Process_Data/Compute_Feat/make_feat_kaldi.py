@@ -104,7 +104,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=temp_wav, filtertype=args.filter_type, use_energy=True,
                                                     nfft=args.nfft, nfilt=args.filters, normalize=args.normalize,
-                                                    duration=True)
+                                                    duration=True, windowsize=args.windowsize)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=temp_wav, windowsize=args.windowsize,
                                                     stride=args.stride, duration=True, nfft=args.nfft,
@@ -118,7 +118,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                 else:
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=pair[1], filtertype=args.filter_type, use_energy=True,
-                                                    nfft=args.nfft,
+                                                    nfft=args.nfft, windowsize=args.windowsize,
                                                     nfilt=args.filters, duration=True, normalize=args.normalize)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=pair[1], windowsize=args.windowsize,

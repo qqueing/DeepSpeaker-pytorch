@@ -55,9 +55,14 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
         f = interpolate.interp1d(x, y)
 
         x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
-        lowfreq_idx = np.where(x_new >= lowfreq)
+        lowfreq_idx = np.where(x_new >= lowfreq)[0]
+        highfreq_idx = np.where(x_new <= highfreq)[0]
         ynew = f(x_new)  # 计算插值结果
-        ynew[:lowfreq_idx[0]] = 0
+
+        ynew[:int(lowfreq_idx[0])] = 0
+        if highfreq_idx[-1] < len(x_new) - 1:
+            ynew[int(highfreq[-1] + 1):] = 0
+
         weight = ynew / np.sum(ynew)
 
         bin = []
@@ -73,7 +78,39 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
                     bin.append(i)
                     break
 
-        bin.append(nfft // 2)
+        bin.append(highfreq_idx[-1])
+
+    elif filtertype == 'dnn.timit':
+        x = np.arange(0, 161) * samplerate / 2 / 160
+        y = np.array(c.TIMIT_FIlTER)
+        f = interpolate.interp1d(x, y)
+
+        x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
+        lowfreq_idx = np.where(x_new >= lowfreq)[0]
+        highfreq_idx = np.where(x_new <= highfreq)[0]
+        ynew = f(x_new)  # 计算插值结果
+
+        ynew[:int(lowfreq_idx[0])] = 0
+        if highfreq_idx[-1] < len(x_new) - 1:
+            ynew[int(highfreq[-1] + 1):] = 0
+
+        weight = ynew / np.sum(ynew)
+
+        bin = []
+        bin.append(lowfreq_idx[0])
+
+        for j in range(nfilt):
+            num_wei = 0.
+            for i in range(nfft // 2 + 1):
+                num_wei += weight[i]
+                if num_wei < (j + 1) / (nfilt + 2):
+                    continue
+                else:
+                    bin.append(i)
+                    break
+
+        bin.append(highfreq_idx[-1])
+
     else:
         raise ValueError
 
@@ -81,6 +118,7 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
     for j in range(0, nfilt):
         for i in range(int(bin[j]), int(bin[j + 1])):
             fbank[j, i] = (i - bin[j]) / (bin[j + 1] - bin[j])
+
         for i in range(int(bin[j + 1]), int(bin[j + 2])):
             fbank[j, i] = (bin[j + 2] - i) / (bin[j + 2] - bin[j + 1])
 

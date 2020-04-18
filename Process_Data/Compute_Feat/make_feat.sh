@@ -134,6 +134,7 @@ if [ $stage -le 9 ]; then
       --filter-type mel \
       --feat-type fbank \
       --nfft 320 \
+      --windowsize 0.02 \
       --filters 64
   done
 fi
@@ -147,6 +148,7 @@ if [ $stage -le 10 ]; then
       --filter-type dnn.timit \
       --feat-type fbank \
       --nfft 320 \
+      --windowsize 0.02 \
       --filters 64
   done
 fi
