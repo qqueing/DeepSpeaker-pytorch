@@ -122,10 +122,10 @@ def main():
     plt.rc('font', family='Times New Roman')
 
     plt.figure(figsize=(8, 6))
-    plt.title('Gradient Distributions', fontsize=25)
-    plt.xlabel('Frequency (Hz)', fontsize=18)
+    plt.title('Gradient Distributions', fontsize=22)
+    plt.xlabel('Frequency (Hz)', fontsize=16)
     plt.xticks(fontsize=16)
-    plt.ylabel('Weight', fontsize=18)
+    plt.ylabel('Weight', fontsize=16)
     plt.yticks(fontsize=16)
 
     # m = np.arange(0, 2840)
@@ -146,14 +146,14 @@ def main():
         plt.plot(xnew, ynew / ynew.sum())
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
-    plt.legend(['Train', 'Test'], loc='upper right', fontsize=18)
-    plt.savefig(args.extract_path + "/inputs.png")
+    plt.legend(['Train', 'Test'], loc='upper right', fontsize=16)
+    plt.savefig(args.extract_path + "/grads.png")
     plt.show()
 
     plt.figure(figsize=(8, 6))
-    plt.title('Data distributions', fontsize=25)
-    plt.xlabel('Frequency (Hz)', fontsize=18)
-    plt.ylabel('Log Power Energy (CMVN)', fontsize=18)
+    plt.title('Data distributions', fontsize=22)
+    plt.xlabel('Frequency (Hz)', fontsize=16)
+    plt.ylabel('Log Power Energy (CMVN)', fontsize=16)
     # 插值平滑 ？？？
     for s in train_set_input, valid_set_input, test_a_set_input, test_b_set_input:
         # for s in test_a_set_grad, test_b_set_grad:
@@ -162,8 +162,8 @@ def main():
         ynew = f(xnew)
         plt.plot(xnew, ynew)
 
-    plt.legend(['Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
-    plt.savefig(args.extract_path + "/grads.png")
+    plt.legend(['Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=16)
+    plt.savefig(args.extract_path + "/inputs.png")
     plt.show()
 
 
