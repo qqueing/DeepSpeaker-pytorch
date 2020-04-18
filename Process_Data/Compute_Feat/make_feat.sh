@@ -130,7 +130,7 @@ if [ $stage -le 9 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_fb64_24 \
+      --out-set ${name}_fb24_20 \
       --filter-type mel \
       --feat-type fbank \
       --nfft 320 \
@@ -144,7 +144,7 @@ if [ $stage -le 10 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_fb64_dnn_24 \
+      --out-set ${name}_fb24_dnn_20 \
       --filter-type dnn.timit \
       --feat-type fbank \
       --nfft 320 \
