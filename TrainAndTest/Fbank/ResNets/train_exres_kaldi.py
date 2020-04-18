@@ -258,19 +258,8 @@ def main():
     if args.cuda:
         model.cuda()
 
-    optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-
-    milestones = args.milestones.split(',')
-    milestones = [int(x) for x in milestones]
-    milestones.sort()
-    print('Scheduler options: {}'.format(milestones))
-    scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
-
     start = 0
-    if args.save_init:
-        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
-        torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-                    'scheduler': scheduler.state_dict()}, check_path)
+
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -305,6 +294,17 @@ def main():
                                      {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
+
+    milestones = args.milestones.split(',')
+    milestones = [int(x) for x in milestones]
+    milestones.sort()
+    print('Scheduler options: {}'.format(milestones))
+    scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+
+    if args.save_init:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
+        torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                    'scheduler': scheduler.state_dict()}, check_path)
 
     start += args.start_epoch
     print('Start epoch is : ' + str(start))
