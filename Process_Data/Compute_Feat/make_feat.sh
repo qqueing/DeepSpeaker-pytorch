@@ -19,6 +19,7 @@ if [ $stage -le 0 ]; then
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb \
       --out-set ${name}_fb24 \
       --windowsize 0.02 \
+      --nfft 320 \
       --feat-type fbank \
       --filter-type mel \
       --filters 24 \
@@ -30,6 +31,7 @@ if [ $stage -le 0 ]; then
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb \
       --out-set ${name}_fb40 \
       --windowsize 0.02 \
+      --nfft 320 \
       --feat-type fbank \
       --filter-type mel \
       --filters 40 \
