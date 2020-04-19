@@ -204,6 +204,7 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
 
 
 def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
+               lowfreq=0,
                preemph=0.97, duration=False, nfft=None, normalize=True):
     """
     read wav as float type. [-1.0 ,1.0]
