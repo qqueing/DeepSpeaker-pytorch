@@ -832,7 +832,7 @@ class LocalResNet(nn.Module):
         #     self.std_pool = AdaptiveStdPooling2d((1, 4))
 
         self.fc = nn.Sequential(
-            nn.Linear(self.inplanes * Avg_size, embedding_size),
+            nn.Linear(self.inplanes * avg_size, embedding_size),
             nn.BatchNorm1d(embedding_size)
         )
 
@@ -842,7 +842,7 @@ class LocalResNet(nn.Module):
             if isinstance(m, nn.Conv2d):  # 以2/n的开方为标准差，做均值为0的正态分布
                 # n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 # m.weight.data.normal_(0, math.sqrt(2. / n))
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='leaky_relu')
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.GroupNorm)):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
