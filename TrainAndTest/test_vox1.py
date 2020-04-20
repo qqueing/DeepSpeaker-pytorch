@@ -62,8 +62,8 @@ parser.add_argument('--sitw-dir', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--check-path',
-                    help='folder to output model checkpoints')
+# parser.add_argument('--check-path',
+#                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -72,14 +72,6 @@ parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--scheduler', default='multi', type=str,
-                    metavar='SCH', help='The optimizer to use (default: Adagrad)')
-parser.add_argument('--gamma', default=0.75, type=float,
-                    metavar='GAMMA', help='The optimizer to use (default: Adagrad)')
-parser.add_argument('--milestones', default='10,15', type=str,
-                    metavar='MIL', help='The optimizer to use (default: Adagrad)')
-parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
-                    help='minimum epoch for initial parameter using softmax (default: 2')
 parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
                     help='number of epochs to train (default: 10)')
 
@@ -99,8 +91,7 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
-parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
-                    help='input batch size for training (default: 128)')
+
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
@@ -131,18 +122,6 @@ parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
                     help='random seed (default: 0)')
-
-parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
-parser.add_argument('--lr-decay', default=0, type=float, metavar='LRD',
-                    help='learning rate decay ratio (default: 1e-4')
-parser.add_argument('--weight-decay', default=5e-4, type=float,
-                    metavar='WEI', help='weight decay (default: 0.0)')
-parser.add_argument('--momentum', default=0.9, type=float,
-                    metavar='MOM', help='momentum for sgd (default: 0.9)')
-parser.add_argument('--dampening', default=0, type=float,
-                    metavar='DAM', help='dampening for sgd (default: 0.0)')
-parser.add_argument('--optimizer', default='sgd', type=str,
-                    metavar='OPT', help='The optimizer to use (default: Adagrad)')
 
 # Device options
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -277,7 +256,6 @@ def main():
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
     elif args.loss_type == 'amsoft':
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
-
 
     start = args.start_epoch
     print('Epoch is : ' + str(start))
