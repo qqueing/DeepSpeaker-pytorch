@@ -136,7 +136,8 @@ def main():
     f = interpolate.interp1d(m[1:-1], n)
     xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), (np.max(m[1:-1]) - np.min(m[1:-1])) / 160)
     ynew = f(xnew)
-    plt.plot(xnew, ynew / ynew.sum(), marker='.')
+    ynew = ynew / ynew.sum()
+    plt.plot(xnew, ynew, marker='.')
     print(np.sum(ynew))
 
     for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
@@ -144,7 +145,8 @@ def main():
         f = interpolate.interp1d(x, s)
         xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / (args.feat_dim - 1))
         ynew = f(xnew)
-        plt.plot(xnew, ynew / ynew.sum(), marker='.')
+        ynew = ynew / ynew.sum()
+        plt.plot(xnew, ynew, marker='.')
         print(np.sum(ynew))
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
