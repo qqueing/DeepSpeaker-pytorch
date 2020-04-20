@@ -30,6 +30,7 @@ if [ $stage -le 1 ]; then
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/center_dp25 \
     --extract-path Data/gradient \
     --dropout-p 0 \
+    --gpu-id 0 \
     --embedding-size 1024 \
     --sample-utt 2000
 
@@ -44,6 +45,7 @@ if [ $stage -le 1 ]; then
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/soft_dp25 \
     --extract-path Data/gradient \
     --dropout-p 0 \
+    --gpu-id 0 \
     --embedding-size 1024 \
     --sample-utt 2000
 #  done
