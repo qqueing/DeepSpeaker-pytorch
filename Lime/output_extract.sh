@@ -19,25 +19,25 @@ fi
 
 if [ $stage -le 1 ]; then
 #  for model in LoResNet10 ; do
-  python Lime/output_extract.py \
-    --model LoResNet10 \
-    --start-epochs 36 \
-    --epochs 36 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
-    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --loss-type center \
-    --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/center_dp25 \
-    --extract-path Data/gradient \
-    --dropout-p 0 \
-    --gpu-id 0 \
-    --embedding-size 1024 \
-    --sample-utt 2000
+#  python Lime/output_extract.py \
+#    --model LoResNet10 \
+#    --start-epochs 36 \
+#    --epochs 36 \
+#    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
+#    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+#    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+#    --loss-type center \
+#    --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/center_dp25 \
+#    --extract-path Data/gradient \
+#    --dropout-p 0 \
+#    --gpu-id 0 \
+#    --embedding-size 1024 \
+#    --sample-utt 2000
 
   python Lime/output_extract.py \
     --model LoResNet10 \
-    --start-epochs 36 \
-    --epochs 36 \
+    --start-epochs 24 \
+    --epochs 24 \
     --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
