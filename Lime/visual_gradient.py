@@ -128,15 +128,15 @@ def main():
     plt.ylabel('Weight', fontsize=16)
     plt.yticks(fontsize=16)
 
-    # m = np.arange(0, 2840)
-    # m = 700 * (10 ** (m / 2595.0) - 1)
-    # n = np.array([m[i] - m[i - 1] for i in range(1, len(m) - 1)])
-    # n = 1/n
-    #
-    # f = interpolate.interp1d(m[1:-1], n)
-    # xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), 161)
-    # ynew = f(xnew)
-    # plt.plot(xnew, ynew/ynew.sum())
+    m = np.arange(0, 2840)
+    m = 700 * (10 ** (m / 2595.0) - 1)
+    n = np.array([m[i] - m[i - 1] for i in range(1, len(m) - 1)])
+    n = 1 / n
+
+    f = interpolate.interp1d(m[1:-1], n)
+    xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), 161)
+    ynew = f(xnew)
+    plt.plot(xnew, ynew / ynew.sum())
 
     for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
@@ -146,7 +146,7 @@ def main():
         plt.plot(xnew, ynew / ynew.sum())
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
-    plt.legend(['Train', 'Test'], loc='upper right', fontsize=16)
+    plt.legend(['Mel', 'Train', 'Test'], loc='upper right', fontsize=16)
     plt.savefig(args.extract_path + "/grads.png")
     plt.show()
 
