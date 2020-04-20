@@ -824,7 +824,7 @@ class LocalResNet(nn.Module):
             self.layer4 = self._make_layer(block=block, planes=channels[3], blocks=layers[3])
 
         self.dropout = nn.Dropout(self.dropout_p)
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, Avg_size))
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, avg_size))
 
         # if self.statis_pooling:
         #     self.statis_pooling = statis_pooling
