@@ -49,9 +49,9 @@ if [ $stage -le 2 ]; then
     --check-path Data/checkpoint/LoResNet10/timit_spect/soft_var \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --sample-utt 500 \
+    --sample-utt 1500 \
     --embedding-size 128 \
-    --extract-path Data/gradient/${model}/${dataset}/${feat}/${loss}_var \
+    --extract-path Data/gradient/${model}/${dataset}/${feat}/${loss}_var_1500 \
     --model ${model} \
     --channels 4,16,64 \
     --dropout-p 0.0 \
