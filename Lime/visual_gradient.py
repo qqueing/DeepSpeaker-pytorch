@@ -134,7 +134,7 @@ def main():
     n = 1 / n
 
     f = interpolate.interp1d(m[1:-1], n)
-    xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), 161)
+    xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), 49.9)
     ynew = f(xnew)
     plt.plot(xnew, ynew / ynew.sum())
 
