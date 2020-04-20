@@ -39,6 +39,43 @@ if [ $stage -le 0 ]; then
   done
 fi
 
+if [ $stage -le 0 ]; then
+  for name in dev test ; do
+#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --nj 16 \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64 \
+#      --out-set ${name}_noc \
+#      --windowsize 0.025 \
+#      --filters 64 \
+#      --feat-type fbank
+
+     python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --nj 16 \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb \
+      --out-set ${name}_fb24_dnn \
+      --windowsize 0.02 \
+      --nfft 320 \
+      --feat-type fbank \
+      --filter-type dnn.vox1 \
+      --filters 24 \
+      --feat-type fbank
+
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --nj 16 \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb \
+      --out-set ${name}_fb40_dnn \
+      --windowsize 0.02 \
+      --nfft 320 \
+      --feat-type fbank \
+      --filter-type dnn.vox1 \
+      --filters 40 \
+      --feat-type fbank
+  done
+fi
+
 stage=100
 
 if [ $stage -le 1 ]; then
