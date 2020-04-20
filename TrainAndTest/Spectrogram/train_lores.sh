@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=15
 #stage=10
 #waited=0
 #while [ `ps 71363 | wc -l` -eq 2 ]; do
@@ -54,7 +54,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=12
+#stage=12
 # kernel size trianing
 if [ $stage -le 4 ]; then
   for kernel in '3,3' '3,7' '5,7' ; do
@@ -153,7 +153,7 @@ if [ $stage -le 8 ]; then
 fi
 
 
-stage=11
+#stage=11
 if [ $stage -le 8 ]; then
   for loss in asoft amsoft center ; do
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 3x3\033[0m\n"
@@ -175,4 +175,23 @@ if [ $stage -le 8 ]; then
   done
 fi
 
+if [ $stage -le 15 ]; then
+    for loss in soft ; do # 32,128,512; 8,32,128
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --nj 12 \
+      --epochs 24 \
+      --resnet-size 8 \
+      --embedding-size 128 \
+      --milestones 10,15,20 \
+      --channels 64,128,256 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_128 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128/checkpoint_20.pth \
+      --loss-type ${loss} \
+      --num-valid 2 \
+      --dropout-p 0.25
+  done
+fi
 
