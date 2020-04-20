@@ -778,7 +778,8 @@ class LocalResNet(nn.Module):
 
     def __init__(self, embedding_size, num_classes, block=BasicBlock,
                  resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
-                 statis_pooling=False, kernal_size=5, padding=2, **kwargs):
+                 statis_pooling=False,
+                 Avg_size=4, kernal_size=5, padding=2, **kwargs):
 
         super(LocalResNet, self).__init__()
         resnet_type = {8: [1, 1, 1, 0],
@@ -803,33 +804,35 @@ class LocalResNet(nn.Module):
         self.layer1 = self._make_layer(block, channels[0], layers[0])
 
         self.inplanes = channels[1]
-        self.conv2 = nn.Conv2d(channels[0], channels[1], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
+        self.conv2 = nn.Conv2d(channels[0], channels[1], kernel_size=kernal_size, stride=2,
+                               padding=padding, bias=False)
         self.bn2 = nn.BatchNorm2d(channels[1])
         self.layer2 = self._make_layer(block, channels[1], layers[1])
 
         self.inplanes = channels[2]
-        self.conv3 = nn.Conv2d(channels[1], channels[2], kernel_size=kernal_size, stride=2, padding=padding, bias=False)
+        self.conv3 = nn.Conv2d(channels[1], channels[2], kernel_size=kernal_size, stride=2,
+                               padding=padding, bias=False)
         self.bn3 = nn.BatchNorm2d(channels[2])
         self.layer3 = self._make_layer(block, channels[2], layers[2])
 
         if layers[3] != 0:
             assert len(channels) == 4
             self.inplanes = channels[3]
-            self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size, stride=2, padding=padding,
-                                   bias=False)
+            self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size, stride=2,
+                                   padding=padding, bias=False)
             self.bn4 = nn.BatchNorm2d(channels[3])
             self.layer4 = self._make_layer(block=block, planes=channels[3], blocks=layers[3])
 
         self.dropout = nn.Dropout(self.dropout_p)
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, Avg_size))
 
-        # self.statis_pooling = statis_pooling
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 4))
         # if self.statis_pooling:
+        #     self.statis_pooling = statis_pooling
         #     self.inplanes *= 2
         #     self.std_pool = AdaptiveStdPooling2d((1, 4))
 
         self.fc = nn.Sequential(
-            nn.Linear(self.inplanes * 4, embedding_size),
+            nn.Linear(self.inplanes * Avg_size, embedding_size),
             nn.BatchNorm1d(embedding_size)
         )
 
@@ -843,8 +846,6 @@ class LocalResNet(nn.Module):
             elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.GroupNorm)):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-        # self.weight = nn.Parameter(torch.Tensor(embedding_size, num_classes))  # 本层权重
-        # self.weight.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)  # 初始化权重，在第一维度上做normalize
 
     def l2_norm(self, input, alpha=1.0):
         input_size = input.size()
