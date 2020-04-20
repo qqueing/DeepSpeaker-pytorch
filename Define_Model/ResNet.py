@@ -779,7 +779,7 @@ class LocalResNet(nn.Module):
     def __init__(self, embedding_size, num_classes, block=BasicBlock,
                  resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
                  statis_pooling=False,
-                 Avg_size=4, kernal_size=5, padding=2, **kwargs):
+                 avg_size=4, kernal_size=5, padding=2, **kwargs):
 
         super(LocalResNet, self).__init__()
         resnet_type = {8: [1, 1, 1, 0],
@@ -910,7 +910,7 @@ class LocalResNet(nn.Module):
         #     x = torch.cat((mean_x, std_x), dim=1)
         #
         # else:
-        print(x.shape)
+        # print(x.shape)
         x = self.avg_pool(x)
         x = x.view(x.size(0), -1)
 

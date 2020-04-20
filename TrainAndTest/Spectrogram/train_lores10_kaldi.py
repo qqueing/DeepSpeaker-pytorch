@@ -31,14 +31,13 @@ from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR
 from tqdm import tqdm
 
 from Define_Model.LossFunction import CenterLoss
-from Define_Model.ResNet import LocalResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data import constants as c
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import concateinputfromMFB, to2tensor
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
-from TrainAndTest.common_func import create_optimizer
+from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -97,6 +96,8 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 
 # Training options
 # Model options
+parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiResNet34', 'SuResCNN10'],
+                    help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
 parser.add_argument('--statis-pooling', action='store_true', default=False,
@@ -109,6 +110,9 @@ parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
+parser.add_argument('--avg-size', type=int, default=4, metavar='ES',
+                    help='Dimensionality of the embedding')
+
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
@@ -275,10 +279,17 @@ def main():
     channels = args.channels.split(',')
     channels = [int(x) for x in channels]
 
-    model = LocalResNet(resnet_size=args.resnet_size, embedding_size=args.embedding_size,
-                        num_classes=train_dir.num_spks, dropout_p=args.dropout_p,
-                        statis_pooling=args.statis_pooling,
-                        channels=channels, kernal_size=kernel_size, padding=padding)
+    model_kwargs = {'embedding_size': args.embedding_size,
+                    'resnet_size': args.resnet_size,
+                    'num_classes': train_dir.num_spks,
+                    'channels': channels,
+                    'Avg_size': args.avg_size,
+                    'kernel_size': kernel_size,
+                    'padding': padding,
+                    'dropout_p': args.dropout_p}
+
+    print('Model options: {}'.format(model_kwargs))
+    model = create_model(args.model, **model_kwargs)
 
     start_epoch = 0
     if args.save_init:

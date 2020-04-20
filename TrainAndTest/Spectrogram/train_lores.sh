@@ -176,9 +176,10 @@ if [ $stage -le 8 ]; then
 fi
 
 if [ $stage -le 15 ]; then
-    for loss in soft ; do # 32,128,512; 8,32,128
+  for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
       --nj 12 \
@@ -192,6 +193,24 @@ if [ $stage -le 15 ]; then
       --loss-type ${loss} \
       --num-valid 2 \
       --dropout-p 0.25
+
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5 avg pooling is (1,2) \033[0m\n"
+    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --model LoResNet10 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --nj 12 \
+      --epochs 24 \
+      --resnet-size 8 \
+      --embedding-size 128 \
+      --milestones 10,15,20 \
+      --channels 64,128,256 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_128_2avg \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128_2avg/checkpoint_20.pth \
+      --loss-type ${loss} \
+      --num-valid 2 \
+      --dropout-p 0.25 \
+      --avg-size 2
   done
 fi
 
