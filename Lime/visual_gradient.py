@@ -137,7 +137,7 @@ def main():
     xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), (np.max(m[1:-1]) - np.min(m[1:-1])) / 160)
     ynew = f(xnew)
     ynew = ynew / ynew.sum()
-    plt.plot(xnew, ynew, marker='.')
+    plt.plot(xnew, ynew)
     print(np.sum(ynew))
 
     for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
@@ -146,7 +146,7 @@ def main():
         xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / (args.feat_dim - 1))
         ynew = f(xnew)
         ynew = ynew / ynew.sum()
-        plt.plot(xnew, ynew, marker='.')
+        plt.plot(xnew, ynew)
         print(np.sum(ynew))
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
