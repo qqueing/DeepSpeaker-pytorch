@@ -117,7 +117,7 @@ def main():
     test_a_set_grad = test_data[1][0]
     test_b_set_grad = test_data[1][1]
 
-    x = np.arange(args.feat_dim) * 8000 / args.feat_dim  # [0-8000]
+    x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
     plt.rc('font', family='Times New Roman')
 
@@ -134,14 +134,14 @@ def main():
     n = 1 / n
 
     f = interpolate.interp1d(m[1:-1], n)
-    xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), 49.9)
+    xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), (np.max(m[1:-1]) - np.min(m[1:-1])) / 160)
     ynew = f(xnew)
     plt.plot(xnew, ynew / ynew.sum())
 
     for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), args.feat_dim)
+        xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / (args.feat_dim - 1))
         ynew = f(xnew)
         plt.plot(xnew, ynew / ynew.sum())
 
