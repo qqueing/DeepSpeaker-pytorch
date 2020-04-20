@@ -26,12 +26,12 @@ from kaldi_io import read_mat
 from torch.autograd import Variable
 from tqdm import tqdm
 
-from Define_Model.ResNet import LocalResNet
 from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import to2tensor, varLengthFeat
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
+from TrainAndTest.common_func import create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 
 warnings.filterwarnings("ignore")
@@ -105,9 +105,9 @@ parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -248,10 +248,16 @@ def main():
     channels = args.channels.split(',')
     channels = [int(x) for x in channels]
 
-    model = LocalResNet(resnet_size=args.resnet_size, embedding_size=args.embedding_size,
-                        num_classes=train_dir.num_spks, dropout_p=args.dropout_p,
-                        statis_pooling=args.statis_pooling,
-                        channels=channels, kernal_size=kernel_size, padding=padding)
+    model_kwargs = {'embedding_size': args.embedding_size,
+                    'resnet_size': args.resnet_size,
+                    'num_classes': train_dir.num_spks,
+                    'channels': channels,
+                    'kernel_size': kernel_size,
+                    'padding': padding,
+                    'dropout_p': args.dropout_p}
+
+    print('Model options: {}'.format(model_kwargs))
+    model = create_model(args.model, **model_kwargs)
 
     if os.path.isfile(args.resume):
         print('=> loading checkpoint {}'.format(args.resume))
@@ -261,7 +267,6 @@ def main():
         filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
         model_dict = model.state_dict()
         model_dict.update(filtered)
-
         model.load_state_dict(model_dict)
         #
         model.dropout.p = args.dropout_p
@@ -277,8 +282,8 @@ def main():
     start = args.start_epoch
     print('Epoch is : ' + str(start))
 
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2), shuffle=False, **kwargs)
+    # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
     #                                                shuffle=False, **kwargs)
