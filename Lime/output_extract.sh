@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=1
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -28,12 +28,25 @@ if [ $stage -le 1 ]; then
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --loss-type center \
     --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/center_dp25 \
-    --extract-path Lime \
+    --extract-path Data/gradient \
     --dropout-p 0 \
-    --sample-utt 500
+    --sample-utt 2000
 
+  python Lime/output_extract.py \
+    --model LoResNet10 \
+    --start-epochs 36 \
+    --epochs 36 \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --loss-type soft \
+    --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/soft_dp25 \
+    --extract-path Data/gradient \
+    --dropout-p 0 \
+    --sample-utt 2000
 #  done
 fi
+stage=3
 
 if [ $stage -le 2 ]; then
   model=LoResNet10
