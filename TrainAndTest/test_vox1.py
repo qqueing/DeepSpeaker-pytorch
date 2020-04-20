@@ -261,6 +261,8 @@ def main():
     start = args.start_epoch
     print('Epoch is : ' + str(start))
 
+    if args.cuda:
+        model.cuda()
     # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
