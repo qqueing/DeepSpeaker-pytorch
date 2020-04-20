@@ -26,6 +26,20 @@ if [ $stage -le 5 ]; then
       --model ${model} \
       --resume Data/checkpoint/LoResNet10/spect_cmvn/soft_dp25/checkpoint_24.pth \
       --loss-type soft \
+      --num-valid 2 \
+      --gpu-id 1
+  done
+
+  for loss in center ; do
+    echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+    python TrainAndTest/test_vox1.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --nj 12 \
+      --model ${model} \
+      --resume Data/checkpoint/LoResNet10/spect_cmvn/${loss}_dp25/checkpoint_36.pth \
+      --loss-type ${loss} \
+      --num-valid 2 \
       --gpu-id 1
   done
 fi
