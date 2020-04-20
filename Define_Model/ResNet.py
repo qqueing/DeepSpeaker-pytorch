@@ -910,6 +910,7 @@ class LocalResNet(nn.Module):
         #     x = torch.cat((mean_x, std_x), dim=1)
         #
         # else:
+        print(x.shape)
         x = self.avg_pool(x)
         x = x.view(x.size(0), -1)
 
