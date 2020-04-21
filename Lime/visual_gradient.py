@@ -152,7 +152,7 @@ def main():
         ynew = ynew - ynew.min() + 0.00001
         ynew = ynew / ynew.sum()
         plt.plot(xnew, ynew)
-        print(np.sum(ynew))
+        print(ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
     plt.legend(['Mel', 'Train', 'Test'], loc='upper right', fontsize=16)
