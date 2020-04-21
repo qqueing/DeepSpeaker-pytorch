@@ -251,17 +251,13 @@ class XVectorTDNN(nn.Module):
         self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1)
         self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1)
 
-        self.segment6 = nn.Sequential(
-            nn.Linear(3000, 512),
-            nn.ReLU(),
-            nn.BatchNorm1d(512)
-        )
+        self.segment6 = nn.Linear(3000, 512)
+        self.relu6 = nn.ReLU()
+        self.bn6 = nn.BatchNorm1d(512)
 
-        self.segment7 = nn.Sequential(
-            nn.Linear(512, embedding_size),
-            nn.ReLU(),
-            nn.BatchNorm1d(embedding_size)
-        )
+        self.segment7 = nn.Linear(512, embedding_size)
+        self.relu7 = nn.ReLU()
+        self.bn7 = nn.BatchNorm1d(512)
 
         self.classifier = nn.Linear(512, num_classes)
         self.drop = nn.Dropout(p=self.dropout_p)
@@ -273,8 +269,8 @@ class XVectorTDNN(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
             elif isinstance(m, NewTDNN):
-                nn.init.normal(m.kernel.weight, mean=0., std=1.)
-                # nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
+                # nn.init.normal(m.kernel.weight, mean=0., std=1.)
+                nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
 
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=1)
@@ -299,11 +295,15 @@ class XVectorTDNN(nn.Module):
             x = self.drop(x)
         # print(x.shape)
         x = self.statistic_pooling(x)
-        embedding_a = self.segment6(x)
-        embedding_b = self.segment7(embedding_a)
+        x = self.segment6(x)
+        x = self.relu6(x)
+        embedding_a = self.bn6(x)
+
+        x = self.segment7(embedding_a)
+        x = self.relu7(x)
+        embedding_b = self.bn7(x)
 
         logits = self.classifier(embedding_b)
-        logits = self.relu(logits)
 
         return logits, embedding_b
 
