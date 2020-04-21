@@ -9,7 +9,7 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-stage=10
+#stage=10
 if [ $stage -le 1 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
