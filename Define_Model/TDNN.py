@@ -303,7 +303,7 @@ class XVectorTDNN(nn.Module):
         embedding_b = self.segment7(embedding_a)
 
         logits = self.classifier(embedding_b)
-        # logits = self.relu(logits)
+        logits = self.relu(logits)
 
         return logits, embedding_b
 
