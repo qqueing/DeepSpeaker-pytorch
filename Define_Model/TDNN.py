@@ -296,13 +296,16 @@ class XVectorTDNN(nn.Module):
         # print(x.shape)
         x = self.statistic_pooling(x)
 
-        x = self.segment6(x)
-        x = self.bn6(x)
         x = self.relu6(x)
-        x = self.segment7(x)
-        x = self.bn7(x)
+        x = self.bn6(x)
+        x = self.segment6(x)
 
-        embedding_b = self.relu7(x)
+        x = self.relu7(x)
+        x = self.bn7(x)
+        embedding_b = self.segment7(x)
+
+
+
 
         logits = self.classifier(embedding_b)
 
