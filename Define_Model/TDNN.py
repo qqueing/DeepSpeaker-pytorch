@@ -273,7 +273,7 @@ class XVectorTDNN(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
             elif isinstance(m, NewTDNN):
-                nn.init.normal(m.weight, mean=0., std=1.)
+                nn.init.normal(m.kernel.weight, mean=0., std=1.)
                 # nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
 
     def statistic_pooling(self, x):
