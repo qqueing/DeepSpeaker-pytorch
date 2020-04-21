@@ -12,6 +12,8 @@
 fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
+from Define_Model.model import ReLU
+
 __author__ = 'Jonas Van Der Donckt'
 import math
 
@@ -251,13 +253,13 @@ class XVectorTDNN(nn.Module):
 
         self.segment6 = nn.Sequential(
             nn.Linear(3000, 512),
-            nn.ReLU(),
+            ReLU(),
             nn.BatchNorm1d(512)
         )
 
         self.segment7 = nn.Sequential(
             nn.Linear(512, embedding_size),
-            nn.ReLU(),
+            ReLU(),
             nn.BatchNorm1d(embedding_size)
         )
 
@@ -294,7 +296,7 @@ class XVectorTDNN(nn.Module):
 
         if self.dropout_p:
             x = self.drop(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.statistic_pooling(x)
         embedding_a = self.segment6(x)
         embedding_b = self.segment7(embedding_a)
