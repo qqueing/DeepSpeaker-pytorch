@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=10
 waited=0
 while [ `ps 45442 | wc -l` -eq 2 ]; do
   sleep 60
@@ -49,14 +49,14 @@ if [ $stage -le 5 ]; then
   done
 fi
 
-stage=100
+stage=10
 if [ $stage -le 10 ]; then
   model=ASTDNN
-  feat=mfcc40
+  feat=fb40
   for loss in soft ; do
     python TrainAndTest/Fbank/TDNNs/train_astdnn_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pymfcc40/dev_kaldi \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pymfcc40/test_kaldi \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --epochs 20 \
