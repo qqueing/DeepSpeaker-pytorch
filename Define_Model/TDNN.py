@@ -253,14 +253,17 @@ class XVectorTDNN(nn.Module):
         self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1)
         self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1)
 
-        self.segment6 = nn.Linear(3000, 512)
-        self.relu6 = nn.ReLU()
-        self.bn6 = nn.BatchNorm1d(512)
+        self.segment6 = nn.Sequential(
+            nn.Linear(3000, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512)
+        )
 
-        self.segment7 = nn.Linear(512, embedding_size)
-        self.relu7 = nn.ReLU()
-        self.bn7 = nn.BatchNorm1d(512)
-
+        self.segment7 = nn.Sequential(
+            nn.Linear(512, embedding_size),
+            nn.ReLU(),
+            nn.BatchNorm1d(embedding_size)
+        )
         self.classifier = nn.Linear(512, num_classes)
         self.drop = nn.Dropout(p=self.dropout_p)
         # self.out_act = nn.Sigmoid()
@@ -299,12 +302,7 @@ class XVectorTDNN(nn.Module):
         x = self.statistic_pooling(x)
 
         x = self.segment6(x)
-        x = self.bn6(x)
-        x = self.relu6(x)
-
-        x = self.segment7(x)
-        x = self.relu7(x)
-        embedding_b = self.bn7(x)
+        embedding_b = self.segment7(x)
 
         logits = self.classifier(embedding_b)
 
