@@ -283,7 +283,7 @@ def main():
                     'resnet_size': args.resnet_size,
                     'num_classes': train_dir.num_spks,
                     'channels': channels,
-                    'Avg_size': args.avg_size,
+                    'avg_size': args.avg_size,
                     'kernel_size': kernel_size,
                     'padding': padding,
                     'dropout_p': args.dropout_p}

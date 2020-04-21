@@ -2,8 +2,8 @@
 
 stage=15
 #stage=10
-#waited=0
-#while [ `ps 71363 | wc -l` -eq 2 ]; do
+waited=0
+#while [ `ps 113458 | wc -l` -eq 2 ]; do
 #  sleep 60
 #  waited=$(expr $waited + 1)
 #  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
@@ -176,7 +176,28 @@ if [ $stage -le 8 ]; then
 fi
 
 if [ $stage -le 15 ]; then
+#  for loss in soft ; do # 32,128,512; 8,32,128
   for loss in soft ; do # 32,128,512; 8,32,128
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+    python -W ignore TrainAndTest/Spectrogram/train_lores10_var.py \
+      --model LoResNet10 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --nj 12 \
+      --epochs 24 \
+      --resnet-size 8 \
+      --embedding-size 128 \
+      --milestones 10,15,20 \
+      --channels 64,128,256 \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_128_var \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128_var/checkpoint_20.pth \
+      --loss-type ${loss} \
+      --lr 0.1 \
+      --num-valid 2 \
+      --dropout-p 0.25
+  done
+
+  for loss in asoft amsoft center ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
@@ -191,26 +212,13 @@ if [ $stage -le 15 ]; then
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_128 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128/checkpoint_20.pth \
       --loss-type ${loss} \
+      --lr 0.1 \
       --num-valid 2 \
+      --margin 0.3 \
+      --s 20 \
+      --m 3 \
+      --loss-ratio 0.001 \
       --dropout-p 0.25
-
-    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5 avg pooling is (1,2) \033[0m\n"
-    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
-      --nj 12 \
-      --epochs 24 \
-      --resnet-size 8 \
-      --embedding-size 128 \
-      --milestones 10,15,20 \
-      --channels 64,128,256 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_128_2avg \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128_2avg/checkpoint_20.pth \
-      --loss-type ${loss} \
-      --num-valid 2 \
-      --dropout-p 0.25 \
-      --avg-size 2
   done
 fi
 
