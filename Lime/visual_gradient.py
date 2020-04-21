@@ -59,7 +59,8 @@ def main():
             with open(p, 'rb') as f:
                 sets = pickle.load(f)
                 for (data, grad) in sets:
-                    train_data[1] += np.mean(np.abs(grad), axis=0)
+                    # train_data[1] += np.mean(np.abs(grad), axis=0)
+                    train_data[1] += np.mean(grad, axis=0)
                     train_data[0] += np.mean(data, axis=0)
                     num_utt += 1
         train_data = train_data / num_utt
@@ -71,7 +72,8 @@ def main():
             with open(p, 'rb') as f:
                 sets = pickle.load(f)
                 for (data, grad) in sets:
-                    valid_data[1] += np.mean(np.abs(grad), axis=0)
+                    # valid_data[1] += np.mean(np.abs(grad), axis=0)
+                    valid_data[1] += np.mean(grad, axis=0)
                     valid_data[0] += np.mean(data, axis=0)
                     num_utt += 1
         valid_data = valid_data / num_utt
@@ -86,8 +88,10 @@ def main():
                     test_data[0][0] += np.mean(data_a, axis=0)
                     test_data[0][1] += np.mean(data_b, axis=0)
 
-                    test_data[1][0] += np.mean(np.abs(grad_a), axis=0)
-                    test_data[1][1] += np.mean(np.abs(grad_b), axis=0)
+                    # test_data[1][0] += np.mean(np.abs(grad_a), axis=0)
+                    # test_data[1][1] += np.mean(np.abs(grad_b), axis=0)
+                    test_data[1][0] += np.mean(grad_a, axis=0)
+                    test_data[1][1] += np.mean(grad_b, axis=0)
 
                     num_utt += 1
 
