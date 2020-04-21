@@ -38,13 +38,13 @@ if [ $stage -le 5 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40 \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
-      --epochs 20 \
+      --epochs 18 \
       --milestones 10,15  \
       --feat-dim 40 \
       --embedding-size 512 \
       --num-valid 2 \
       --loss-type ${loss} \
-      --lr 0.01
+      --lr 0.001
   done
 fi
 
