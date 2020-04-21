@@ -253,7 +253,7 @@ class XVectorTDNN(nn.Module):
 
         self.segment6 = nn.Linear(3000, 512)
         self.relu6 = nn.ReLU()
-        self.bn6 = nn.BatchNorm1d(512)
+        self.bn6 = nn.BatchNorm1d(3000)
 
         self.segment7 = nn.Linear(512, embedding_size)
         self.relu7 = nn.ReLU()
