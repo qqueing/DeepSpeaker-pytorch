@@ -12,13 +12,14 @@
 fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
-from Define_Model.model import ReLU
 __author__ = 'Jonas Van Der Donckt'
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import math
+
 from Define_Model.Pooling import AttentionStatisticPooling
 
 """Time Delay Neural Network as mentioned in the 1989 paper by Waibel et al. (Hinton) and the 2015 paper by Peddinti et al. (Povey)"""
@@ -236,27 +237,32 @@ class NewTDNN(nn.Module):
         return x
 
 class XVectorTDNN(nn.Module):
-    def __init__(self, num_spk, input_dim=24, dropout_p=0.0):
+    def __init__(self, num_classes, embedding_size=512, input_dim=24, dropout_p=0.0, **kwargs):
         super(XVectorTDNN, self).__init__()
-        self.num_spk = num_spk
+        self.num_classes = num_classes
         self.dropout_p = dropout_p
         self.input_dim = input_dim
 
-        self.frame1 = NewTDNN(input_dim=self.input_dim, output_dim=512, context_size=5, dilation=1, dropout_p=dropout_p)
-        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2, dropout_p=dropout_p)
-        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3, dropout_p=dropout_p)
-        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1, dropout_p=dropout_p)
-        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1, dropout_p=dropout_p)
+        self.frame1 = NewTDNN(input_dim=self.input_dim, output_dim=512, context_size=5, dilation=1)
+        self.frame2 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=2)
+        self.frame3 = NewTDNN(input_dim=512, output_dim=512, context_size=3, dilation=3)
+        self.frame4 = NewTDNN(input_dim=512, output_dim=512, context_size=1, dilation=1)
+        self.frame5 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1)
 
-        self.segment6 = nn.Linear(3000, 512)
-        self.segment7 = nn.Linear(512, 512)
-        self.segment8 = nn.Linear(512, num_spk)
+        self.segment6 = nn.Sequential(
+            nn.Linear(3000, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512)
+        )
+
+        self.segment7 = nn.Sequential(
+            nn.Linear(512, embedding_size),
+            nn.ReLU(),
+            nn.BatchNorm1d(embedding_size)
+        )
+
+        self.classifier = nn.Linear(512, num_classes)
         self.drop = nn.Dropout(p=self.dropout_p)
-
-        self.batch_norm6 = nn.BatchNorm1d(512)
-        self.batch_norm7 = nn.BatchNorm1d(512)
-
-        self.relu = ReLU()
         # self.out_act = nn.Sigmoid()
         # self.relu = nn.LeakyReLU()
 
@@ -275,15 +281,9 @@ class XVectorTDNN(nn.Module):
 
     def set_global_dropout(self, dropout_p):
         self.dropout_p = dropout_p
-        self.drop = nn.Dropout(p=self.dropout_p)
+        self.drop.p = dropout_p
 
-        self.frame1.set_dropout(dropout_p)
-        self.frame2.set_dropout(dropout_p)
-        self.frame3.set_dropout(dropout_p)
-        self.frame4.set_dropout(dropout_p)
-        self.frame5.set_dropout(dropout_p)
-
-    def pre_forward(self, x):
+    def forward(self, x):
         # pdb.set_trace()
         x = x.squeeze(1).float()
         x = self.frame1(x)
@@ -292,24 +292,16 @@ class XVectorTDNN(nn.Module):
         x = self.frame4(x)
         x = self.frame5(x)
 
+        if self.dropout_p:
+            x = self.drop(x)
+
         x = self.statistic_pooling(x)
-        x = self.segment6(x)
-        embedding_a = self.relu(self.batch_norm6(x))
-        if self.dropout_p:
-            embedding_a = self.drop(embedding_a)
+        embedding_a = self.segment6(x)
+        embedding_b = self.segment7(embedding_a)
 
-        x = self.segment7(embedding_a)
+        logits = self.classifier(embedding_b)
 
-        embedding_b = self.relu(self.batch_norm7(x))
-        if self.dropout_p:
-            embedding_b = self.drop(embedding_b)
-
-        return embedding_a, embedding_b
-
-    def forward(self, x):
-        x = self.segment8(x)
-
-        return x
+        return logits, embedding_b
 
 
 class ASTDNN(nn.Module):
