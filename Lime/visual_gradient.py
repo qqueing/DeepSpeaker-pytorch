@@ -153,7 +153,7 @@ def main():
         ynew = ynew - ynew.min() + 0.00001
         ynew = ynew / ynew.sum()
         plt.plot(xnew, ynew)
-        pdb.set_trace
+    pdb.set_trace
         # np.save(args.extract_path + '/grad.npy', ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
