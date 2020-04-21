@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=1
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -42,15 +42,15 @@ if [ $stage -le 1 ]; then
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --loss-type soft \
-    --check-path /home/yangwenhao/local/project/DeepSpeaker-pytorch/Data/checkpoint/LoResNet10/spect_cmvn/soft_dp25 \
+    --check-path Data/checkpoint/LoResNet10/spect/soft_dp25_128 \
     --extract-path Data/gradient \
     --dropout-p 0 \
     --gpu-id 0 \
-    --embedding-size 1024 \
+    --embedding-size 128 \
     --sample-utt 2000
 #  done
 fi
-#stage=3
+stage=300
 
 if [ $stage -le 2 ]; then
   model=LoResNet10
@@ -75,7 +75,7 @@ if [ $stage -le 2 ]; then
     --epoch 20
 fi
 
-stage=5
+#stage=50
 
 if [ $stage -le 5 ]; then
   model=LoResNet10
