@@ -147,7 +147,7 @@ def main():
     for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / (args.feat_dim - 1))
+        xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / args.feat_dim)
         ynew = f(xnew)
         ynew = ynew - ynew.min() + 0.00001
         ynew = ynew / ynew.sum()
