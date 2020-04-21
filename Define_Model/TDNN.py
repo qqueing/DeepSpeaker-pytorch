@@ -12,7 +12,6 @@
 fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
-from Define_Model.model import ReLU
 
 __author__ = 'Jonas Van Der Donckt'
 import math
@@ -253,13 +252,13 @@ class XVectorTDNN(nn.Module):
 
         self.segment6 = nn.Sequential(
             nn.Linear(3000, 512),
-            ReLU(),
+            nn.ReLU(),
             nn.BatchNorm1d(512)
         )
 
         self.segment7 = nn.Sequential(
             nn.Linear(512, embedding_size),
-            ReLU(),
+            nn.ReLU(),
             nn.BatchNorm1d(embedding_size)
         )
 
