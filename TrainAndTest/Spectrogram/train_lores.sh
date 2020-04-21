@@ -3,11 +3,11 @@
 stage=15
 #stage=10
 waited=0
-#while [ `ps 113458 | wc -l` -eq 2 ]; do
-#  sleep 60
-#  waited=$(expr $waited + 1)
-#  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
-#done
+while [ `ps 113458 | wc -l` -eq 2 ]; do
+  sleep 60
+  waited=$(expr $waited + 1)
+  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
+done
 
 #stage=1
 if [ $stage -le 0 ]; then
