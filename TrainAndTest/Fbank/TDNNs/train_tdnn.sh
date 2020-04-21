@@ -63,7 +63,7 @@ if [ $stage -le 10 ]; then
       --batch-size 128 \
       --milestones 9,14  \
       --feat-dim 40 \
-      --embedding-size 512 \
+      --embedding-size 128 \
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 240 \
