@@ -333,7 +333,7 @@ def main():
             continue
         model.cuda()
 
-        file_dir = args.extract_path + '/%s/%s_dp%.2f/epoch_%d' % (args.model, args.loss_type, args.dropout_p, e)
+        file_dir = args.extract_path + '/epoch_%d' % e
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
 

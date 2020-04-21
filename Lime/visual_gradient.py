@@ -149,7 +149,7 @@ def main():
         f = interpolate.interp1d(x, s)
         xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / args.feat_dim)
         ynew = f(xnew)
-        ynew = ynew - ynew.min() + 0.00001
+        # ynew = ynew - ynew.min() + 0.00001
         ynew = ynew / ynew.sum()
         plt.plot(xnew, ynew)
         # pdb.set_trace
