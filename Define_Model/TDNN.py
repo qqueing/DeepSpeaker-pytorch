@@ -189,7 +189,7 @@ class NewTDNN(nn.Module):
         self.dropout_p = dropout_p
         self.batch_norm = batch_norm
 
-        self.kernel = nn.Linear(input_dim * context_size, output_dim)
+        self.kernel = nn.Linear(input_dim * context_size, output_dim, bias=False)
         if activation == 'relu':
             self.nonlinearity = nn.ReLU()
         elif activation == 'leakyrelu':
@@ -297,11 +297,11 @@ class XVectorTDNN(nn.Module):
         x = self.statistic_pooling(x)
 
         x = self.segment6(x)
-        # x = self.relu6(x)
+        x = self.relu6(x)
         embedding_a = self.bn6(x)
 
         x = self.segment7(embedding_a)
-        # x = self.relu7(x)
+        x = self.relu7(x)
         embedding_b = self.bn7(x)
 
         logits = self.classifier(embedding_b)
