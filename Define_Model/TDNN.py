@@ -12,6 +12,7 @@
 fork from:
 https://github.com/jonasvdd/TDNN/blob/master/tdnn.py
 """
+from Define_Model.model import ReLU
 
 __author__ = 'Jonas Van Der Donckt'
 import math
@@ -265,14 +266,15 @@ class XVectorTDNN(nn.Module):
         self.classifier = nn.Linear(512, num_classes)
         self.drop = nn.Dropout(p=self.dropout_p)
         # self.out_act = nn.Sigmoid()
-        # self.relu = nn.LeakyReLU()
+        self.relu = ReLU()
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
             elif isinstance(m, NewTDNN):
-                nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.normal(m.weight, mean=0., std=1.)
+                # nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
 
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=1)
@@ -301,6 +303,7 @@ class XVectorTDNN(nn.Module):
         embedding_b = self.segment7(embedding_a)
 
         logits = self.classifier(embedding_b)
+        # logits = self.relu(logits)
 
         return logits, embedding_b
 
