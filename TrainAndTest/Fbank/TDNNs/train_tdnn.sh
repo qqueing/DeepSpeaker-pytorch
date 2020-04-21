@@ -33,7 +33,7 @@ if [ $stage -le 5 ]; then
   feat=fb40
   for loss in soft ; do
     python TrainAndTest/Fbank/TDNNs/train_tdnn_kaldi.py \
-      -- ${model} \
+      --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40 \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
