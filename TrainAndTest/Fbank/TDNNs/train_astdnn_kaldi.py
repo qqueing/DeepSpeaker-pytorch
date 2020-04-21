@@ -198,12 +198,12 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
-        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
         to2tensor()
     ])
