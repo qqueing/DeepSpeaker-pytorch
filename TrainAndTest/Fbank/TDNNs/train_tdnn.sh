@@ -60,6 +60,7 @@ if [ $stage -le 10 ]; then
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --epochs 20 \
+      --batch-size 64 \
       --milestones 10,15  \
       --feat-dim 40 \
       --embedding-size 512 \
