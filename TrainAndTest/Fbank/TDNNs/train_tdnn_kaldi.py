@@ -319,7 +319,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        train(train_loader, model, optimizer, ce, scheduler, epoch)
+        train(train_loader, model, optimizer, ce, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
@@ -328,7 +328,7 @@ def main():
     writer.close()
 
 
-def train(train_loader, model, optimizer, ce, scheduler, epoch):
+def train(train_loader, model, optimizer, ce, epoch):
     # switch to evaluate mode
     model.train()
 

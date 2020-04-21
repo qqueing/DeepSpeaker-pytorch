@@ -285,7 +285,7 @@ class XVectorTDNN(nn.Module):
 
     def forward(self, x):
         # pdb.set_trace()
-        x = x.squeeze(1).float()
+        x = x.squeeze(1).float().transpose(1, 2)
         x = self.frame1(x)
         x = self.frame2(x)
         x = self.frame3(x)
