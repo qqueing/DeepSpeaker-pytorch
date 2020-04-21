@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=5
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -50,7 +50,7 @@ if [ $stage -le 1 ]; then
     --sample-utt 2000
 #  done
 fi
-stage=3
+#stage=3
 
 if [ $stage -le 2 ]; then
   model=LoResNet10
@@ -73,4 +73,28 @@ if [ $stage -le 2 ]; then
     --channels 4,16,64 \
     --dropout-p 0.0 \
     --epoch 20
+fi
+
+stage=5
+
+if [ $stage -le 5 ]; then
+  model=LoResNet10
+  datasets=libri
+  feat=spect_161
+  loss=soft
+
+  python Lime/output_extract.py \
+    --model LoResNet10 \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/dev_spect_161 \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/test_spect_161 \
+    --start-epochs 15 \
+    --check-path Data/checkpoint/LoResNet10/${datasets}_spect/${loss}_var \
+    --epochs 15 \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --sample-utt 1500 \
+    --embedding-size 128 \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var_1500 \
+    --model ${model} \
+    --channels 4,16,64 \
+    --dropout-p 0.0
 fi
