@@ -59,13 +59,14 @@ if [ $stage -le 10 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
-      --epochs 20 \
-      --batch-size 64 \
-      --milestones 10,15  \
+      --epochs 18 \
+      --batch-size 128 \
+      --milestones 9,14  \
       --feat-dim 40 \
       --embedding-size 512 \
       --num-valid 2 \
       --loss-type ${loss} \
+      --input-per-spks 240 \
       --lr 0.01
   done
 fi
