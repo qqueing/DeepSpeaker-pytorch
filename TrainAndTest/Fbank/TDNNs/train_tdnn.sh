@@ -45,7 +45,8 @@ if [ $stage -le 5 ]; then
       --embedding-size 128 \
       --num-valid 2 \
       --loss-type ${loss} \
-      --lr 0.001
+      --input-per-spks 240 \
+      --lr 0.01
   done
 fi
 
