@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-stage=15
-#stage=10
+stage=0
+
 waited=0
 while [ `ps 113458 | wc -l` -eq 2 ]; do
   sleep 60
@@ -14,21 +14,24 @@ if [ $stage -le 0 ]; then
     for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --nj 12 \
       --epochs 24 \
       --resnet-size 8 \
       --embedding-size 1024 \
       --milestones 10,15,20 \
       --channels 64,128,256 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_wcmvn \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
       --dropout-p 0.25
   done
 fi
+
+stage=100
+
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
