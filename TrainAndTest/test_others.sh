@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=15
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -52,3 +52,20 @@ fi
 #    --lr 0.01 \
 #    --epochs 10
 
+if [ $stage -le 15 ]; then
+  model=ASTDNN
+  feat=fb40
+  for loss in soft ; do
+    echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+    python TrainAndTest/test_vox1.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
+      --nj 12 \
+      --model ${model} \
+      --embedding-size 128 \
+      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_18.pth
+      --loss-type soft \
+      --num-valid 2 \
+      --gpu-id 1
+  done
+fi
