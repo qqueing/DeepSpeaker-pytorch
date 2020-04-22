@@ -78,7 +78,8 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 # Training options
 # Model options
 # ALSTM  ASiResNet34  ExResNet34  LoResNet10  ResNet20  SiResNet34  SuResCNN10  TDNN
-parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiResNet34', 'SuResCNN10'],
+parser.add_argument('--model', type=str,
+                    choices=['ASTDNN', 'TDNN', 'LoResNet10', 'ResNet20', 'SiResNet34', 'SuResCNN10'],
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
