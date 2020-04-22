@@ -19,7 +19,7 @@ if [ $stage -le 0 ]; then
       --nj 12 \
       --epochs 24 \
       --resnet-size 8 \
-      --embedding-size 1024 \
+      --embedding-size 128 \
       --milestones 10,15,20 \
       --channels 64,128,256 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_wcmvn \
