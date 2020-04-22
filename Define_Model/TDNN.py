@@ -241,7 +241,7 @@ class NewTDNN(nn.Module):
         return x
 
 class XVectorTDNN(nn.Module):
-    def __init__(self, num_classes, embedding_size=512, input_dim=24, dropout_p=0.0, **kwargs):
+    def __init__(self, num_classes, embedding_size, input_dim, dropout_p=0.0, **kwargs):
         super(XVectorTDNN, self).__init__()
         self.num_classes = num_classes
         self.dropout_p = dropout_p
@@ -264,7 +264,7 @@ class XVectorTDNN(nn.Module):
             nn.ReLU(),
             nn.BatchNorm1d(embedding_size)
         )
-        self.classifier = nn.Linear(512, num_classes)
+        self.classifier = nn.Linear(embedding_size, num_classes)
         self.drop = nn.Dropout(p=self.dropout_p)
         # self.out_act = nn.Sigmoid()
         self.relu = ReLU()
@@ -310,7 +310,7 @@ class XVectorTDNN(nn.Module):
 
 
 class ASTDNN(nn.Module):
-    def __init__(self, num_classes, input_dim=24, embedding_size=512, dropout_p=0.0, **kwargs):
+    def __init__(self, num_classes, embedding_size, input_dim=24, dropout_p=0.0, **kwargs):
         super(ASTDNN, self).__init__()
         self.num_classes = num_classes
         self.dropout_p = dropout_p

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=10
+stage=5
 waited=0
 while [ `ps 45442 | wc -l` -eq 2 ]; do
   sleep 60
@@ -38,18 +38,18 @@ if [ $stage -le 5 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
-      --batch-size 64 \
+      --batch-size 80 \
       --epochs 18 \
-      --milestones 10,15  \
+      --milestones 11  \
       --feat-dim 40 \
-      --embedding-size 512 \
+      --embedding-size 128 \
       --num-valid 2 \
       --loss-type ${loss} \
-      --lr 0.01
+      --lr 0.001
   done
 fi
 
-stage=10
+stage=100
 if [ $stage -le 10 ]; then
   model=ASTDNN
   feat=fb40
