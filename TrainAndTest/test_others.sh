@@ -63,6 +63,7 @@ if [ $stage -le 15 ]; then
       --nj 12 \
       --model ${model} \
       --embedding-size 128 \
+      --feat-dim 40 \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_18.pth
       --loss-type soft \
       --num-valid 2 \

@@ -231,6 +231,7 @@ def main():
 
     model_kwargs = {'embedding_size': args.embedding_size,
                     'resnet_size': args.resnet_size,
+                    'input_dim': args.feat_dim
                     'num_classes': train_dir.num_spks,
                     'channels': channels,
                     'kernel_size': kernel_size,
