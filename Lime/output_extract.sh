@@ -45,7 +45,7 @@ if [ $stage -le 1 ]; then
     --check-path Data/checkpoint/LoResNet10/spect/soft_wcmvn \
     --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn \
     --dropout-p 0.25 \
-    --gpu-id 1 \
+    --gpu-id 0 \
     --embedding-size 128 \
     --sample-utt 2000
 #  done
