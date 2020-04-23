@@ -254,8 +254,8 @@ if [ $stage -le 11 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
-      --out-set spect/${name}_noc \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect \
+      --out-set ${name}_noc \
       --feat-type spectrogram \
       --nfft 320 \
       --windowsize 0.02
@@ -267,8 +267,8 @@ if [ $stage -le 12 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
-      --out-set pyfb/${name}_fb40 \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
+      --out-set ${name}_fb40 \
       --filter-type mel \
       --feat-type fbank \
       --nfft 320 \
@@ -291,8 +291,8 @@ if [ $stage -le 13 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
-      --out-set pyfb/${name}_fb24 \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
+      --out-set ${name}_fb24 \
       --filter-type mel \
       --feat-type fbank \
       --nfft 320 \
