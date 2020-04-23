@@ -80,6 +80,7 @@ parser.add_argument('--embedding-size', type=int, metavar='ES', help='Dimensiona
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
                     help='Dimensionality of the embedding')
 
+parser.add_argument('--nj', default=8, type=int, metavar='NJOB', help='num of job')
 parser.add_argument('--batch-size', type=int, default=1, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
@@ -121,7 +122,7 @@ if args.cuda:
     cudnn.benchmark = True
 
 # Define visulaize SummaryWriter instance
-kwargs = {'num_workers': 12, 'pin_memory': False} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
 transform = transforms.Compose([
