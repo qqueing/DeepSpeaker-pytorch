@@ -145,7 +145,7 @@ parser.add_argument('--m', type=int, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
+parser.add_argument('--lambda-max', type=float, default=1000, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
@@ -318,9 +318,7 @@ def main():
     elif args.loss_type == 'asoft':
         ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
-        lambda_max = int(all_iteration * args.lambda_max / 2) // 50 * 50
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':
@@ -332,6 +330,13 @@ def main():
     if args.loss_type == 'center':
         optimizer = torch.optim.SGD([{'params': xe_criterion.parameters(), 'lr': args.lr * 5},
                                      {'params': model.parameters()}],
+                                    lr=args.lr, weight_decay=args.weight_decay,
+                                    momentum=args.momentum)
+    elif args.loss_type == 'asoft' or 'amsoft':
+        classifier_params = list(map(id, model.classifier.parameters()))
+        rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
+        optimizer = torch.optim.SGD([{'params': classifier_params, 'lr': args.lr * 5},
+                                     {'params': rest_params}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
 

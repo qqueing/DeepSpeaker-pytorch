@@ -52,6 +52,7 @@ if [ $stage -le 1 ]; then
       --loss-type ${loss} \
       --loss-ratio 0.001 \
       --lr 0.01 \
+      --lambda-max 1200 \
       --margin 0.35 \
       --s 15 \
       --m 3 \
