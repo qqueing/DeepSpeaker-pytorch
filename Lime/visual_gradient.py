@@ -134,11 +134,11 @@ def main():
 
     m = np.arange(0, 2840)
     m = 700 * (10 ** (m / 2595.0) - 1)
-    n = np.array([m[i] - m[i - 1] for i in range(1, len(m) - 1)])
+    n = np.array([m[i] - m[i - 1] for i in range(1, len(m))])
     n = 1 / n
 
-    f = interpolate.interp1d(m[1:-1], n)
-    xnew = np.arange(np.min(m[1:-1]), np.max(m[1:-1]), (np.max(m[1:-1]) - np.min(m[1:-1])) / 160)
+    f = interpolate.interp1d(m[1:], n)
+    xnew = np.arange(np.min(m[1:]), np.max(m[1:]), (np.max(m[1:]) - np.min(m[1:])) / 161)
     ynew = f(xnew)
     ynew = ynew / ynew.sum()
     plt.plot(xnew, ynew)

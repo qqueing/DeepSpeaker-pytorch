@@ -30,7 +30,7 @@ fi
 if [ $stage -le 5 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/epoch_24 \
+      --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn/epoch_24 \
       --feat-dim 161
 #    python Lime/visual_gradient.py \
 #      --extract-path Data/gradient/LoResNet10/center_dp0.00/epoch_36 \
