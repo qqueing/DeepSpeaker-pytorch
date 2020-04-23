@@ -215,8 +215,8 @@ def main():
     # test_display_triplet_distance = False
     # print the experiment configuration
     print('\nCurrent time is \33[91m{}\33[0m.'.format(str(time.asctime())))
-    print('Parsed options: {}'.format(vars(args)))
-    print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
+    # print('Parsed options: {}'.format(vars(args)))
+    # print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
     # instantiate model and initialize weights
     kernel_size = args.kernel_size.split(',')
@@ -240,6 +240,10 @@ def main():
 
     print('Model options: {}'.format(model_kwargs))
     model = create_model(args.model, **model_kwargs)
+    if args.loss_type == 'asoft':
+        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+    elif args.loss_type == 'amsoft':
+        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
 
     if os.path.isfile(args.resume):
         print('=> loading checkpoint {}'.format(args.resume))
@@ -254,11 +258,6 @@ def main():
         model.dropout.p = args.dropout_p
     else:
         print('=> no checkpoint found at {}'.format(args.resume))
-
-    if args.loss_type == 'asoft':
-        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-    elif args.loss_type == 'amsoft':
-        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
 
     start = args.start_epoch
     print('Epoch is : ' + str(start))

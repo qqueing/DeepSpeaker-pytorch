@@ -18,7 +18,8 @@ fi
 if [ $stage -le 5 ]; then
   model=LoResNet10
 #  --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128/checkpoint_24.pth \
-  for loss in soft ; do
+#  for loss in soft ; do
+  for loss in asoft amsoft center ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
@@ -26,8 +27,8 @@ if [ $stage -le 5 ]; then
       --nj 12 \
       --model ${model} \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_wcmvn/checkpoint_24.pth \
-      --loss-type soft \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_24.pth \
+      --loss-type ${loss} \
       --num-valid 2 \
       --gpu-id 1
   done
