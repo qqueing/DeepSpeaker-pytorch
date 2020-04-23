@@ -27,7 +27,7 @@ if [ $stage -le 5 ]; then
       --nj 12 \
       --model ${model} \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_wcmvn/checkpoint_24.pth \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_38.pth \
       --loss-type ${loss} \
       --num-valid 2 \
       --gpu-id 1
