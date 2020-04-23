@@ -176,6 +176,7 @@ if [ $stage -le 6 ]; then
 #      --loss-type ${loss}
 
     python TrainAndTest/Spectrogram/train_lores10_var.py \
+      --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
       --nj 14 \
@@ -190,7 +191,7 @@ if [ $stage -le 6 ]; then
       --input-per-spks 256 \
       --num-valid 2 \
       --weight-decay 0.001 \
-      --dropout-p 0.5 \
+      --dropout-p 0.25 \
       --loss-type ${loss}
   done
 fi
