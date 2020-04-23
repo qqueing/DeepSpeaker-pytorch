@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=0
+stage=1
 
 waited=0
 while [ `ps 113458 | wc -l` -eq 2 ]; do
@@ -11,7 +11,7 @@ done
 
 #stage=1
 if [ $stage -le 0 ]; then
-    for loss in soft ; do # 32,128,512; 8,32,128
+  for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
@@ -31,7 +31,7 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-stage=100
+#stage=100
 
 
 if [ $stage -le 1 ]; then
@@ -39,26 +39,26 @@ if [ $stage -le 1 ]; then
   for loss in asoft amsoft center; do
     echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wmcvn \
       --nj 12 \
       --resnet-size 8 \
       --epochs 14 \
       --milestones 6,10 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_wcmvn \
+      --resume Data/checkpoint/LoResNet10/spect/soft_wcmvn/checkpoint_24.pth \
       --loss-type ${loss} \
-      --loss-ratio 0.01 \
+      --loss-ratio 0.001 \
       --lr 0.01 \
-      --margin 0.3 \
-      --s 30 \
+      --margin 0.35 \
+      --s 15 \
       --m 3 \
       --num-valid 2 \
       --dropout-p 0.25
   done
 fi
 
-#stage=12
+stage=100
 # kernel size trianing
 if [ $stage -le 4 ]; then
   for kernel in '3,3' '3,7' '5,7' ; do
