@@ -227,7 +227,7 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=500):
             inputs_uids = []
 
     print('Saving pairs in %s.\n' % file_dir)
-
+    torch.cuda.empty_cache()
 
 def test_extract(test_loader, model, file_dir, set_name, save_per_num=250):
     # switch to evaluate mode
@@ -280,6 +280,8 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=250):
 
             input_grads = []
             inputs_uids = []
+
+    torch.cuda.empty_cache()
 
 def main():
     class_to_idx = train_dir.spk_to_idx
