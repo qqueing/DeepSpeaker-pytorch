@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=11
+stage=7
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -167,9 +167,11 @@ if [ $stage -eq 7 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_spect_noc \
-      --feat-type spectrogram
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect \
+      --out-set ${name}_noc \
+      --feat-type spectrogram \
+      --nfft 320 \
+      --windowsize 0.02
   done
 fi
 
@@ -178,13 +180,17 @@ if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_fb64 \
-      --feat-type fbank
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/pyfb \
+      --out-set ${name}_fb24 \
+      --feat-type fbank \
+      --filter-type mel \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --filters 24
   done
 fi
 
-#stage=9
+stage=100
 if [ $stage -le 9 ]; then
   for name in train test ; do
 #    python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -220,35 +226,35 @@ if [ $stage -le 9 ]; then
 fi
 
 stage=100
-if [ $stage -le 10 ]; then
-  for name in train test ; do
-    python Process_Data/Compute_Feat/make_feat_kaldi.py \
-      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_mfcc_20 \
-      --filter-type mel \
-      --feat-type mfcc \
-      --nfft 320 \
-      --lowfreq 20 \
-      --windowsize 0.02 \
-      --filters 30 \
-      --numcep 24
+#if [ $stage -le 10 ]; then
+#  for name in train test ; do
+#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+#      --out-set ${name}_mfcc_20 \
+#      --filter-type mel \
+#      --feat-type mfcc \
+#      --nfft 320 \
+#      --lowfreq 20 \
+#      --windowsize 0.02 \
+#      --filters 30 \
+#      --numcep 24
+#
+#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
+#      --out-set ${name}_mfcc_dnn_20 \
+#      --filter-type dnn.timit \
+#      --feat-type mfcc \
+#      --nfft 320 \
+#      --lowfreq 20 \
+#      --windowsize 0.02 \
+#      --filters 30 \
+#      --numcep 24
+#  done
+#fi
 
-    python Process_Data/Compute_Feat/make_feat_kaldi.py \
-      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
-      --out-set ${name}_mfcc_dnn_20 \
-      --filter-type dnn.timit \
-      --feat-type mfcc \
-      --nfft 320 \
-      --lowfreq 20 \
-      --windowsize 0.02 \
-      --filters 30 \
-      --numcep 24
-  done
-fi
-
-stage=11
+stage=100
 # libri
 if [ $stage -le 11 ]; then
   for name in dev test ; do
