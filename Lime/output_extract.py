@@ -207,7 +207,7 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=500):
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Saving {} : [{:8d}/{:8d} ({:3.0f}%)] '.format(
                 uid,
-                batch_idx * len(data),
+                batch_idx + 1,
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader)))
 
@@ -260,7 +260,7 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=250):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Saving pair [{:8d}/{:8d} ({:3.0f}%)] '.format(
-                batch_idx,
+                batch_idx + 1,
                 len(test_loader),
                 100. * batch_idx / len(test_loader)))
 
