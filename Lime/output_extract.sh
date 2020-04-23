@@ -38,14 +38,14 @@ if [ $stage -le 1 ]; then
     --model LoResNet10 \
     --start-epochs 24 \
     --epochs 24 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --loss-type soft \
-    --check-path Data/checkpoint/LoResNet10/spect/soft_dp25_128 \
-    --extract-path Data/gradient \
-    --dropout-p 0 \
-    --gpu-id 0 \
+    --check-path Data/checkpoint/LoResNet10/spect/soft_wcmvn \
+    --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn \
+    --dropout-p 0.25 \
+    --gpu-id 1 \
     --embedding-size 128 \
     --sample-utt 2000
 #  done
