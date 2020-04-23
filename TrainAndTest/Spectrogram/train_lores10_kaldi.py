@@ -332,7 +332,7 @@ def main():
                                      {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
-    elif args.loss_type == 'asoft' or 'amsoft':
+    elif args.loss_type == 'asoft' or args.loss_type == 'amsoft':
         classifier_params = list(map(id, model.classifier.parameters()))
         rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
         optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
