@@ -46,6 +46,7 @@ if [ $stage -le 1 ]; then
       --resnet-size 8 \
       --epochs 14 \
       --milestones 6,10 \
+      --embedding-size 128 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_wcmvn \
       --resume Data/checkpoint/LoResNet10/spect/soft_wcmvn/checkpoint_24.pth \
       --loss-type ${loss} \
