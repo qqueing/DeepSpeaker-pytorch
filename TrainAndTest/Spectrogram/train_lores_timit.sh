@@ -183,8 +183,8 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet10/${datasets}_spect/${loss}_var \
-      --resume Data/checkpoint/LoResNet10/${datasets}_spect/${loss}_var/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_var \
+      --resume Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_var/checkpoint_1.pth \
       --channels 4,16,64 \
       --statis-pooling \
       --embedding-size 128 \
