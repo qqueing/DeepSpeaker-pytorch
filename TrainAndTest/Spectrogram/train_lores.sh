@@ -40,7 +40,7 @@ if [ $stage -le 1 ]; then
     echo -e "\n\033[1;4;31m Finetuning with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wmcvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --nj 12 \
       --resnet-size 8 \
       --epochs 14 \
