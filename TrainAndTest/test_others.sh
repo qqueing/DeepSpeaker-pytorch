@@ -85,12 +85,12 @@ if [ $stage -le 20 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
       --nj 12 \
       --model ${model} \
-      --channels 8,32,128 \
+      --channels 4,32,128 \
       --embedding-size 128 \
       --feat-dim 40 \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_128_0.5/checkpoint_15.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_128_0.25/checkpoint_15.pth \
       --loss-type soft \
-      --dropout-p 0.5 \
+      --dropout-p 0.25 \
       --num-valid 1 \
       --gpu-id 1
   done
