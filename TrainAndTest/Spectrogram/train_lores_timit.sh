@@ -64,14 +64,15 @@ if [ $stage -le 6 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
       --nj 14 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet10/${datasets}/spect/${loss} \
       --resume Data/checkpoint/LoResNet10/${datasets}/spect/${loss}/checkpoint_1.pth \
+      --kernel-size 3,3 \
       --channels 8,32,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
