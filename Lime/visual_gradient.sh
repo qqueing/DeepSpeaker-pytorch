@@ -28,9 +28,10 @@ fi
 
 
 if [ $stage -le 5 ]; then
+#Data/gradient/LoResNet10/libri/spect/soft_128_0.25/epoch_15/
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/LoResNet10/libri/spect_wcmvn/soft/epoch_15 \
+      --extract-path Data/gradient/LoResNet10/libri/spect/soft_128_0.25/epoch_15 \
       --feat-dim 161
 #    python Lime/visual_gradient.py \
 #      --extract-path Data/gradient/LoResNet10/center_dp0.00/epoch_36 \
