@@ -85,8 +85,8 @@ if [ $stage -le 5 ]; then
 
   python Lime/output_extract.py \
     --model LoResNet10 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/libri/spect/dev_wcmvn \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/libri/spect/test_wcmvn \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
     --start-epochs 15 \
     --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss} \
     --epochs 15 \
