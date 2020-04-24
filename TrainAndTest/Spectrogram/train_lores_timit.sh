@@ -60,7 +60,7 @@ if [ $stage -le 6 ]; then
   model=LoResNet10
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-  for loss in amsoft center ; do
+  for loss in soft amsoft center ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
@@ -70,9 +70,9 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet10/${datasets}/spect/${loss}_128_025 \
-      --resume Data/checkpoint/LoResNet10/${datasets}/spect/${loss}_128_025/checkpoint_1.pth \
-      --channels 4,32,128 \
+      --check-path Data/checkpoint/LoResNet10/${datasets}/spect/${loss}_128_01 \
+      --resume Data/checkpoint/LoResNet10/${datasets}/spect/${loss}_128_01/checkpoint_1.pth \
+      --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
@@ -82,7 +82,7 @@ if [ $stage -le 6 ]; then
       --m 3 \
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
-      --dropout-p 0.25 \
+      --dropout-p 0.1 \
       --loss-type ${loss}
 
 #    python TrainAndTest/Spectrogram/train_lores10_var.py \
