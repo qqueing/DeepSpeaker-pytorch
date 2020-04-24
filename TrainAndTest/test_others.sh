@@ -76,7 +76,7 @@ fi
 
 if [ $stage -le 20 ]; then
   model=LoResNet10
-  feat=spect_wcmvn
+  feat=spect
   datasets=libri
   for loss in soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
