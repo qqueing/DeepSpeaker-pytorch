@@ -106,6 +106,8 @@ parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
+parser.add_argument('--alpha', default=12, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
@@ -284,6 +286,7 @@ def main():
                     'num_classes': train_dir.num_spks,
                     'channels': channels,
                     'avg_size': args.avg_size,
+                    'alpha': args.alpha,
                     'kernel_size': kernel_size,
                     'padding': padding,
                     'dropout_p': args.dropout_p}

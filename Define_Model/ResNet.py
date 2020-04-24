@@ -778,7 +778,7 @@ class LocalResNet(nn.Module):
 
     def __init__(self, embedding_size, num_classes, block=BasicBlock,
                  resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
-                 statis_pooling=False,
+                 statis_pooling=False, alpha=12,
                  avg_size=4, kernal_size=5, padding=2, **kwargs):
 
         super(LocalResNet, self).__init__()
@@ -790,6 +790,7 @@ class LocalResNet(nn.Module):
                        101: [3, 4, 23, 3]}
 
         layers = resnet_type[resnet_size]
+        self.alpha = alpha
         self.layers = layers
         self.dropout_p = dropout_p
 
@@ -915,7 +916,7 @@ class LocalResNet(nn.Module):
         x = x.view(x.size(0), -1)
 
         x = self.fc(x)
-        x = self.l2_norm(x, alpha=12)
+        x = self.l2_norm(x, alpha=self.alpha)
 
         logits = self.classifier(x)
 
