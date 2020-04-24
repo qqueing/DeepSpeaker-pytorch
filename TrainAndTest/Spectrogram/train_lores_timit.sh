@@ -78,7 +78,7 @@ if [ $stage -le 6 ]; then
       --input-per-spks 256 \
       --num-valid 2 \
       --weight-decay 0.001 \
-      --dropout-p 0.25 \
+      --dropout-p 0.5 \
       --loss-type ${loss}
 
 #    python TrainAndTest/Spectrogram/train_lores10_var.py \
