@@ -19,7 +19,7 @@ if [ $stage -le 0 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_wcmvn \
       --nj 14 \
-      --epochs 15 \
+      --epochs 14 \
       --lr 0.1 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss} \
@@ -28,7 +28,7 @@ if [ $stage -le 0 ]; then
       --statis-pooling \
       --embedding-size 128 \
       --input-per-spks 256 \
-      --num-valid 2 \
+      --num-valid 1 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
       --loss-type ${loss}
@@ -38,7 +38,7 @@ if [ $stage -le 0 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_wcmvn \
       --nj 14 \
-      --epochs 15 \
+      --epochs 14 \
       --lr 0.1 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_var \
@@ -47,7 +47,7 @@ if [ $stage -le 0 ]; then
       --statis-pooling \
       --embedding-size 128 \
       --input-per-spks 256 \
-      --num-valid 2 \
+      --num-valid 1 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
       --loss-type ${loss}
