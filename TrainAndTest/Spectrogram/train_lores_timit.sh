@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #stage=3
-stage=0
+stage=6
 
 waited=0
 while [ `ps 128196 | wc -l` -eq 2 ]; do
@@ -53,15 +53,19 @@ if [ $stage -le 0 ]; then
       --loss-type ${loss}
   done
 fi
-stage=100
+
+stage=6
 if [ $stage -le 6 ]; then
   datasets=libri
+  model=LoResNet10
+#  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+#  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+      --model  \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
       --nj 14 \
       --epochs 15 \
       --lr 0.1 \
@@ -79,8 +83,8 @@ if [ $stage -le 6 ]; then
 
     python TrainAndTest/Spectrogram/train_lores10_var.py \
       --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
       --nj 14 \
       --epochs 15 \
       --lr 0.1 \
