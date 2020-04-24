@@ -133,6 +133,8 @@ parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
 # loss configure
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--finetune', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
@@ -335,13 +337,14 @@ def main():
                                      {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
-    elif args.loss_type == 'asoft' or args.loss_type == 'amsoft':
-        classifier_params = list(map(id, model.classifier.parameters()))
-        rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
-        optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
-                                     {'params': rest_params}],
-                                    lr=args.lr, weight_decay=args.weight_decay,
-                                    momentum=args.momentum)
+    if args.finetune:
+        if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
+            classifier_params = list(map(id, model.classifier.parameters()))
+            rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
+            optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
+                                         {'params': rest_params}],
+                                        lr=args.lr, weight_decay=args.weight_decay,
+                                        momentum=args.momentum)
 
     if args.scheduler == 'exp':
         scheduler = ExponentialLR(optimizer, gamma=args.gamma)
