@@ -88,7 +88,7 @@ if [ $stage -le 20 ]; then
       --channels 4,16,64 \
       --embedding-size 128 \
       --feat-dim 40 \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_15.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var/checkpoint_15.pth \
       --loss-type soft \
       --dropout-p 0.25 \
       --num-valid 2 \
