@@ -64,8 +64,8 @@ if [ $stage -le 6 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
       --nj 14 \
       --epochs 15 \
       --lr 0.1 \
@@ -82,7 +82,7 @@ if [ $stage -le 6 ]; then
       --m 3 \
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
-      --dropout-p 0.0 \
+      --dropout-p 0.1 \
       --loss-type ${loss}
 
 #    python TrainAndTest/Spectrogram/train_lores10_var.py \
