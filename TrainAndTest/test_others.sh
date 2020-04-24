@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=20
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -54,7 +54,7 @@ fi
 #    --lr 0.01 \
 #    --epochs 10
 
-stage=100
+stage=20
 if [ $stage -le 15 ]; then
   model=ASTDNN
   feat=fb40
@@ -69,6 +69,28 @@ if [ $stage -le 15 ]; then
       --feat-dim 40 \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_18.pth
       --loss-type soft \
+      --num-valid 2 \
+      --gpu-id 1
+  done
+fi
+
+if [ $stage -le 20 ]; then
+  model=LoResNet10
+  feat=spect_wcmvn
+  datasets=libri
+  for loss in soft ; do
+    echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+    python TrainAndTest/test_vox1.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
+      --nj 12 \
+      --model ${model} \
+      --channels 4,16,64 \
+      --embedding-size 128 \
+      --feat-dim 40 \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_15.pth \
+      --loss-type soft \
+      --dropout-p 0.25 \
       --num-valid 2 \
       --gpu-id 1
   done
