@@ -77,7 +77,7 @@ if [ $stage -le 6 ]; then
       --input-per-spks 256 \
       --num-valid 1 \
       --alpha 12 \
-      --margin 0.3 \
+      --margin 0.4 \
       --s 30 \
       --m 3 \
       --loss-ratio 0.05 \
