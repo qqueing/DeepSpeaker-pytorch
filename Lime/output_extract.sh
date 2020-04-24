@@ -80,21 +80,21 @@ fi
 if [ $stage -le 5 ]; then
   model=LoResNet10
   datasets=libri
-  feat=spect_wcmvn
+  feat=spect
   loss=soft
 
   python Lime/output_extract.py \
     --model LoResNet10 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
     --start-epochs 15 \
-    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss} \
+    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss}_128_0.25 \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --sample-utt 1500 \
     --embedding-size 128 \
-    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss} \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_128_0.25 \
     --model ${model} \
-    --channels 4,16,64 \
+    --channels 4,32,128 \
     --dropout-p 0.25
 fi
