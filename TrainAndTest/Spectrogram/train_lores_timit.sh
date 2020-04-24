@@ -16,7 +16,7 @@ if [ $stage -le 0 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_wcmvn \
       --nj 14 \
       --epochs 15 \
@@ -35,7 +35,7 @@ if [ $stage -le 0 ]; then
 
     python TrainAndTest/Spectrogram/train_lores10_var.py \
       --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_wcmvn \
       --nj 14 \
       --epochs 15 \
