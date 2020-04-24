@@ -72,7 +72,7 @@ if [ $stage -le 6 ]; then
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet10/${datasets}/spect/${loss} \
       --resume Data/checkpoint/LoResNet10/${datasets}/spect/${loss}/checkpoint_1.pth \
-      --channels 4,32,128 \
+      --channels 8,32,128 \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
