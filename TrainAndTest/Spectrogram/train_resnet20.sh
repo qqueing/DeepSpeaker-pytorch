@@ -12,8 +12,8 @@ if [ $stage -le 0 ]; then
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
     python TrainAndTest/Spectrogram/train_resnet20_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257 \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257_wcmvn \
       --embedding-size 128 \
       --batch-size 32 \
       --test-batch-size 2 \
@@ -23,8 +23,8 @@ if [ $stage -le 0 ]; then
       --milestones 10,15,20 \
       --lr 0.1 \
       --veri-pairs 12800 \
-      --check-path Data/checkpoint/ResNet20/spect_257/${loss}_dp0.5 \
-      --resume Data/checkpoint/ResNet20/spect_257/${loss}_dp0.5/checkpoint_1.pth \
+      --check-path Data/checkpoint/ResNet20/spect_257_wcmvn/${loss}_dp0.5 \
+      --resume Data/checkpoint/ResNet20/spect_257_wcmvn/${loss}_dp0.5/checkpoint_1.pth \
       --loss-type ${loss} \
       --dropout-p 0.5
   done
