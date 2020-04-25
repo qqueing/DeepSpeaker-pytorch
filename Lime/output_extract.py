@@ -270,7 +270,7 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=250):
             # checkpoint_dir / extract / < dataset > / < set >.*.bin
 
             filename = file_dir + '/%s.%d.bin' % (set_name, num)
-            print('Saving pairs in %s.' % filename)
+            # print('Saving pairs in %s.' % filename)
 
             with open(filename, 'wb') as f:
                 pickle.dump(input_grads, f)
@@ -280,7 +280,7 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=250):
 
             input_grads = []
             inputs_uids = []
-
+    print('Saving pairs into %s.' % file_dir)
     torch.cuda.empty_cache()
 
 def main():
