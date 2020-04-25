@@ -20,6 +20,23 @@ from scipy.fft import dct
 import Process_Data.constants as c
 
 
+def hz2amel(hz):
+    """Convert a value in Hertz to Mels
+
+    :param hz: a value in Hz. This can also be a numpy array, conversion proceeds element-wise.
+    :returns: a value in Mels. If an array was passed in, an identical sized array is returned.
+    """
+    return 2595 * np.log10(1 + (8000 - hz) / 700.)
+
+
+def amel2hz(mel):
+    """Convert a value in Mels to Hertz
+
+    :param mel: a value in Mels. This can also be a numpy array, conversion proceeds element-wise.
+    :returns: a value in Hertz. If an array was passed in, an identical sized array is returned.
+    """
+    return 8000 - 700 * (10 ** (mel / 2595.0) - 1)
+
 def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
                     highfreq=None, filtertype='mel'):
     """Compute a Mel-filterbank. The filters are stored in the rows, the columns correspond
@@ -43,6 +60,13 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
         melpoints = np.linspace(lowmel, highmel, nfilt + 2)
         # our points are in Hz, but we use fft bins, so we have to convert from Hz to fft bin number
         bin = np.floor((nfft + 1) * mel2hz(melpoints) / samplerate)
+    elif filtertype == 'amel':
+        # compute points evenly spaced in mels
+        lowmel = hz2amel(lowfreq)
+        highmel = hz2amel(highfreq)
+        melpoints = np.linspace(lowmel, highmel, nfilt + 2)
+        # our points are in Hz, but we use fft bins, so we have to convert from Hz to fft bin number
+        bin = np.floor((nfft + 1) * amel2hz(melpoints) / samplerate)
 
     elif filtertype == 'linear':
         linearpoints = np.linspace(lowfreq, highfreq, nfilt + 2)
