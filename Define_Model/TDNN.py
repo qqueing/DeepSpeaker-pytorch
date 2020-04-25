@@ -264,6 +264,8 @@ class XVectorTDNN(nn.Module):
             nn.BatchNorm1d(embedding_size)
         )
         self.classifier = nn.Linear(embedding_size, num_classes)
+        self.bn = nn.BatchNorm1d(num_classes)
+
         self.drop = nn.Dropout(p=self.dropout_p)
         # self.out_act = nn.Sigmoid()
 
@@ -303,7 +305,8 @@ class XVectorTDNN(nn.Module):
         x = self.segment6(x)
         embedding_b = self.segment7(x)
 
-        logits = self.classifier(embedding_b)
+        x = self.classifier(embedding_b)
+        logits = self.bn(x)
 
         return logits, embedding_b
 
