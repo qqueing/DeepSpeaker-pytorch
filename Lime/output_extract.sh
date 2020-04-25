@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=2
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -50,32 +50,46 @@ if [ $stage -le 1 ]; then
     --sample-utt 2000
 #  done
 fi
-stage=5
+stage=2
 
 if [ $stage -le 2 ]; then
   model=LoResNet10
-  dataset=timit
-  feat=spect_161
+  datasets=timit
+  feat=spect
   loss=soft
 
   python Lime/output_extract.py \
     --model LoResNet10 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
+    --start-epochs 15 \
+    --check-path Data/checkpoint/LoResNet10/timit_spect/soft_fix \
+    --epochs 15 \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --sample-utt 1500 \
+    --embedding-size 128 \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_fix \
+    --model ${model} \
+    --channels 4,16,64 \
+    --dropout-p 0.25
+
+  python Lime/output_extract.py \
+    --model LoResNet10 \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
     --start-epochs 15 \
     --check-path Data/checkpoint/LoResNet10/timit_spect/soft_var \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --sample-utt 1500 \
     --embedding-size 128 \
-    --extract-path Data/gradient/${model}/${dataset}/${feat}/${loss}_var_1500 \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
     --model ${model} \
     --channels 4,16,64 \
-    --dropout-p 0.0 \
-    --epoch 20
+    --dropout-p 0.25
 fi
 
-#stage=50
+stage=50
 
 if [ $stage -le 5 ]; then
   model=LoResNet10
