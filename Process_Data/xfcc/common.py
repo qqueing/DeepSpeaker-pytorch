@@ -110,6 +110,8 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
             y = np.array(c.TIMIT_FIlTER_FIX)
         elif filtertype.endswith('var'):
             y = np.array(c.TIMIT_FIlTER_VAR)
+        elif filtertype.endswith('mdv'):
+            y = np.array(c.TIMIT_FIlTER_MDV)
 
         f = interpolate.interp1d(x, y)
         x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
