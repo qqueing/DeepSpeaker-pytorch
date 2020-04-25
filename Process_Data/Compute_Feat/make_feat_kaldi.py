@@ -161,7 +161,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
     utt2dur_f.close()
     feat_ark_f.close()
     utt2num_frames_f.close()
-    print('\n>> Process {} finished!'.format(os.getpid()))
+    # print('\n>> Process {} finished!'.format(os.getpid()))
 
 
 if __name__ == "__main__":
