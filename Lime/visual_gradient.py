@@ -61,7 +61,7 @@ def main():
                 for (data, grad) in sets:
                     # train_data[1] += np.mean(np.abs(grad), axis=0)
                     this_weight = np.var(grad, axis=0)
-                    train_data[1] += this_weight / this_weight.sum()
+                    train_data[1] += this_weight
                     # train_data[1] += np.mean(grad, axis=0)
                     train_data[0] += np.mean(data, axis=0)
                     num_utt += 1
@@ -76,7 +76,7 @@ def main():
                 for (data, grad) in sets:
                     # valid_data[1] += np.mean(np.abs(grad), axis=0)
                     this_weight = np.var(grad, axis=0)
-                    valid_data[1] += this_weight / this_weight.sum()
+                    valid_data[1] += this_weight
                     # valid_data[1] += np.mean(grad, axis=0)
                     valid_data[0] += np.mean(data, axis=0)
                     num_utt += 1
@@ -95,10 +95,10 @@ def main():
                     # test_data[1][0] += np.mean(np.abs(grad_a), axis=0)
                     # test_data[1][1] += np.mean(np.abs(grad_b), axis=0)
                     this_weight_a = np.var(grad_a, axis=0)
-                    test_data[1][0] += this_weight_a / this_weight_a.sum()
+                    test_data[1][0] += this_weight_a
 
                     this_weight_b = np.var(grad_b, axis=0)
-                    test_data[1][1] += this_weight_b / this_weight_b.sum()
+                    test_data[1][1] += this_weight_b
 
                     # test_data[1][0] += np.mean(grad_a, axis=0)
                     # test_data[1][1] += np.mean(grad_b, axis=0)
