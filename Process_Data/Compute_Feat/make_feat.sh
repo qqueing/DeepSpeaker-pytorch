@@ -235,9 +235,9 @@ if [ $stage -le 9 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/pyfb \
-      --out-set ${name}_fb30_var \
+      --out-set ${name}_dfb30_var \
       --filter-type dnn.timit.var \
-      --feat-type fbank \
+      --feat-type dnn.timit.var \
       --nfft 320 \
       --windowsize 0.02 \
       --filters 30
