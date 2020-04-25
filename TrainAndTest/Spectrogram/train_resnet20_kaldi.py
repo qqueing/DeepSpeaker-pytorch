@@ -278,21 +278,6 @@ def main():
                     'state_dict': model.state_dict()},
                    check_path)
         # torch.save(model, check_path)
-
-    ce_criterion = nn.CrossEntropyLoss()
-    if args.loss_type == 'soft':
-        xe_criterion = None
-    elif args.loss_type == 'asoft':
-        ce_criterion = None
-        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
-    elif args.loss_type == 'center':
-        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
-    elif args.loss_type == 'amsoft':
-        ce_criterion = None
-        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
-        xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
-
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
@@ -309,6 +294,20 @@ def main():
             #     ce = checkpoint['criterion']
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
+
+    ce_criterion = nn.CrossEntropyLoss()
+    if args.loss_type == 'soft':
+        xe_criterion = None
+    elif args.loss_type == 'asoft':
+        ce_criterion = None
+        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+    elif args.loss_type == 'center':
+        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
+    elif args.loss_type == 'amsoft':
+        ce_criterion = None
+        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
+        xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     if args.loss_type == 'center':
