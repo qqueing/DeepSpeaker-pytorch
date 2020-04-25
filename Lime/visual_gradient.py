@@ -135,7 +135,7 @@ def main():
     plt.rc('font', family='Times New Roman')
 
     plt.figure(figsize=(8, 6))
-    plt.title('Gradient Distributions', fontsize=22)
+    # plt.title('Gradient Distributions', fontsize=22)
     plt.xlabel('Frequency (Hz)', fontsize=16)
     plt.xticks(fontsize=16)
     plt.ylabel('Weight', fontsize=16)
