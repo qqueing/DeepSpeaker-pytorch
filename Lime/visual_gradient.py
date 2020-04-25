@@ -158,15 +158,15 @@ def main():
         f = interpolate.interp1d(x, s)
         xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / args.feat_dim)
         ynew = f(xnew)
-        ynew = ynew - ynew.min()
+        # ynew = ynew - ynew.min()
         ynew = ynew / ynew.sum()
         plt.plot(xnew, ynew)
         # pdb.set_trace
     # if not os.path.exists(args.extract_path + '/grad.npy'):
     ynew = test_a_set_grad + test_b_set_grad
-    ynew = ynew - ynew.min()
+    # ynew = ynew - ynew.min()
     ynew = ynew / ynew.sum()
-    np.save(args.extract_path + '/test.grad.npy', ynew)
+    np.save(args.extract_path + '/grad.test.npy', ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
     plt.legend(['Mel', 'Train', 'Test'], loc='upper right', fontsize=16)
