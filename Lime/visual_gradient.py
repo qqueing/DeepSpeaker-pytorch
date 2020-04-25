@@ -52,37 +52,37 @@ def main():
         valid_lst = list(dir_path.glob('*valid*bin'))
         test_lst = list(dir_path.glob('*test*bin'))
 
-        train_data = np.zeros((2, args.feat_dim))  # [data/grad]
+        train_data = np.zeros((3, args.feat_dim))  # [data/grad]
         num_utt = 0
         for t in train_lst:
             p = str(t)
             with open(p, 'rb') as f:
                 sets = pickle.load(f)
                 for (data, grad) in sets:
-                    train_data[1] += np.mean(np.abs(grad), axis=0)
-                    # this_weight = np.variance_var(grad, axis=0)
-                    # train_data[1] += this_weight  # / this_weight.sum()
+                    train_data[1] += np.sum(np.abs(grad), axis=0)
+                    this_weight = np.variance_var(grad, axis=0)
+                    train_data[2] += this_weight  # / this_weight.sum()
                     # train_data[1] += np.mean(grad, axis=0)
                     train_data[0] += np.mean(data, axis=0)
                     num_utt += 1
         train_data = train_data / num_utt
 
-        valid_data = np.zeros((2, args.feat_dim))  # [data/grad]
+        valid_data = np.zeros((3, args.feat_dim))  # [data/grad]
         num_utt = 0
         for t in valid_lst:
             p = str(t)
             with open(p, 'rb') as f:
                 sets = pickle.load(f)
                 for (data, grad) in sets:
-                    valid_data[1] += np.mean(np.abs(grad), axis=0)
-                    # this_weight = np.variance_var(grad, axis=0)
-                    # valid_data[1] += this_weight  #/ this_weight.sum()
+                    valid_data[1] += np.sum(np.abs(grad), axis=0)
+                    this_weight = np.var(grad, axis=0)
+                    valid_data[2] += this_weight  # / this_weight.sum()
                     # valid_data[1] += np.mean(grad, axis=0)
                     valid_data[0] += np.mean(data, axis=0)
                     num_utt += 1
         valid_data = valid_data / num_utt
 
-        test_data = np.zeros((2, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
+        test_data = np.zeros((3, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
         num_utt = 0
         for t in test_lst:
             p = str(t)
@@ -92,13 +92,14 @@ def main():
                     test_data[0][0] += np.mean(data_a, axis=0)
                     test_data[0][1] += np.mean(data_b, axis=0)
 
-                    test_data[1][0] += np.mean(np.abs(grad_a), axis=0)
-                    test_data[1][1] += np.mean(np.abs(grad_b), axis=0)
-                    # this_weight_a = np.variance_var(grad_a, axis=0)
-                    # test_data[1][0] += this_weight_a  #/ this_weight_a.sum()
-                    #
-                    # this_weight_b = np.variance_var(grad_b, axis=0)
-                    # test_data[1][1] += this_weight_b  #/ this_weight_b.sum()
+                    test_data[1][0] += np.sum(np.abs(grad_a), axis=0)
+                    test_data[1][1] += np.sum(np.abs(grad_b), axis=0)
+
+                    this_weight_a = np.variance_var(grad_a, axis=0)
+                    test_data[2][0] += this_weight_a  # / this_weight_a.sum()
+
+                    this_weight_b = np.variance_var(grad_b, axis=0)
+                    test_data[2][1] += this_weight_b  #/ this_weight_b.sum()
 
                     num_utt += 1
 
