@@ -10,7 +10,6 @@
 @Overview:
 """
 import argparse
-import os
 import pathlib
 import pickle
 import random
@@ -163,8 +162,11 @@ def main():
         ynew = ynew / ynew.sum()
         plt.plot(xnew, ynew)
         # pdb.set_trace
-        if not os.path.exists(args.extract_path + '/grad.npy'):
-            np.save(args.extract_path + '/grad.npy', ynew)
+    # if not os.path.exists(args.extract_path + '/grad.npy'):
+    ynew = test_a_set_grad + test_b_set_grad
+    ynew = ynew - ynew.min()
+    ynew = ynew / ynew.sum()
+    np.save(args.extract_path + '/test.grad.npy', ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
     plt.legend(['Mel', 'Train', 'Test'], loc='upper right', fontsize=16)
