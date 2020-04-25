@@ -42,12 +42,12 @@ def main():
     dir_path = pathlib.Path(args.extract_path)
 
     # inputs [train/valid/test]
-    if os.path.exists(args.extract_path + '/inputs.train.npy'):
-        train_data = np.load(args.extract_path + '/inputs.train.npy')
-        valid_data = np.load(args.extract_path + '/inputs.valid.npy')
-        test_data = np.load(args.extract_path + '/inputs.test.npy')
+    # if os.path.exists(args.extract_path + '/inputs.train.npy'):
+    #     train_data = np.load(args.extract_path + '/inputs.train.npy')
+    #     valid_data = np.load(args.extract_path + '/inputs.valid.npy')
+    #     test_data = np.load(args.extract_path + '/inputs.test.npy')
 
-    else:
+    if True:
         train_lst = list(dir_path.glob('*train*bin'))
         valid_lst = list(dir_path.glob('*valid*bin'))
         test_lst = list(dir_path.glob('*test*bin'))
@@ -59,7 +59,9 @@ def main():
             with open(p, 'rb') as f:
                 sets = pickle.load(f)
                 for (data, grad) in sets:
-                    train_data[1] += np.mean(np.abs(grad), axis=0)
+                    # train_data[1] += np.mean(np.abs(grad), axis=0)
+                    this_weight = np.var(grad, axis=0)
+                    train_data[1] += this_weight / this_weight.sum()
                     # train_data[1] += np.mean(grad, axis=0)
                     train_data[0] += np.mean(data, axis=0)
                     num_utt += 1
@@ -72,7 +74,9 @@ def main():
             with open(p, 'rb') as f:
                 sets = pickle.load(f)
                 for (data, grad) in sets:
-                    valid_data[1] += np.mean(np.abs(grad), axis=0)
+                    # valid_data[1] += np.mean(np.abs(grad), axis=0)
+                    this_weight = np.var(grad, axis=0)
+                    valid_data[1] += this_weight / this_weight.sum()
                     # valid_data[1] += np.mean(grad, axis=0)
                     valid_data[0] += np.mean(data, axis=0)
                     num_utt += 1
@@ -88,8 +92,14 @@ def main():
                     test_data[0][0] += np.mean(data_a, axis=0)
                     test_data[0][1] += np.mean(data_b, axis=0)
 
-                    test_data[1][0] += np.mean(np.abs(grad_a), axis=0)
-                    test_data[1][1] += np.mean(np.abs(grad_b), axis=0)
+                    # test_data[1][0] += np.mean(np.abs(grad_a), axis=0)
+                    # test_data[1][1] += np.mean(np.abs(grad_b), axis=0)
+                    this_weight_a = np.var(grad_a, axis=0)
+                    test_data[1][0] += this_weight_a / this_weight_a.sum()
+
+                    this_weight_b = np.var(grad_b, axis=0)
+                    test_data[1][1] += this_weight_b / this_weight_b.sum()
+
                     # test_data[1][0] += np.mean(grad_a, axis=0)
                     # test_data[1][1] += np.mean(grad_b, axis=0)
 
