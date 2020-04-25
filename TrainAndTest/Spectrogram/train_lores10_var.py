@@ -61,21 +61,18 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Data options
 parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/timit_spect/soft_var',
+parser.add_argument('--check-path',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='need to make mfb file')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/LoResNet10/timit_spect/soft_var/checkpoint_10.pth', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -129,8 +126,11 @@ parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
 
 # loss configure
-parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
+parser.add_argument('--loss-type', type=str, default='soft',
+                    choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--finetune', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO',
                     help='the ratio softmax loss - triplet loss (default: 2.0')
 
@@ -195,7 +195,6 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
-
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
@@ -306,7 +305,6 @@ def main():
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model_dict = model.state_dict()
             model_dict.update(filtered)
-
             model.load_state_dict(model_dict)
             #
             model.dropout.p = args.dropout_p
@@ -335,6 +333,14 @@ def main():
                                      {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
+    if args.finetune:
+        if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
+            classifier_params = list(map(id, model.classifier.parameters()))
+            rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
+            optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
+                                         {'params': rest_params}],
+                                        lr=args.lr, weight_decay=args.weight_decay,
+                                        momentum=args.momentum)
 
     if args.scheduler == 'exp':
         scheduler = ExponentialLR(optimizer, gamma=args.gamma)
