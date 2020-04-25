@@ -510,8 +510,8 @@ class PadCollate:
             dim - the dimension to be padded (dimension of time in sequences)
         """
         self.dim = dim
-        self.min_chunk_size = 250
-        self.max_chunk_size = 450
+        self.min_chunk_size = 200
+        self.max_chunk_size = 400
         self.fix_len = fix_len
         self.normlize = normlize
 
