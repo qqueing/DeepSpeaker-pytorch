@@ -80,11 +80,14 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
 
         bin.append(highfreq_idx[-1])
 
-    elif filtertype == 'dnn.timit':
+    elif filtertype.startswith('dnn.timit'):
         x = np.arange(0, 161) * samplerate / 2 / 160
-        y = np.array(c.TIMIT_FIlTER)
-        f = interpolate.interp1d(x, y)
+        if filtertype.endswith('fix'):
+            y = np.array(c.TIMIT_FIlTER_FIX)
+        elif filtertype.endswith('var'):
+            y = np.array(c.TIMIT_FIlTER_VAR)
 
+        f = interpolate.interp1d(x, y)
         x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
         lowfreq_idx = np.where(x_new >= lowfreq)[0]
         highfreq_idx = np.where(x_new <= highfreq)[0]

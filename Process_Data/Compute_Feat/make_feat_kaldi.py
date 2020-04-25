@@ -44,7 +44,7 @@ parser.add_argument('--feat-type', type=str,
                     default='fbank', choices=['fbank', 'spectrogram', 'mfcc'],
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--filter-type', type=str,
-                    default='mel', choices=['mel', 'linear', 'dnn', 'dnn.timit', 'dnn.vox1'],
+                    default='mel',
                     help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--filters', type=int, default=24,
