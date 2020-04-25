@@ -264,10 +264,10 @@ class XVectorTDNN(nn.Module):
             nn.BatchNorm1d(embedding_size)
         )
         self.classifier = nn.Linear(embedding_size, num_classes)
-        self.bn = nn.BatchNorm1d(num_classes)
+        # self.bn = nn.BatchNorm1d(num_classes)
 
         self.drop = nn.Dropout(p=self.dropout_p)
-        # self.out_act = nn.Sigmoid()
+        self.out_act = nn.Sigmoid()
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
@@ -306,7 +306,7 @@ class XVectorTDNN(nn.Module):
         embedding_b = self.segment7(x)
 
         x = self.classifier(embedding_b)
-        logits = self.bn(x)
+        logits = self.out_act(x)
 
         return logits, embedding_b
 
