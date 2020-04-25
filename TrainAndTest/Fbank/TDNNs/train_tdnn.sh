@@ -34,13 +34,13 @@ if [ $stage -le 5 ]; then
   for loss in soft ; do
     python TrainAndTest/Fbank/TDNNs/train_tdnn_kaldi.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
-      --batch-size 80 \
+      --batch-size 64 \
       --epochs 18 \
-      --milestones 11  \
+      --milestones 11,16  \
       --feat-dim 40 \
       --embedding-size 128 \
       --num-valid 2 \
