@@ -267,7 +267,8 @@ class XVectorTDNN(nn.Module):
         # self.bn = nn.BatchNorm1d(num_classes)
 
         self.drop = nn.Dropout(p=self.dropout_p)
-        self.out_act = nn.Sigmoid()
+        self.out_act = nn.Hardtanh(min_val=-10., max_val=10.)
+        # self.out_act = nn.Sigmoid()
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
