@@ -267,7 +267,7 @@ class XVectorTDNN(nn.Module):
         # self.bn = nn.BatchNorm1d(num_classes)
 
         self.drop = nn.Dropout(p=self.dropout_p)
-        self.out_act = nn.Hardtanh(min_val=-10., max_val=10.)
+        # self.out_act = nn.Hardtanh(min_val=-10., max_val=10.)
         # self.out_act = nn.Sigmoid()
 
         for m in self.modules():  # 对于各层参数的初始化
@@ -306,8 +306,8 @@ class XVectorTDNN(nn.Module):
         x = self.segment6(x)
         embedding_b = self.segment7(x)
 
-        x = self.classifier(embedding_b)
-        logits = self.out_act(x)
+        logits = self.classifier(embedding_b)
+        # logits = self.out_act(x)
 
         return logits, embedding_b
 

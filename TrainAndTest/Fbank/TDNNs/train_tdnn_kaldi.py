@@ -9,17 +9,6 @@
 @Time: 19-8-6 下午1:29
 @Overview: Train the resnet 34 with asoftmax.
 """
-# !/usr/bin/env python
-# encoding: utf-8
-
-"""
-@Author: yangwenhao
-@Contact: 874681044@qq.com
-@Software: PyCharm
-@File: train_exres_kaldi.py
-@Time: 2020/3/27 10:46 AM
-@Overview:
-"""
 # from __future__ import print_function
 import argparse
 import os
