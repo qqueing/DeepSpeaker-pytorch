@@ -13,7 +13,11 @@ fi
 if [ $stage -le 1 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/LoResNet10/timit/spect_161/soft_var_1500/LoResNet10/soft_dp0.00/epoch_15 \
+      --extract-path Data/gradient/LoResNet10/timit/spect/soft_fix/epoch_15 \
+      --feat-dim 161
+
+    python Lime/visual_gradient.py \
+      --extract-path Data/gradient/LoResNet10/timit/spect/soft_var/epoch_15 \
       --feat-dim 161
   done
 fi
