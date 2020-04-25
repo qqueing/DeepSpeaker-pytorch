@@ -36,3 +36,23 @@ if [ $stage -le 1 ]; then
     --epoch 20 \
     --embedding-size 1024
 fi
+
+if [ $stage -le 2 ]; then
+  model=LoResNet10
+  dataset=timit
+  feat=spect_161
+  loss=soft
+
+  python Xvector_Extraction/extract_xvector_kaldi.py \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/train_spect_noc \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/test_spect_noc \
+    --resume Data/checkpoint/LoResNet10/timit_spect/soft_fix/checkpoint_15.pth \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --feat-dim 161 \
+    --embedding-size 128 \
+    --extract-path Data/xvector/${model}/${dataset}/${feat}/${loss} \
+    --model ${model} \
+    --dropout-p 0.0 \
+    --epoch 20 \
+    --embedding-size 1024
+fi

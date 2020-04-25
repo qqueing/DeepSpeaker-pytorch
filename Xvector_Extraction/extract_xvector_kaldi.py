@@ -216,10 +216,10 @@ def main():
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
 
     # Extract Train set vectors
-    extract(train_loader, model, dataset='train', extract_path=args.check_path + '/x_vector')
+    extract(train_loader, model, dataset='train', extract_path=args.extract_path + '/x_vector')
 
     # Extract test set vectors
-    extract(test_loader, model, dataset='test', extract_path=args.check_path + '/x_vector')
+    extract(test_loader, model, dataset='test', extract_path=args.extract_path + '/x_vector')
 
     print('Extract x-vector completed for train and test!\n')
 

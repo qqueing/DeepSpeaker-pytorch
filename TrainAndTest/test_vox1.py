@@ -331,20 +331,18 @@ def test(test_loader, valid_loader, model):
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
-        data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
+        data_a, data_p = Variable(data_a), Variable(data_p)
 
         # compute output
-        _, out_a_ = model(data_a)
-        _, out_p_ = model(data_p)
-        out_a = out_a_
-        out_p = out_p_
+        _, out_a = model(data_a)
+        _, out_p = model(data_p)
 
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
         dists = dists.data.cpu().numpy()
 
         distances.append(dists)
-        labels.append(label.data.cpu().numpy())
+        labels.append(label.numpy())
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test: [{}/{} ({:.0f}%)]'.format(
@@ -381,21 +379,19 @@ def sitw_test(sitw_test_loader, model, epoch):
 
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
-        data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
+        data_a, data_p = Variable(data_a), Variable(data_p)
 
         # compute output
-        _, out_a_ = model(data_a)
-        _, out_p_ = model(data_p)
-        out_a = out_a_
-        out_p = out_p_
-
+        _, out_a = model(data_a)
+        _, out_p = model(data_p)
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         if vec_shape[1] != 1:
             dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+
         dists = dists.data.cpu().numpy()
 
         distances.append(dists)
-        labels.append(label.data.cpu().numpy())
+        labels.append(label.numpy())
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description('Test Epoch: {} [{}/{} ({:.0f}%)]'.format(

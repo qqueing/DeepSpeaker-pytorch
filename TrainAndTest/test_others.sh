@@ -101,7 +101,7 @@ if [ $stage -le 25 ]; then
   feat=spect_wcmvn
   datasets=timit
   for loss in soft ; do
-    echo -e "\033[31m==> Loss type: ${loss} fix length \033[0m"
+    echo -e "\033[31m==> Loss type: ${loss} variance_fix length \033[0m"
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
@@ -115,7 +115,7 @@ if [ $stage -le 25 ]; then
       --num-valid 2 \
       --gpu-id 1
 
-    echo -e "\033[31m==> Loss type: ${loss} fix length \033[0m"
+    echo -e "\033[31m==> Loss type: ${loss} variance_fix length \033[0m"
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
