@@ -122,6 +122,8 @@ parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
 # parser.add_argument('--n-triplets', type=int, default=1000000, metavar='N',
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--finetune', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--m', type=int, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
@@ -133,7 +135,7 @@ parser.add_argument('--loss-ratio', type=float, default=0.1, metavar='LOSSRATIO'
 # args for a-softmax
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=int, default=10500, metavar='S',
+parser.add_argument('--lambda-max', type=int, default=2000, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
@@ -272,7 +274,24 @@ def main():
     start_epoch = 0
     if args.save_init:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start_epoch)
-        torch.save(model, check_path)
+        torch.save({'epoch': 0,
+                    'state_dict': model.state_dict()},
+                   check_path)
+        # torch.save(model, check_path)
+
+    ce_criterion = nn.CrossEntropyLoss()
+    if args.loss_type == 'soft':
+        xe_criterion = None
+    elif args.loss_type == 'asoft':
+        ce_criterion = None
+        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
+    elif args.loss_type == 'center':
+        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
+    elif args.loss_type == 'amsoft':
+        ce_criterion = None
+        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
+        xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
 
     if args.resume:
         if os.path.isfile(args.resume):
@@ -281,10 +300,9 @@ def main():
             start_epoch = checkpoint['epoch']
 
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-            # model_dict = model.state_dict()
-            # model_dict = model_dict.update(filtered)
-
-            model.load_state_dict(filtered)
+            model_dict = model.state_dict()
+            model_dict.update(filtered)
+            model.load_state_dict(model_dict)
             # optimizer.load_state_dict(checkpoint['optimizer'])
             # scheduler.load_state_dict(checkpoint['scheduler'])
             # if 'criterion' in checkpoint.keys():
@@ -292,30 +310,21 @@ def main():
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
-    ce_criterion = nn.CrossEntropyLoss()
-    if args.loss_type == 'soft':
-        xe_criterion = None
-    elif args.loss_type == 'asoft':
-        ce_criterion = None
-        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-
-        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
-        lambda_max = int(all_iteration * 0.3) // 500 * 500
-
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
-    elif args.loss_type == 'center':
-        xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
-    elif args.loss_type == 'amsoft':
-        ce_criterion = None
-        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
-        xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
-
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     if args.loss_type == 'center':
         optimizer = torch.optim.SGD([{'params': xe_criterion.parameters(), 'lr': args.lr * 5},
                                      {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
+
+    if args.finetune:
+        if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
+            classifier_params = list(map(id, model.classifier.parameters()))
+            rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
+            optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
+                                         {'params': rest_params}],
+                                        lr=args.lr, weight_decay=args.weight_decay,
+                                        momentum=args.momentum)
 
     milestones = args.milestones.split(',')
     milestones = [int(x) for x in milestones]
