@@ -135,10 +135,10 @@ def main():
 
     plt.figure(figsize=(8, 6))
     # plt.title('Gradient Distributions', fontsize=22)
-    plt.xlabel('Frequency (Hz)', fontsize=16)
-    plt.xticks(fontsize=16)
-    plt.ylabel('Weight', fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xlabel('Frequency (Hz)', fontsize=18)
+    plt.xticks(fontsize=18)
+    plt.ylabel('Weight', fontsize=18)
+    plt.yticks(fontsize=18)
 
     m = np.arange(0, 2840)
     m = 700 * (10 ** (m / 2595.0) - 1)
@@ -168,7 +168,7 @@ def main():
     np.save(args.extract_path + '/grad.test.npy', ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
-    plt.legend(['Mel', 'Train', 'Test'], loc='upper right', fontsize=16)
+    plt.legend(['Mel-scale', 'Train Set', 'Test Set'], loc='upper right', fontsize=18)
     plt.savefig(args.extract_path + "/grads.png")
     plt.show()
 
