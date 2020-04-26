@@ -61,23 +61,16 @@ except AttributeError:
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Data options
-parser.add_argument('--train-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev',
-                    help='path to dataset')
-parser.add_argument('--test-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
-                    help='path to voxceleb1 test dataset')
+parser.add_argument('--train-dir', type=str, help='path to dataset')
+parser.add_argument('--test-dir', type=str, help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
-                    help='folder to output model checkpoints')
+parser.add_argument('--check-path', help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='need to make mfb file')
-parser.add_argument('--resume',
-                    default='Data/checkpoint/LoResNet10/spect/soft/checkpoint_10.pth', type=str,
-                    metavar='PATH',
+parser.add_argument('--resume', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
