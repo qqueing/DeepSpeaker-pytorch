@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import sys
 import time
 # Version conflict
 import warnings
@@ -33,6 +34,7 @@ from Process_Data.audio_processing import to2tensor, varLengthFeat
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
+from logger import NewLogger
 
 warnings.filterwarnings("ignore")
 
@@ -163,6 +165,8 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
+sys.stdout = NewLogger(os.path.join(args.check_path, 'test.log'))
+
 
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
@@ -215,7 +219,7 @@ def main():
     # test_display_triplet_distance = False
     # print the experiment configuration
     print('\nCurrent time is \33[91m{}\33[0m.'.format(str(time.asctime())))
-    # print('Parsed options: {}'.format(vars(args)))
+    print('Parsed options: {}'.format(vars(args)))
     # print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
     # instantiate model and initialize weights
