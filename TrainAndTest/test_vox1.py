@@ -165,7 +165,7 @@ if args.cuda:
 # Define visulaize SummaryWriter instance
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
-sys.stdout = NewLogger(os.path.join(args.check_path, 'test.log'))
+sys.stdout = NewLogger(os.path.join(os.path.dirname(args.resume), 'test.log'))
 
 
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
