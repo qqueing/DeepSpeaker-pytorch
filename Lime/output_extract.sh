@@ -47,7 +47,7 @@ if [ $stage -le 1 ]; then
     --dropout-p 0.25 \
     --gpu-id 1 \
     --embedding-size 128 \
-    --sample-utt 10000
+    --sample-utt 5000
 
   for loss in amsoft center ; do
     python Lime/output_extract.py \
@@ -63,7 +63,7 @@ if [ $stage -le 1 ]; then
       --dropout-p 0.25 \
       --gpu-id 1 \
       --embedding-size 128 \
-      --sample-utt 10000
+      --sample-utt 5000
   done
 fi
 stage=200
