@@ -59,6 +59,9 @@ parser.add_argument('--train-dir', type=str, help='path to dataset')
 parser.add_argument('--test-dir', type=str, help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str, help='path to voxceleb1 test dataset')
 
+parser.add_argument('--test-only', action='store_true', default=False, help='using Cosine similarity')
+
+
 parser.add_argument('--check-path', help='folder to output model checkpoints')
 parser.add_argument('--extract-path', help='folder to output model grads, etc')
 
@@ -153,6 +156,7 @@ transform_T = transforms.Compose([
     to2tensor()
 ])
 file_loader = read_mat
+
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks,
                                loader=file_loader, transform=transform, return_uid=True)
@@ -363,12 +367,13 @@ def main():
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
 
-        if args.cuda:
-            model_conv1 = model.conv1.weight.cpu().detach().numpy()
-            np.save(file_dir + '/model.conv1.npy', model_conv1)
+        if not args.test_only:
+            if args.cuda:
+                model_conv1 = model.conv1.weight.cpu().detach().numpy()
+                np.save(file_dir + '/model.conv1.npy', model_conv1)
 
-        train_extract(train_loader, model, file_dir, 'vox1_train')
-        train_extract(valid_loader, model, file_dir, 'vox1_valid')
+            train_extract(train_loader, model, file_dir, 'vox1_train')
+            train_extract(valid_loader, model, file_dir, 'vox1_valid')
         test_extract(test_loader, model, file_dir, 'vox1_test')
 
 
