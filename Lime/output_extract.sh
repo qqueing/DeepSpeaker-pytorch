@@ -138,7 +138,6 @@ if [ $stage -le 20 ]; then
     --model LoResNet10 \
     --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
-    --test-only \
     --start-epochs 15 \
     --check-path Data/checkpoint/LoResNet10/timit_spect/soft_var \
     --epochs 15 \
