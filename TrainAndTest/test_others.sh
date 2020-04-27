@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=20
+stage=5
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -54,7 +54,7 @@ fi
 #    --lr 0.01 \
 #    --epochs 10
 
-#stage=20
+stage=200
 if [ $stage -le 15 ]; then
   model=ASTDNN
   feat=fb40
