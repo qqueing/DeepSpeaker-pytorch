@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=40
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -150,7 +150,7 @@ if [ $stage -le 30 ]; then
   feat=spect_wcmvn
   datasets=vox
   for loss in soft ; do
-    echo -e "\033[31m==> Loss type: ${loss} variance_fix length \033[0m"
+    echo -e "\033[31m==> Loss type: ${loss} fix length \033[0m"
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257_wcmvn \
@@ -162,5 +162,27 @@ if [ $stage -le 30 ]; then
       --dropout-p 0.5 \
       --num-valid 2 \
       --gpu-id 1
+  done
+fi
+
+if [ $stage -le 40 ]; then
+#  for loss in soft asoft ; do
+  for loss in soft center ; do
+    echo -e "\n\033[1;4;31m Test ${model} with ${loss}\033[0m\n"
+    python -W ignore TrainAndTest/test_vox1.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
+      --nj 12 \
+      --epochs 30 \
+      --model ExResNet34 \
+      --remove-vad \
+      --resnet-size 34 \
+      --feat-dim 64 \
+      --stride 1 \
+      --kernel-size 3,3 \
+      --resume ExResNet/spect/soft/checkpoint_30.pth \
+      --input-per-spks 192 \
+      --num-valid 2 \
+      --loss-type ${loss}
   done
 fi
