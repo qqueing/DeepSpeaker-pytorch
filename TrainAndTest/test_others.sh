@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=40
+stage=25
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -114,24 +114,24 @@ if [ $stage -le 25 ]; then
   feat=spect_wcmvn
   datasets=timit
   for loss in soft ; do
-    echo -e "\033[31m==> Loss type: ${loss} variance_fix length \033[0m"
-    python TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
-      --nj 12 \
-      --model ${model} \
-      --channels 4,16,64 \
-      --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/timit_spect/soft_fix/checkpoint_15.pth \
-      --loss-type soft \
-      --dropout-p 0.25 \
-      --num-valid 2 \
-      --gpu-id 1
+#    echo -e "\033[31m==> Loss type: ${loss} variance_fix length \033[0m"
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 4,16,64 \
+#      --embedding-size 128 \
+#      --resume Data/checkpoint/LoResNet10/timit_spect/soft_fix/checkpoint_15.pth \
+#      --loss-type soft \
+#      --dropout-p 0.25 \
+#      --num-valid 2 \
+#      --gpu-id 1
 
     echo -e "\033[31m==> Loss type: ${loss} variance_fix length \033[0m"
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --nj 12 \
       --model ${model} \
       --channels 4,16,64 \
@@ -144,7 +144,7 @@ if [ $stage -le 25 ]; then
   done
 fi
 
-
+stage=100
 if [ $stage -le 30 ]; then
   model=ResNet20
   feat=spect_wcmvn
