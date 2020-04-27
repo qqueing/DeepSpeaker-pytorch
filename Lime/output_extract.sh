@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=2
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -68,9 +68,52 @@ if [ $stage -le 1 ]; then
       --sample-utt 5000
   done
 fi
-stage=200
 
 if [ $stage -le 2 ]; then
+  model=ExResNet34
+  datasets=vox1
+  feat=fb64_noc
+  loss=soft
+  python Lime/output_extract.py \
+      --model ${model} \
+      --start-epochs 30 \
+      --epochs 30 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
+      --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+      --loss-type ${loss} \
+      --check-path Data/checkpoint/ExResNet/spect/soft \
+      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss} \
+      --dropout-p 0.0 \
+      --gpu-id 1 \
+      --embedding-size 128 \
+      --sample-utt 5000
+fi
+
+if [ $stage -le 3 ]; then
+  model=ResNet20
+  datasets=vox1
+  feat=spect_256
+  loss=soft
+  python Lime/output_extract.py \
+      --model ${model} \
+      --start-epochs 24 \
+      --epochs 24 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_257_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_257_wcmvn \
+      --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+      --loss-type ${loss} \
+      --check-path Data/checkpoint/ResNet20/spect_257_wcmvn/soft_dp0.5 \
+      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_wcmvn \
+      --dropout-p 0.5 \
+      --gpu-id 1 \
+      --embedding-size 128 \
+      --sample-utt 5000
+fi
+
+stage=200
+
+if [ $stage -le 20 ]; then
   model=LoResNet10
   datasets=timit
   feat=spect
@@ -109,7 +152,7 @@ fi
 
 #stage=5
 
-if [ $stage -le 5 ]; then
+if [ $stage -le 30 ]; then
   model=LoResNet10
   datasets=libri
   feat=spect
