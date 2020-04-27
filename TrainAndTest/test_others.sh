@@ -177,6 +177,7 @@ if [ $stage -le 40 ]; then
       --model ExResNet34 \
       --remove-vad \
       --resnet-size 34 \
+      --embedding-size 128 \
       --feat-dim 64 \
       --kernel-size 3,3 \
       --resume Data/checkpoint/ExResNet/spect/soft/checkpoint_30.pth \
