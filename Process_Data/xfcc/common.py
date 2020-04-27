@@ -73,45 +73,18 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
         # our points are in Hz, but we use fft bins, so we have to convert from Hz to fft bin number
         bin = np.floor((nfft + 1) * linearpoints / samplerate)
 
-    elif filtertype == 'dnn':
+    elif filtertype.startswith('dnn'):
         x = np.arange(0, 161) * samplerate / 2 / 160
-        y = np.array(c.DNN_FILTER)
-        f = interpolate.interp1d(x, y)
-
-        x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
-        lowfreq_idx = np.where(x_new >= lowfreq)[0]
-        highfreq_idx = np.where(x_new <= highfreq)[0]
-        ynew = f(x_new)  # 计算插值结果
-
-        ynew[:int(lowfreq_idx[0])] = 0
-        if highfreq_idx[-1] < len(x_new) - 1:
-            ynew[int(highfreq[-1] + 1):] = 0
-
-        weight = ynew / np.sum(ynew)
-
-        bin = []
-        bin.append(lowfreq_idx[0])
-
-        for j in range(nfilt):
-            num_wei = 0.
-            for i in range(nfft // 2 + 1):
-                num_wei += weight[i]
-                if num_wei < (j + 1) / (nfilt + 2):
-                    continue
-                else:
-                    bin.append(i)
-                    break
-
-        bin.append(highfreq_idx[-1])
-
-    elif filtertype.startswith('dnn.timit'):
-        x = np.arange(0, 161) * samplerate / 2 / 160
-        if filtertype.endswith('fix'):
+        if filtertype.endswith('timit.fix'):
             y = np.array(c.TIMIT_FIlTER_FIX)
-        elif filtertype.endswith('var'):
+        elif filtertype.endswith('timit.var'):
             y = np.array(c.TIMIT_FIlTER_VAR)
-        elif filtertype.endswith('mdv'):
+        elif filtertype.endswith('timit.mdv'):
             y = np.array(c.TIMIT_FIlTER_MDV)
+        elif filtertype.endswith('libri.fix'):
+            y = np.array(c.LIBRI_FILTER_FIX)
+        elif filtertype.endswith('libri.var'):
+            y = np.array(c.LIBRI_FILTER_VAR)
 
         f = interpolate.interp1d(x, y)
         x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
