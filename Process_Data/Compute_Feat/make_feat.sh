@@ -63,11 +63,11 @@ if [ $stage -le 1 ]; then
       --nj 16 \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb \
-      --out-set ${name}_dfb24 \
+      --out-set ${name}_dfb24_soft \
       --windowsize 0.02 \
       --nfft 320 \
       --feat-type fbank \
-      --filter-type dnn.vox1 \
+      --filter-type dnn.vox1.soft \
       --filters 24 \
       --feat-type fbank
   done

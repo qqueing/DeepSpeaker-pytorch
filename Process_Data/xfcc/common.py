@@ -85,6 +85,8 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
             y = np.array(c.LIBRI_FILTER_FIX)
         elif filtertype.endswith('libri.var'):
             y = np.array(c.LIBRI_FILTER_VAR)
+        elif filtertype.endswith('vox1.soft'):
+            y = np.array(c.VOX_FILTER_SOFT)
 
         f = interpolate.interp1d(x, y)
         x_new = np.arange(nfft // 2 + 1) * samplerate / 2 / (nfft // 2)
