@@ -29,6 +29,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
@@ -75,6 +76,22 @@ parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'a
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
+
+# args for additive margin-softmax
+parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--s', type=float, default=15, metavar='S',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+# args for a-softmax
+parser.add_argument('--m', type=int, default=3, metavar='M',
+                    help='the margin value for the angualr softmax loss function (default: 3.0')
+parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
+                    help='random seed (default: 0)')
+parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
+                    help='random seed (default: 0)')
+
+
+
 parser.add_argument('--cos-sim', action='store_true', default=True, help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, metavar='ES', help='Dimensionality of the embedding')
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
@@ -304,6 +321,10 @@ def main():
     print('Model options: {}'.format(model_kwargs))
 
     model = create_model(args.model, **model_kwargs)
+    if args.loss_type == 'asoft':
+        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+    elif args.loss_type == 'amsoft':
+        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
 
     train_loader = DataLoader(train_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     valid_loader = DataLoader(valid_part, batch_size=args.batch_size, shuffle=False, **kwargs)

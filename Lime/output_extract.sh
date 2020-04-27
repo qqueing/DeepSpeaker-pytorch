@@ -34,22 +34,22 @@ if [ $stage -le 1 ]; then
 #    --embedding-size 1024 \
 #    --sample-utt 2000
 
-  python Lime/output_extract.py \
-    --model LoResNet10 \
-    --start-epochs 24 \
-    --epochs 24 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
-    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --loss-type soft \
-    --check-path Data/checkpoint/LoResNet10/spect/soft_wcmvn \
-    --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn \
-    --dropout-p 0.25 \
-    --gpu-id 1 \
-    --embedding-size 128 \
-    --sample-utt 5000
+#  python Lime/output_extract.py \
+#    --model LoResNet10 \
+#    --start-epochs 24 \
+#    --epochs 24 \
+#    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+#    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
+#    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+#    --loss-type soft \
+#    --check-path Data/checkpoint/LoResNet10/spect/soft_wcmvn \
+#    --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn \
+#    --dropout-p 0.25 \
+#    --gpu-id 1 \
+#    --embedding-size 128 \
+#    --sample-utt 5000
 
-  for loss in amsoft center ; do
+  for loss in amsoft ; do
     python Lime/output_extract.py \
       --model LoResNet10 \
       --start-epochs 38 \
@@ -61,6 +61,8 @@ if [ $stage -le 1 ]; then
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_wcmvn \
       --extract-path Data/gradient/LoResNet10/spect/${loss}_wcmvn \
       --dropout-p 0.25 \
+      --s 15 \
+      --margin 0.35 \
       --gpu-id 1 \
       --embedding-size 128 \
       --sample-utt 5000
