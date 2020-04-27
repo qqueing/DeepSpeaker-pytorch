@@ -179,7 +179,7 @@ if [ $stage -le 40 ]; then
       --resnet-size 34 \
       --feat-dim 64 \
       --kernel-size 3,3 \
-      --resume ExResNet/spect/soft/checkpoint_30.pth \
+      --resume Data/checkpoint/ExResNet/spect/soft/checkpoint_30.pth \
       --input-per-spks 192 \
       --num-valid 2 \
       --loss-type ${loss}
