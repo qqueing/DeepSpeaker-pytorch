@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=10
+stage=1
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
@@ -12,17 +12,17 @@ fi
 #stage=10
 if [ $stage -le 1 ]; then
   for model in LoResNet10 ; do
-    python Lime/visual_gradient.py \
-      --extract-path Data/gradient/LoResNet10/timit/spect/soft_fix/epoch_15 \
-      --feat-dim 161
+#    python Lime/visual_gradient.py \
+#      --extract-path Data/gradient/LoResNet10/timit/spect/soft_fix/epoch_15 \
+#      --feat-dim 161
 
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/LoResNet10/timit/spect/soft_var/epoch_15 \
+      --extract-path Data/gradient/LoResNet10/timit/spect/soft_var_test/epoch_15 \
       --feat-dim 161
   done
 fi
 
-#stage=5
+stage=500
 if [ $stage -le 2 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
@@ -47,7 +47,7 @@ if [ $stage -le 5 ]; then
 #      --feat-dim 161
   done
 fi
-stage=10
+#stage=10
 if [ $stage -le 10 ]; then
     python Lime/visual_gradient.py \
       --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn/epoch_24 \
