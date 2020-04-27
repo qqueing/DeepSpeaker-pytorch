@@ -462,9 +462,11 @@ class varLengthFeat(object):
     """
     prepare feats with true length.
     """
-    def __init__(self, min_chunk_size=300, max_chunk_size=500):
+
+    def __init__(self, min_chunk_size=300, max_chunk_size=500, remove_vad=False):
 
         super(varLengthFeat, self).__init__()
+        self.remove_vad = remove_vad
         self.min_chunk_size = min_chunk_size
         self.max_chunk_size = max_chunk_size
 
@@ -472,6 +474,9 @@ class varLengthFeat(object):
         # pdb.set_trace()
         network_inputs = []
         output = np.array(frames_features)
+
+        if self.remove_vad:
+            output = output[:, 1:]
 
         network_inputs.append(output)
         network_inputs = np.array(network_inputs)
