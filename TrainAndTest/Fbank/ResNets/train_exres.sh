@@ -8,34 +8,37 @@ while [ `ps 75486 | wc -l` -eq 2 ]; do
   echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
 done
 #stage=10
-model=ExResNet
+
 
 if [ $stage -le 0 ]; then
 #  for loss in soft asoft ; do
+  model=ExResNet34
+  datasets=vox1
+  feat=fb64_wcmvn
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_${feat} \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_${feat} \
       --nj 12 \
       --epochs 30 \
       --milestones 14,20,25 \
-      --model ExResNet34 \
+      --model ${model} \
       --resnet-size 34 \
       --feat-dim 64 \
       --stride 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
       --lr 0.1 \
-      --check-path Data/checkpoint/${model}/spect/${loss} \
-      --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss} \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 12800 \
       --num-valid 2 \
       --loss-type ${loss}
   done
 fi
-#stage=10
+stage=10
 
 if [ $stage -le 1 ]; then
 #  for loss in center amsoft ; do/
