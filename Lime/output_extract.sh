@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=5
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -45,12 +45,12 @@ if [ $stage -le 1 ]; then
     --check-path Data/checkpoint/LoResNet10/spect/soft_wcmvn \
     --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn \
     --dropout-p 0.25 \
-    --gpu-id 0 \
+    --gpu-id 1 \
     --embedding-size 128 \
-    --sample-utt 2000
+    --sample-utt 10000
 #  done
 fi
-stage=2
+#stage=2
 
 if [ $stage -le 2 ]; then
   model=LoResNet10
@@ -89,7 +89,7 @@ if [ $stage -le 2 ]; then
     --dropout-p 0.25
 fi
 
-stage=50
+#stage=5
 
 if [ $stage -le 5 ]; then
   model=LoResNet10
@@ -102,12 +102,27 @@ if [ $stage -le 5 ]; then
     --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
     --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
     --start-epochs 15 \
-    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss}_128_0.25 \
+    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss} \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --sample-utt 1500 \
     --embedding-size 128 \
-    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_128_0.25 \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss} \
+    --model ${model} \
+    --channels 4,32,128 \
+    --dropout-p 0.25
+
+  python Lime/output_extract.py \
+    --model LoResNet10 \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+    --start-epochs 15 \
+    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss}_var \
+    --epochs 15 \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --sample-utt 1500 \
+    --embedding-size 128 \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
     --model ${model} \
     --channels 4,32,128 \
     --dropout-p 0.25
