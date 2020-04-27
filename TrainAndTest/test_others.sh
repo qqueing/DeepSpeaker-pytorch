@@ -178,7 +178,6 @@ if [ $stage -le 40 ]; then
       --remove-vad \
       --resnet-size 34 \
       --feat-dim 64 \
-      --stride 1 \
       --kernel-size 3,3 \
       --resume ExResNet/spect/soft/checkpoint_30.pth \
       --input-per-spks 192 \
