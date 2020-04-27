@@ -318,8 +318,8 @@ if [ $stage -le 13 ]; then
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
       --out-set ${name}_dfb24_fix \
-      --filter-type mel \
-      --feat-type dnn.libri.fix \
+      --filter-type dnn.libri.fix \
+      --feat-type fbank \
       --nfft 320 \
       --windowsize 0.02 \
       --filters 24
