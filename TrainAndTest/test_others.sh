@@ -19,7 +19,7 @@ if [ $stage -le 5 ]; then
   model=LoResNet10
 #  --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128/checkpoint_24.pth \
 #  for loss in soft ; do
-  for loss in asoft amsoft center ; do
+  for loss in center ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
