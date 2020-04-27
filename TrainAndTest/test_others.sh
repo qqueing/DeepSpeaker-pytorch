@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=25
+stage=30
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -144,7 +144,7 @@ if [ $stage -le 25 ]; then
   done
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 30 ]; then
   model=ResNet20
   feat=spect_wcmvn
@@ -167,11 +167,11 @@ fi
 
 if [ $stage -le 40 ]; then
 #  for loss in soft asoft ; do
-  for loss in soft center ; do
+  for loss in soft ; do
     echo -e "\n\033[1;4;31m Test ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_wcmvn \
       --nj 12 \
       --epochs 30 \
       --model ExResNet34 \
