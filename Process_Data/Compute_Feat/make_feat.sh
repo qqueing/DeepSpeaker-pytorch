@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=9
+stage=12
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -287,7 +287,7 @@ if [ $stage -le 11 ]; then
   done
 fi
 
-#stage=10
+stage=13
 if [ $stage -le 12 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -317,22 +317,22 @@ if [ $stage -le 13 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
-      --out-set ${name}_fb24 \
+      --out-set ${name}_dfb24_fix \
       --filter-type mel \
-      --feat-type fbank \
+      --feat-type dnn.libri.fix \
       --nfft 320 \
       --windowsize 0.02 \
       --filters 24
 
-#     python Process_Data/Compute_Feat/make_feat_kaldi.py \
-#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
-#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
-#      --out-set ${name}_fb24_dnn_20 \
-#      --filter-type dnn.timit \
-#      --feat-type fbank \
-#      --nfft 320 \
-#      --windowsize 0.02 \
-#      --filters 24
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
+      --out-set ${name}_dfb24_var \
+      --filter-type dnn.libri.var \
+      --feat-type fbank \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --filters 24
   done
 fi
 
