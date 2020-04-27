@@ -324,15 +324,15 @@ if [ $stage -le 13 ]; then
       --windowsize 0.02 \
       --filters 24
 
-    python Process_Data/Compute_Feat/make_feat_kaldi.py \
-      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
-      --out-set ${name}_dfb24_var \
-      --filter-type dnn.libri.var \
-      --feat-type fbank \
-      --nfft 320 \
-      --windowsize 0.02 \
-      --filters 24
+#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
+#      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
+#      --out-set ${name}_dfb24_var \
+#      --filter-type dnn.libri.var \
+#      --feat-type fbank \
+#      --nfft 320 \
+#      --windowsize 0.02 \
+#      --filters 24
   done
 fi
 
