@@ -111,7 +111,7 @@ if [ $stage -le 3 ]; then
       --sample-utt 5000
 fi
 
-stage=20
+stage=30
 
 if [ $stage -le 20 ]; then
   model=LoResNet10
@@ -150,7 +150,7 @@ if [ $stage -le 20 ]; then
     --dropout-p 0.25
 fi
 
-stage=500
+#stage=500
 
 if [ $stage -le 30 ]; then
   model=LoResNet10
@@ -166,7 +166,7 @@ if [ $stage -le 30 ]; then
     --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss} \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --sample-utt 1500 \
+    --sample-utt 4000 \
     --embedding-size 128 \
     --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss} \
     --model ${model} \
@@ -181,7 +181,7 @@ if [ $stage -le 30 ]; then
     --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss}_var \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --sample-utt 1500 \
+    --sample-utt 4000 \
     --embedding-size 128 \
     --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
     --model ${model} \
