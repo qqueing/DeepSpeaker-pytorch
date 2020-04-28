@@ -100,7 +100,7 @@ parser.add_argument('--embedding-size', type=int, metavar='ES', help='Dimensiona
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
                     help='Dimensionality of the embedding')
 
-parser.add_argument('--nj', default=8, type=int, metavar='NJOB', help='num of job')
+parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 parser.add_argument('--batch-size', type=int, default=1, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
