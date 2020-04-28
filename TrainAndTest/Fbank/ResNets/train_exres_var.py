@@ -114,6 +114,8 @@ parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
 # loss configure
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--finetune', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--m', type=float, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',

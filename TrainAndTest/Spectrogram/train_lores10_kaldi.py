@@ -310,7 +310,6 @@ def main():
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model_dict = model.state_dict()
             model_dict.update(filtered)
-
             model.load_state_dict(model_dict)
             #
             model.dropout.p = args.dropout_p
