@@ -193,7 +193,7 @@ valid_part = torch.utils.data.Subset(valid_dir, indices)
 # sitw_dev_part = torch.utils.data.Subset(sitw_dev_dir, indices)
 
 
-def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
+def train_extract(train_loader, model, file_dir, set_name, save_per_num=2000):
     # switch to evaluate mode
     model.eval()
 
@@ -254,7 +254,7 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=1000):
     torch.cuda.empty_cache()
 
 
-def test_extract(test_loader, model, file_dir, set_name, save_per_num=500):
+def test_extract(test_loader, model, file_dir, set_name, save_per_num=1000):
     # switch to evaluate mode
     model.eval()
 
