@@ -142,7 +142,7 @@ if args.cuda:
     cudnn.benchmark = True
 
 # Define visulaize SummaryWriter instance
-kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': False} if args.cuda else {}
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
 transform = transforms.Compose([
@@ -164,6 +164,9 @@ indices = list(range(len(train_dir)))
 random.shuffle(indices)
 indices = indices[:args.sample_utt]
 train_part = torch.utils.data.Subset(train_dir, indices)
+
+veri_dir = ScriptTestDataset(dir=args.train_dir, loader=file_loader, transform=transform_T, return_uid=True)
+veri_dir.partition(args.sample_utt)
 
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T, return_uid=True)
 test_dir.partition(args.sample_utt)
@@ -331,6 +334,7 @@ def main():
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
 
     train_loader = DataLoader(train_part, batch_size=args.batch_size, shuffle=False, **kwargs)
+    veri_loader = DataLoader(veri_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     valid_loader = DataLoader(valid_part, batch_size=args.batch_size, shuffle=False, **kwargs)
     test_loader = DataLoader(test_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
     # sitw_test_loader = DataLoader(sitw_test_part, batch_size=args.batch_size, shuffle=False, **kwargs)
@@ -374,6 +378,8 @@ def main():
 
             train_extract(train_loader, model, file_dir, 'vox1_train')
             train_extract(valid_loader, model, file_dir, 'vox1_valid')
+            test_extract(veri_loader, model, file_dir, 'vox1_veri')
+
         test_extract(test_loader, model, file_dir, 'vox1_test')
 
 
