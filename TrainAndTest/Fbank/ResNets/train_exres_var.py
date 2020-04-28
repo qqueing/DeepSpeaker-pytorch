@@ -327,10 +327,12 @@ def main():
 
     # pdb.set_trace()
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
-                                               collate_fn=PadCollate(dim=2, fix_len=False),
+                                               collate_fn=PadCollate(dim=2, min_chunk_size=300,
+                                                                     max_chunk_size=800, fix_len=False),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size,
-                                               collate_fn=PadCollate(dim=2, fix_len=False),
+                                               collate_fn=PadCollate(dim=2, min_chunk_size=300,
+                                                                     max_chunk_size=800, fix_len=False),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
