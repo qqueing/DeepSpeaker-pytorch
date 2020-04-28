@@ -144,7 +144,7 @@ if [ $stage -le 20 ]; then
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
     --sample-utt 4000 \
     --embedding-size 128 \
-    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var_test \
+    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
     --model ${model} \
     --channels 4,16,64 \
     --dropout-p 0.25
