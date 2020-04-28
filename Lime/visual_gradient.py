@@ -49,6 +49,7 @@ def main():
     if True:
 
         train_lst = list(dir_path.glob('*train*bin'))
+        veri_lst = list(dir_path.glob('*ver*bin'))
         valid_lst = list(dir_path.glob('*valid*bin'))
         test_lst = list(dir_path.glob('*test*bin'))
 
@@ -82,6 +83,29 @@ def main():
                     num_utt += 1
         valid_data = valid_data / num_utt
 
+        veri_data = np.zeros((3, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
+        num_utt = 0
+        for t in veri_lst:
+            p = str(t)
+            with open(p, 'rb') as f:
+                sets = pickle.load(f)
+                for (label, grad_a, grad_b, data_a, data_b) in sets:
+                    veri_data[0][0] += np.mean(data_a, axis=0)
+                    veri_data[0][1] += np.mean(data_b, axis=0)
+
+                    veri_data[1][0] += np.sum(np.abs(grad_a), axis=0)
+                    veri_data[1][1] += np.sum(np.abs(grad_b), axis=0)
+
+                    this_weight_a = np.var(grad_a, axis=0)
+                    veri_data[2][0] += this_weight_a  # / this_weight_a.sum()
+
+                    this_weight_b = np.var(grad_b, axis=0)
+                    veri_data[2][1] += this_weight_b  # / this_weight_b.sum()
+
+                    num_utt += 1
+
+        veri_data = veri_data / num_utt
+
         test_data = np.zeros((3, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
         num_utt = 0
         for t in test_lst:
@@ -113,6 +137,7 @@ def main():
 
         np.save(args.extract_path + '/inputs.train.npy', train_data)
         np.save(args.extract_path + '/inputs.valid.npy', valid_data)
+        np.save(args.extract_path + '/inputs.veri.npy', veri_data)
         np.save(args.extract_path + '/inputs.test.npy', test_data)
 
     # all_data [5, 2, 120, 161]
@@ -126,8 +151,8 @@ def main():
 
     train_set_grad = train_data[1]
     valid_set_grad = valid_data[1]
-    test_a_set_grad = test_data[1][0]
-    test_b_set_grad = test_data[1][1]
+    veri_set_grad = test_data[1][0] + test_data[1][1]
+    test_set_grad = test_data[1][0] + test_data[1][1]
 
     x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
@@ -152,7 +177,7 @@ def main():
     plt.plot(xnew, ynew)
     # print(np.sum(ynew))
 
-    for s in train_set_grad + valid_set_grad, test_a_set_grad + test_b_set_grad:
+    for s in train_set_grad, valid_set_grad, veri_set_grad, test_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
         xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / args.feat_dim)
@@ -162,13 +187,12 @@ def main():
         plt.plot(xnew, ynew)
         # pdb.set_trace
     # if not os.path.exists(args.extract_path + '/grad.npy'):
-    ynew = test_a_set_grad + test_b_set_grad
-    # ynew = ynew - ynew.min()
+    ynew = veri_set_grad
     ynew = ynew / ynew.sum()
-    np.save(args.extract_path + '/grad.test.npy', ynew)
+    np.save(args.extract_path + '/grad.veri.npy', ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
-    plt.legend(['Mel-scale', 'Train Set', 'Test Set'], loc='upper right', fontsize=24)
+    plt.legend(['Mel-scale', 'Train Set', 'Valid Set', 'train Verify Set', 'Test Set'], loc='upper right', fontsize=24)
     plt.savefig(args.extract_path + "/grads.png")
     plt.show()
 
