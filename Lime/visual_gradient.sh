@@ -17,7 +17,7 @@ if [ $stage -le 1 ]; then
 #      --feat-dim 161
 
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/LoResNet10/timit/spect/soft_var_test/epoch_15 \
+      --extract-path Data/gradient/LoResNet10/timit/spect/soft_var/epoch_15 \
       --feat-dim 161
   done
 fi
