@@ -50,11 +50,13 @@ if [ $stage -le 0 ]; then
       --stride 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
+      --test-batch-size 1 \
+      --test-input-per-file 1 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var \
       --resume Data/checkpoint/${model}/${datasets}/${feat}_var/${loss}/checkpoint_1.pth \
       --input-per-spks 192 \
-      --veri-pairs 12800 \
+      --veri-pairs 9600 \
       --num-valid 2 \
       --loss-type ${loss}
   done
