@@ -37,7 +37,6 @@ if [ $stage -le 0 ]; then
 #      --num-valid 2 \
 #      --loss-type ${loss}
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_var.py \
-      --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_${feat} \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_${feat} \
       --nj 12 \
@@ -45,6 +44,7 @@ if [ $stage -le 0 ]; then
       --milestones 14,20,25 \
       --model ${model} \
       --resnet-size 34 \
+      --embedding-size 128 \
       --feat-dim 64 \
       --remove-vad \
       --stride 1 \
