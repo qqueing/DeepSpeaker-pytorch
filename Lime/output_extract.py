@@ -376,8 +376,8 @@ def main():
                 model_conv1 = model.conv1.weight.cpu().detach().numpy()
                 np.save(file_dir + '/model.conv1.npy', model_conv1)
 
-            train_extract(train_loader, model, file_dir, 'vox1_train')
-            train_extract(valid_loader, model, file_dir, 'vox1_valid')
+            # train_extract(train_loader, model, file_dir, 'vox1_train')
+            # train_extract(valid_loader, model, file_dir, 'vox1_valid')
             test_extract(veri_loader, model, file_dir, 'vox1_veri')
 
         test_extract(test_loader, model, file_dir, 'vox1_test')

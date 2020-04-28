@@ -173,18 +173,18 @@ if [ $stage -le 30 ]; then
     --channels 4,32,128 \
     --dropout-p 0.25
 
-  python Lime/output_extract.py \
-    --model LoResNet10 \
-    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
-    --start-epochs 15 \
-    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss}_var \
-    --epochs 15 \
-    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --sample-utt 4000 \
-    --embedding-size 128 \
-    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
-    --model ${model} \
-    --channels 4,32,128 \
-    --dropout-p 0.25
+#  python Lime/output_extract.py \
+#    --model LoResNet10 \
+#    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+#    --start-epochs 15 \
+#    --check-path Data/checkpoint/LoResNet10/${datasets}/${feat}/${loss}_var \
+#    --epochs 15 \
+#    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+#    --sample-utt 4000 \
+#    --embedding-size 128 \
+#    --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
+#    --model ${model} \
+#    --channels 4,32,128 \
+#    --dropout-p 0.25
 fi
