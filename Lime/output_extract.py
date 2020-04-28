@@ -371,9 +371,9 @@ def main():
             os.makedirs(file_dir)
 
         if not args.test_only:
-            if args.cuda:
-                model_conv1 = model.conv1.weight.cpu().detach().numpy()
-                np.save(file_dir + '/model.conv1.npy', model_conv1)
+            # if args.cuda:
+            #     model_conv1 = model.conv1.weight.cpu().detach().numpy()
+            #     np.save(file_dir + '/model.conv1.npy', model_conv1)
 
             train_extract(train_loader, model, file_dir, 'vox1_train')
             train_extract(valid_loader, model, file_dir, 'vox1_valid')
