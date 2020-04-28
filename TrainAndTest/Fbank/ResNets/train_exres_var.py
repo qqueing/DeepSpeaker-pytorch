@@ -108,6 +108,8 @@ parser.add_argument('--remove-vad', action='store_true', default=False,
 
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
+parser.add_argument('--stride', default=1, type=int, metavar='KE',
+                    help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
@@ -286,6 +288,7 @@ def main():
                     'resnet_size': args.resnet_size,
                     'num_classes': train_dir.num_spks,
                     'channels': channels,
+                    'stride': args.stride,
                     'avg_size': args.avg_size,
                     'kernel_size': kernel_size,
                     'padding': padding,
