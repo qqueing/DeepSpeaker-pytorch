@@ -179,7 +179,7 @@ if args.cuda:
 writer = SummaryWriter(args.check_path, filename_suffix='exploring')
 sys.stdout = NewLogger(os.path.join(args.check_path, 'log.txt'))
 
-kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': False} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 

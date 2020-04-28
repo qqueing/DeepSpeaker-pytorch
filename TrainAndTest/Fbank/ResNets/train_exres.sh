@@ -49,8 +49,8 @@ if [ $stage -le 0 ]; then
       --kernel-size 3,3 \
       --batch-size 64 \
       --lr 0.1 \
-      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}_var/${loss}/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 12800 \
       --num-valid 2 \
