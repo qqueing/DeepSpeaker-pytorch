@@ -509,14 +509,14 @@ class PadCollate:
     a batch of sequences
     """
 
-    def __init__(self, dim=0, normlize=True, fix_len=False):
+    def __init__(self, dim=0, min_chunk_size=300, max_chunk_size=400, normlize=True, fix_len=False):
         """
         args:
             dim - the dimension to be padded (dimension of time in sequences)
         """
         self.dim = dim
-        self.min_chunk_size = 200
-        self.max_chunk_size = 400
+        self.min_chunk_size = min_chunk_size
+        self.max_chunk_size = max_chunk_size
         self.fix_len = fix_len
         self.normlize = normlize
 
