@@ -259,9 +259,6 @@ def main():
     print('Model options: {}'.format(model_kwargs))
     model = create_model(args.model, **model_kwargs)
 
-    if args.cuda:
-        model.cuda()
-
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
 
     milestones = args.milestones.split(',')
