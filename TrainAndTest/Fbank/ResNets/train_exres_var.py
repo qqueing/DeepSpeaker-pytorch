@@ -78,8 +78,6 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
 
-parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
-                    help='acoustic feature dimension')
 parser.add_argument('--check-path',
                     help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True,
