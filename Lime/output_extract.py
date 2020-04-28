@@ -180,7 +180,6 @@ random.shuffle(indices)
 indices = indices[:args.sample_utt]
 valid_part = torch.utils.data.Subset(valid_dir, indices)
 
-
 # sitw_test_dir = SitwTestDataset(sitw_dir=args.sitw_dir, sitw_set='eval', transform=transform_T, return_uid=False)
 # indices = list(range(len(sitw_test_dir)))
 # random.shuffle(indices)
@@ -253,7 +252,6 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=2000):
 
     print('Saving pairs in %s.\n' % file_dir)
     torch.cuda.empty_cache()
-
 
 def test_extract(test_loader, model, file_dir, set_name, save_per_num=1000):
     # switch to evaluate mode
