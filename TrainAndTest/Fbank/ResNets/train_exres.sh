@@ -17,7 +17,26 @@ if [ $stage -le 0 ]; then
   feat=fb64_wcmvn
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
-    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
+#    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_${feat} \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_${feat} \
+#      --nj 12 \
+#      --epochs 30 \
+#      --milestones 14,20,25 \
+#      --model ${model} \
+#      --resnet-size 34 \
+#      --feat-dim 64 \
+#      --stride 1 \
+#      --kernel-size 3,3 \
+#      --batch-size 64 \
+#      --lr 0.1 \
+#      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss} \
+#      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_1.pth \
+#      --input-per-spks 192 \
+#      --veri-pairs 12800 \
+#      --num-valid 2 \
+#      --loss-type ${loss}
+    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_var.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_${feat} \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_${feat} \
       --nj 12 \
