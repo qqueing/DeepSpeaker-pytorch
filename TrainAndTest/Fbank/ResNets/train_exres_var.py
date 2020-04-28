@@ -29,13 +29,12 @@ from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from Define_Model.LossFunction import CenterLoss
-from Define_Model.ResNet import ExporingResNet
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, varLengthFeat, \
     PadCollate
-from TrainAndTest.common_func import create_optimizer
+from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -66,6 +65,19 @@ parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_kaldi',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
+
+parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'ExResNet34', 'SuResCNN10'],
+                    help='path to voxceleb1 test dataset')
+parser.add_argument('--resnet-size', default=34, type=int,
+                    metavar='RES', help='The channels of convs layers)')
+parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
+                    help='kernel size of conv filters')
+parser.add_argument('--stride', default=2, type=int, metavar='ST',
+                    help='kernel size of conv filters')
+parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
+                    help='acoustic feature dimension')
+parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
+                    help='input batch size for testing (default: 64)')
 
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
@@ -184,13 +196,13 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 if args.mfb:
     transform = transforms.Compose([
         # concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
-        varLengthFeat(),
+        varLengthFeat(remove_vad=True),
         totensor(),
         # tonormal()
     ])
     transform_T = transforms.Compose([
         # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=True),
-        varLengthFeat(),
+        varLengthFeat(remove_vad=True),
         totensor(),
         # tonormal()
     ])
@@ -204,14 +216,16 @@ else:
         # tonormal()
     ])
 
-train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
+train_dir = ScriptTrainDataset(dir=args.train_dir,
+                               samples_per_speaker=args.input_per_spks, transform=transform,
                                loader=file_loader, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, loader=file_loader)
+if len(test_dir) < args.veri_pairs:
+    args.veri_pairs = len(test_dir)
+    print('There are %d verification pairs.' % len(test_dir))
+else:
+    test_dir.partition(args.veri_pairs)
 
-indices = list(range(len(test_dir)))
-random.shuffle(indices)
-indices = indices[:args.veri_pairs]
-test_part = torch.utils.data.Subset(test_dir, indices)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat,
@@ -228,8 +242,24 @@ def main():
 
     # instantiate
     # model and initialize weights
-    model = ExporingResNet(layers=[3, 4, 6, 3], num_classes=len(train_dir.speakers),
-                           embedding_size=args.embedding_size)
+    kernel_size = args.kernel_size.split(',')
+    kernel_size = [int(x) for x in kernel_size]
+    padding = [int((x - 1) / 2) for x in kernel_size]
+
+    kernel_size = tuple(kernel_size)
+    padding = tuple(padding)
+
+    model_kwargs = {'input_dim': args.feat_dim,
+                    'kernel_size': kernel_size,
+                    'stride': args.stride,
+                    'padding': padding,
+                    'resnet_size': args.resnet_size,
+                    'embedding_size': args.embedding_size,
+                    'num_classes': len(train_dir.speakers),
+                    'dropout_p': args.dropout_p}
+
+    print('Model options: {}'.format(model_kwargs))
+    model = create_model(args.model, **model_kwargs)
 
     if args.cuda:
         model.cuda()
@@ -242,10 +272,7 @@ def main():
     scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
 
     start = 0
-    if args.save_init:
-        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
-        torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
-                    'scheduler': scheduler.state_dict()}, check_path)
+
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -266,7 +293,8 @@ def main():
         xe_criterion = None
     elif args.loss_type == 'asoft':
         ce_criterion = None
-        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+        model.classifier = AngleLinear(in_features=args.embedding_size,
+                                       out_features=train_dir.num_spks, m=args.m)
         xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
@@ -280,6 +308,18 @@ def main():
                                      {'params': model.parameters()}],
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
+    if args.finetune:
+        if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
+            classifier_params = list(map(id, model.classifier.parameters()))
+            rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
+            optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
+                                         {'params': rest_params}],
+                                        lr=args.lr, weight_decay=args.weight_decay,
+                                        momentum=args.momentum)
+    if args.save_init:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
+        torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+                    'scheduler': scheduler.state_dict()}, check_path)
 
     start += args.start_epoch
     print('Start epoch is : ' + str(start))
@@ -292,7 +332,7 @@ def main():
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size,
                                                collate_fn=PadCollate(dim=2, fix_len=False),
                                                shuffle=False, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     ce = [ce_criterion, xe_criterion]
     if args.cuda:
@@ -308,7 +348,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        train(train_loader, model, optimizer, ce, scheduler, epoch)
+        train(train_loader, model, optimizer, ce, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
@@ -317,7 +357,7 @@ def main():
     writer.close()
 
 
-def train(train_loader, model, optimizer, ce, scheduler, epoch):
+def train(train_loader, model, optimizer, ce, epoch):
     # switch to evaluate mode
     model.train()
 

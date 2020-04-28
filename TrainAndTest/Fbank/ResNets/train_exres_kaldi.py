@@ -255,11 +255,7 @@ def main():
 
     model = create_model(args.model, **model_kwargs)
 
-    if args.cuda:
-        model.cuda()
-
     start = 0
-
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -287,6 +283,9 @@ def main():
     elif args.loss_type == 'amsoft':
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
         xe_criterion = AMSoftmaxLoss(margin=args.margin, s=args.s)
+
+    if args.cuda:
+        model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
     if args.loss_type == 'center':
