@@ -47,7 +47,7 @@ if [ $stage -le 0 ]; then
       --feat-dim 64 \
       --stride 1 \
       --kernel-size 3,3 \
-      --batch-size 64 \
+      --batch-size 32 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var \
       --resume Data/checkpoint/${model}/${datasets}/${feat}_var/${loss}/checkpoint_1.pth \
