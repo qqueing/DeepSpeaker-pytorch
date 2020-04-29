@@ -214,11 +214,11 @@ else:
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
                                loader=file_loader, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform_T, loader=file_loader)
-
-indices = list(range(len(test_dir)))
-random.shuffle(indices)
-indices = indices[:args.veri_pairs]
-test_part = torch.utils.data.Subset(test_dir, indices)
+if len(test_dir) < args.veri_pairs:
+    args.veri_pairs = len(test_dir)
+    print('There are %d verification pairs.' % len(test_dir))
+else:
+    test_dir.partition(args.veri_pairs)
 
 valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat,
@@ -310,9 +310,15 @@ def main():
     end = start + args.epochs
 
     # pdb.set_trace()
-    train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.batch_size, shuffle=False, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dir,
+                                               batch_size=args.batch_size,
+                                               shuffle=True, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(valid_dir,
+                                               batch_size=int(args.batch_size / 2),
+                                               shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir,
+                                              batch_size=args.test_batch_size,
+                                              shuffle=False, **kwargs)
 
     ce = [ce_criterion, xe_criterion]
     if args.cuda:
