@@ -109,11 +109,30 @@ if [ $stage -le 6 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
       --nj 14 \
-      --epochs 14 \
+      --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss} \
       --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
+      --channels 4,16,64 \
+      --statis-pooling \
+      --embedding-size 128 \
+      --input-per-spks 256 \
+      --num-valid 1 \
+      --weight-decay 0.001 \
+      --dropout-p 0.25 \
+      --loss-type ${loss}
+
+    python TrainAndTest/Spectrogram/train_lores10_var.py \
+      --model LoResNet10 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --nj 14 \
+      --epochs 15 \
+      --lr 0.1 \
+      --milestones 7,11 \
+      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_var \
+      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_var/checkpoint_1.pth \
       --channels 4,16,64 \
       --statis-pooling \
       --embedding-size 128 \
