@@ -116,6 +116,7 @@ if [ $stage -le 6 ]; then
       --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
       --channels 4,16,64 \
       --statis-pooling \
+      --alpha 9.8 \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
@@ -134,6 +135,7 @@ if [ $stage -le 6 ]; then
       --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_var \
       --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_var/checkpoint_1.pth \
       --channels 4,16,64 \
+      --alpha 9.8 \
       --statis-pooling \
       --embedding-size 128 \
       --input-per-spks 256 \
