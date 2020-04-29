@@ -216,7 +216,7 @@ def main():
     plt.legend(['Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=16)
     plt.savefig(args.extract_path + "/inputs.png")
     plt.show()
-
+    print('Completed!\n')
 
 if __name__ == '__main__':
     main()
