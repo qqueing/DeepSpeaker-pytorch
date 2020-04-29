@@ -53,6 +53,7 @@ def main():
         valid_lst = list(dir_path.glob('*valid*bin'))
         test_lst = list(dir_path.glob('*test*bin'))
 
+        print('Train set extracting:')
         train_data = np.zeros((3, args.feat_dim))  # [data/grad]
         num_utt = 0
         for t in train_lst:
@@ -68,6 +69,7 @@ def main():
                     num_utt += 1
         train_data = train_data / num_utt
 
+        print('Valid set extracting:')
         valid_data = np.zeros((3, args.feat_dim))  # [data/grad]
         num_utt = 0
         for t in valid_lst:
@@ -83,6 +85,7 @@ def main():
                     num_utt += 1
         valid_data = valid_data / num_utt
 
+        print('Train verification set extracting:')
         veri_data = np.zeros((3, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
         num_utt = 0
         for t in veri_lst:
@@ -106,6 +109,7 @@ def main():
 
         veri_data = veri_data / num_utt
 
+        print('Test set extracting:')
         test_data = np.zeros((3, 2, args.feat_dim))  # [data/grad, utt_a, utt_b]
         num_utt = 0
         for t in test_lst:
