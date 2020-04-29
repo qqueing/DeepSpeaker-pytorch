@@ -181,7 +181,7 @@ if [ $stage -le 40 ]; then
       --embedding-size 128 \
       --feat-dim 64 \
       --kernel-size 3,3 \
-      --resume Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft/checkpoint_30.pth \
+      --resume Data/checkpoint/ExResNet34/vox1/fb64_wcmvn_var/soft/checkpoint_1.pth \
       --input-per-spks 192 \
       --num-valid 2 \
       --loss-type ${loss}
