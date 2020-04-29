@@ -30,12 +30,11 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR
 from tqdm import tqdm
 
-import Process_Data.constants as c
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import to2tensor, concateinputfromMFB, varLengthFeat, PadCollate
+from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -118,9 +117,9 @@ parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
+parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -145,7 +144,7 @@ parser.add_argument('--m', type=int, default=3, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
+parser.add_argument('--lambda-max', type=float, default=1000, metavar='S',
                     help='random seed (default: 0)')
 
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.125)')
@@ -216,8 +215,8 @@ if args.acoustic_feature == 'fbank':
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
-        # varLengthFeat(),
+        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
+        varLengthFeat(),
         to2tensor(),
         # tonormal()
     ])
@@ -317,9 +316,7 @@ def main():
     elif args.loss_type == 'asoft':
         ce_criterion = None
         model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-        all_iteration = train_dir.num_spks * args.input_per_spks / args.batch_size * args.epochs
-        lambda_max = int(all_iteration * args.lambda_max / 2) // 50 * 50
-        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=lambda_max)
+        xe_criterion = AngleSoftmaxLoss(lambda_min=args.lambda_min, lambda_max=args.lambda_max)
     elif args.loss_type == 'center':
         xe_criterion = CenterLoss(num_classes=train_dir.num_spks, feat_dim=args.embedding_size)
     elif args.loss_type == 'amsoft':
