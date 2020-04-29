@@ -113,7 +113,7 @@ if [ $stage -le 20 ]; then
       --channels 4,16,64 \
       --embedding-size 128 \
       --resume Data/checkpoint/LoResNet10/libri/spect_noc/${loss}/checkpoint_25.pth \
-      --loss-type soft \
+      --loss-type ${loss} \
       --dropout-p 0.25 \
       --num-valid 2 \
       --gpu-id 1
