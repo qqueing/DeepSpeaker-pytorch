@@ -60,7 +60,7 @@ if [ $stage -le 6 ]; then
   model=LoResNet10
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-  for loss in amsoft center ; do
+  for loss in center ; do
 #    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
 #    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
 #      --model ${model} \
@@ -159,6 +159,7 @@ if [ $stage -le 6 ]; then
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
+      --loss_ratio 0.01 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
       --veri-pairs 15000 \
