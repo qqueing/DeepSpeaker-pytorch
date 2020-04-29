@@ -104,25 +104,26 @@ if [ $stage -le 6 ]; then
 #      --weight-decay 0.001 \
 #      --dropout-p 0.25 \
 #      --loss-type ${loss}
-#    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-#      --model LoResNet10 \
-#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-#      --nj 14 \
-#      --epochs 15 \
-#      --lr 0.1 \
-#      --milestones 7,11 \
-#      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss} \
-#      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
-#      --channels 4,16,64 \
-#      --statis-pooling \
-#      --alpha 9.8 \
-#      --embedding-size 128 \
-#      --input-per-spks 256 \
-#      --num-valid 1 \
-#      --weight-decay 0.001 \
-#      --dropout-p 0.25 \
-#      --loss-type ${loss}
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --model LoResNet10 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --nj 14 \
+      --epochs 15 \
+      --lr 0.1 \
+      --milestones 7,11 \
+      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_03 \
+      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_03/checkpoint_1.pth \
+      --channels 4,16,64 \
+      --statis-pooling \
+      --alpha 9.8 \
+      --embedding-size 128 \
+      --input-per-spks 256 \
+      --num-valid 1 \
+      --weight-decay 0.002 \
+      --veri-pairs 20000 \
+      --dropout-p 0.3 \
+      --loss-type ${loss}
 #
 #    python TrainAndTest/Spectrogram/train_lores10_var.py \
 #      --model LoResNet10 \
@@ -143,27 +144,27 @@ if [ $stage -le 6 ]; then
 #      --weight-decay 0.001 \
 #      --dropout-p 0.25 \
 #      --loss-type ${loss}
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-      --nj 14 \
-      --epochs 10 \
-      --lr 0.01 \
-      --milestones 6 \
-      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss} \
-      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/soft/checkpoint_15.pth \
-      --channels 4,16,64 \
-      --finetune \
-      --alpha 9.8 \
-      --embedding-size 128 \
-      --input-per-spks 256 \
-      --num-valid 1 \
-      --loss-ratio 0.01 \
-      --weight-decay 0.001 \
-      --dropout-p 0.25 \
-      --veri-pairs 15000 \
-      --loss-type ${loss}
+#    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+#      --model LoResNet10 \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#      --nj 14 \
+#      --epochs 10 \
+#      --lr 0.01 \
+#      --milestones 6 \
+#      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss} \
+#      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/soft/checkpoint_15.pth \
+#      --channels 4,16,64 \
+#      --finetune \
+#      --alpha 9.8 \
+#      --embedding-size 128 \
+#      --input-per-spks 256 \
+#      --num-valid 1 \
+#      --loss-ratio 0.01 \
+#      --weight-decay 0.001 \
+#      --dropout-p 0.25 \
+#      --veri-pairs 15000 \
+#      --loss-type ${loss}
   done
 fi
 
