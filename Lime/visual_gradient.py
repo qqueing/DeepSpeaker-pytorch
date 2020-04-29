@@ -176,7 +176,7 @@ def main():
     n = 1 / n
 
     f = interpolate.interp1d(m[1:], n)
-    xnew = np.arange(np.min(m[1:]), np.max(m[1:]), (np.max(m[1:]) - np.min(m[1:])) / 161)
+    xnew = np.arange(np.min(m[1:]), np.max(m[1:]), (np.max(m[1:]) - np.min(m[1:])) / args.feat_dim)
     ynew = f(xnew)
     ynew = ynew / ynew.sum()
     plt.plot(xnew, ynew)
