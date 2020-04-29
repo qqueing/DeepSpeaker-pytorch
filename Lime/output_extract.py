@@ -93,8 +93,8 @@ parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
 parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
                     help='random seed (default: 0)')
 
-
-
+parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
+                    help='acoustic feature dimension')
 parser.add_argument('--cos-sim', action='store_true', default=True, help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, metavar='ES', help='Dimensionality of the embedding')
 parser.add_argument('--sample-utt', type=int, default=120, metavar='ES',
@@ -322,6 +322,7 @@ def main():
     model_kwargs = {'embedding_size': args.embedding_size,
                     'num_classes': len(class_to_idx),
                     'channels': channels,
+                    'alpha': args.alpha,
                     'dropout_p': args.dropout_p}
 
     print('Model options: {}'.format(model_kwargs))
