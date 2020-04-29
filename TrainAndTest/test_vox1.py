@@ -93,7 +93,8 @@ parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
 parser.add_argument('--remove-vad', action='store_true', default=False,
                     help='using Cosine similarity')
 
-
+parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
+                    help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
@@ -240,6 +241,7 @@ def main():
                     'resnet_size': args.resnet_size,
                     'input_dim': args.feat_dim,
                     'num_classes': train_dir.num_spks,
+                    'alpha': args.alpha,
                     'channels': channels,
                     'kernel_size': kernel_size,
                     'padding': padding,
