@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=3
+stage=30
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -111,7 +111,7 @@ if [ $stage -le 3 ]; then
       --sample-utt 5000
 fi
 
-stage=300
+stage=30
 
 if [ $stage -le 20 ]; then
   model=LoResNet10
