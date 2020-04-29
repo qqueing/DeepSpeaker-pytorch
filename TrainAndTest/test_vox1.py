@@ -252,22 +252,21 @@ def main():
     elif args.loss_type == 'amsoft':
         model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
 
-    if os.path.isfile(args.resume):
-        print('=> loading checkpoint {}'.format(args.resume))
-        checkpoint = torch.load(args.resume)
-        # start_epoch = checkpoint['epoch']
+    assert os.path.isfile(args.resume)
+    print('=> loading checkpoint {}'.format(args.resume))
+    checkpoint = torch.load(args.resume)
+    # start_epoch = checkpoint['epoch']
 
-        filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-        # model_dict = model.state_dict()
-        # model_dict.update(filtered)
-        model.load_state_dict(filtered)
-        #
-        try:
-            model.dropout.p = args.dropout_p
-        except:
-            pass
-    else:
-        print('=> no checkpoint found at {}'.format(args.resume))
+    filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+    # model_dict = model.state_dict()
+    # model_dict.update(filtered)
+    model.load_state_dict(filtered)
+    #
+    try:
+        model.dropout.p = args.dropout_p
+    except:
+        pass
+
 
     start = args.start_epoch
     print('Epoch is : ' + str(start))
