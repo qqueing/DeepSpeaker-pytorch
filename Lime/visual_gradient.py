@@ -39,6 +39,7 @@ def main():
 
     # load selected input uids
     dir_path = pathlib.Path(args.extract_path)
+    print('Path is %s' % str(dir_path))
 
     # inputs [train/valid/test]
     # if os.path.exists(args.extract_path + '/inputs.train.npy'):
