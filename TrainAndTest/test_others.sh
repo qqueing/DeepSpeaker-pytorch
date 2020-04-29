@@ -80,30 +80,42 @@ if [ $stage -le 20 ]; then
   datasets=libri
   for loss in soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 4,32,128 \
+#      --embedding-size 128 \
+#      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_15.pth \
+#      --loss-type soft \
+#      --dropout-p 0.25 \
+#      --num-valid 1 \
+#      --gpu-id 1
+#
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 4,32,128 \
+#      --embedding-size 128 \
+#      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var/checkpoint_15.pth \
+#      --loss-type soft \
+#      --dropout-p 0.25 \
+#      --num-valid 1 \
+#      --gpu-id 1
     python TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --nj 12 \
       --model ${model} \
-      --channels 4,32,128 \
+      --channels 4,16,64 \
       --embedding-size 128 \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_15.pth \
+      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
       --loss-type soft \
       --dropout-p 0.25 \
-      --num-valid 1 \
-      --gpu-id 1
-
-    python TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
-      --nj 12 \
-      --model ${model} \
-      --channels 4,32,128 \
-      --embedding-size 128 \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var/checkpoint_15.pth \
-      --loss-type soft \
-      --dropout-p 0.25 \
-      --num-valid 1 \
+      --num-valid 2 \
       --gpu-id 1
   done
 fi
