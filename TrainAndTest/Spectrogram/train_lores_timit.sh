@@ -159,7 +159,7 @@ if [ $stage -le 6 ]; then
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
-      --loss_ratio 0.01 \
+      --loss-ratio 0.01 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
       --veri-pairs 15000 \
