@@ -78,7 +78,7 @@ if [ $stage -le 20 ]; then
   model=LoResNet10
   feat=spect
   datasets=libri
-  for loss in soft ; do
+  for loss in amsoft center ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
 #    python TrainAndTest/test_vox1.py \
 #      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
@@ -112,24 +112,24 @@ if [ $stage -le 20 ]; then
       --model ${model} \
       --channels 4,16,64 \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
+      --resume Data/checkpoint/LoResNet10/libri/spect_noc/${loss}/checkpoint_25.pth \
       --loss-type soft \
       --dropout-p 0.25 \
       --num-valid 2 \
       --gpu-id 1
 
-    python TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
-      --nj 12 \
-      --model ${model} \
-      --channels 4,16,64 \
-      --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft_var/checkpoint_15.pth \
-      --loss-type soft \
-      --dropout-p 0.25 \
-      --num-valid 2 \
-      --gpu-id 1
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 4,16,64 \
+#      --embedding-size 128 \
+#      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft_var/checkpoint_15.pth \
+#      --loss-type soft \
+#      --dropout-p 0.25 \
+#      --num-valid 2 \
+#      --gpu-id 1
   done
 fi
 
