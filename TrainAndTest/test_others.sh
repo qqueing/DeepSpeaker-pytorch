@@ -78,7 +78,7 @@ if [ $stage -le 20 ]; then
   model=LoResNet10
   feat=spect
   datasets=libri
-  for loss in amsoft ; do
+  for loss in soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
 #    python TrainAndTest/test_vox1.py \
 #      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
