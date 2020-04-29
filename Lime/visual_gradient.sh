@@ -49,12 +49,15 @@ if [ $stage -le 5 ]; then
 fi
 stage=10
 if [ $stage -le 10 ]; then
-
-  for loss in soft amsoft center ; do
-    python Lime/visual_gradient.py \
-      --extract-path Data/gradient/LoResNet10/spect/${loss}_wcmvn/epoch_38 \
+  python Lime/visual_gradient.py \
+      --extract-path Data/gradient/LoResNet10/spect/soft_wcmvn/epoch_24 \
       --feat-dim 161
-  done
+
+#  for loss in soft amsoft center ; do
+#    python Lime/visual_gradient.py \
+#      --extract-path Data/gradient/LoResNet10/spect/${loss}_wcmvn/epoch_38 \
+#      --feat-dim 161
+#  done
 fi
 stage=100
 
