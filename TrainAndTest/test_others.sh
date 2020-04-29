@@ -113,7 +113,7 @@ if [ $stage -le 20 ]; then
       --channels 4,16,64 \
       --embedding-size 128 \
       --alpha 9.8 \
-      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft_03/checkpoint_25.pth \
+      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft_03/checkpoint_15.pth \
       --loss-type ${loss} \
       --dropout-p 0.3 \
       --num-valid 2 \
