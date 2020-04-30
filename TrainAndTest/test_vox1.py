@@ -388,7 +388,7 @@ def extract(test_loader, model, xvector_dir):
     for set_id in np.arange(np.ceil(len(uid) / 2000)):
         ark_file = xvector_dir + '/xvector.{}.ark'.format(set_id)
         with open(scp_file, 'w') as scp, open(ark_file, 'wb') as ark:
-            ranges = np.arange(len(uid))[set_id * 2000:(set_id + 1) * 2000]
+            ranges = np.arange(len(uid))[int(set_id * 2000):int((set_id + 1) * 2000)]
             for i in ranges:
                 vec = vectors[i]
                 len_vec = len(vec.tobytes())
