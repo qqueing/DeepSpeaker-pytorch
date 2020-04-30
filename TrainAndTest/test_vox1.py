@@ -73,8 +73,7 @@ parser.add_argument('--valid', action='store_true', default=False,
                     help='using Cosine similarity')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--xvector-dir',
-                    default='Data/xvectors/LoResNet10/timit_spect/soft_var',
+parser.add_argument('--xvector-dir', default='Data/xvectors/LoResNet10/timit_spect/soft_var',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     default='Data/checkpoint/LoResNet10/timit_spect/soft_var/checkpoint_15.pth',
