@@ -27,7 +27,7 @@ if [ $stage -le 5 ]; then
       --nj 12 \
       --model ${model} \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_38.pth \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_24.pth \
       --xvector-dir Data/xvector/LoResNet10/spect/${loss}_wcmvn \
       --loss-type ${loss} \
       --trials trials_e \
