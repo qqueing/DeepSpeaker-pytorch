@@ -71,7 +71,7 @@ parser.add_argument('--sitw-dir', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--valid', action='store_true', default=False,
                     help='using Cosine similarity')
-parser.add_argument('--extract', action='store_true', default=True,
+parser.add_argument('--extract', action='store_true', default=False,
                     help='using Cosine similarity')
 
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
