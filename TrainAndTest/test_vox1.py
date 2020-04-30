@@ -13,7 +13,6 @@ from __future__ import print_function
 
 import argparse
 import os
-import pdb
 import sys
 import time
 # Version conflict
@@ -380,7 +379,7 @@ def extract(test_loader, model, xvector_dir):
         if vec_shape[1] != 1:
             out = out.reshape(vec_shape[0], vec_shape[1], out.shape[-1]).mean(axis=1)
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         vectors.append(out.squeeze().data.cpu().numpy())
         uids.append(uid[0])
