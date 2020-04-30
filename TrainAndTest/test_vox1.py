@@ -24,7 +24,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
-from kaldi_io import read_mat
+from kaldi_io import read_mat, read_vec_flt
 from torch.autograd import Variable
 from tqdm import tqdm
 
@@ -293,8 +293,9 @@ def main():
         valid(valid_loader, model)
 
     verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    extract(verify_loader, model, args.xvector_dir)
+    # extract(verify_loader, model, args.xvector_dir)
 
+    file_loader = read_vec_flt
     test_dir = ScriptVerifyDataset(dir=args.test_dir, xvectors_dir=args.xvector_dir,
                                    loader=file_loader)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
