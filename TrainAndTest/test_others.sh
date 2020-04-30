@@ -31,7 +31,6 @@ if [ $stage -le 5 ]; then
       --xvector-dir Data/xvector/LoResNet10/spect/${loss}_wcmvn \
       --loss-type ${loss} \
       --trials trials_h \
-      --extract False \
       --num-valid 0 \
       --gpu-id 0
   done
