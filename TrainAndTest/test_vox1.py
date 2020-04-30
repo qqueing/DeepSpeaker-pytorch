@@ -381,8 +381,8 @@ def extract(test_loader, model, xvector_dir):
             out = out.reshape(vec_shape[0], vec_shape[1], out.shape[-1]).mean(axis=1)
 
         pdb.set_trace()
-        vec = out.squeeze().data.cpu().numpy()
-        vectors.append(vec)
+
+        vectors.append(out.squeeze().data.cpu().numpy())
         uids.append(uid[0])
 
         if batch_idx % args.log_interval == 0:
