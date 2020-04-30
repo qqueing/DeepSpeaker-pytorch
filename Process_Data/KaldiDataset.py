@@ -556,7 +556,7 @@ class KaldiExtractDataset(data.Dataset):
 
     def __getitem__(self, index):
         uid = self.uids[index]
-        y = self.filer_loader(self.uid2feat[uid])
+        y = self.file_loader(self.uid2feat[uid])
         feature = self.transform(y)
 
         return feature, uid
