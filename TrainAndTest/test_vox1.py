@@ -355,7 +355,7 @@ def valid(valid_loader, model):
     torch.cuda.empty_cache()
 
 
-def extract(test_loader, model, xvector_dir, ark_num=5000):
+def extract(test_loader, model, xvector_dir, ark_num=50000):
     model.eval()
 
     if not os.path.exists(xvector_dir):
@@ -396,6 +396,7 @@ def extract(test_loader, model, xvector_dir, ark_num=5000):
     print('There are %d vectors' % len(uids))
     scp_file = xvector_dir + '/xvectors.scp'
     scp = open(scp_file, 'w')
+
     # write scp and ark file
     # pdb.set_trace()
     for set_id in range(int(np.ceil(len(uids) / ark_num))):
