@@ -294,7 +294,7 @@ def main():
     test_dir = ScriptVerifyDataset(dir=args.test_dir, xvectors_dir=args.xvector_dir,
                                    loader=file_loader)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    test(test_loader, valid_loader, model)
+    test(test_loader)
 
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
     #                                                shuffle=False, **kwargs)
@@ -402,10 +402,8 @@ def extract(test_loader, model, xvector_dir):
     torch.cuda.empty_cache()
 
 
-def test(test_loader, model):
+def test(test_loader):
     # switch to evaluate mode
-    model.eval()
-
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
