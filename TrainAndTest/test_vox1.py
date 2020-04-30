@@ -389,9 +389,10 @@ def extract(test_loader, model, xvector_dir):
                 batch_idx, len(test_loader.dataset), 100. * batch_idx / len(test_loader)))
 
     assert len(uids) == len(vectors)
+    print('There are %d vectors' % len(uids))
     scp_file = xvector_dir + '/xvectors.scp'
     # write scp and ark file
-    for set_id in np.arange(np.ceil(len(uid) / 2000)):
+    for set_id in range(np.ceil(len(uid) / 2000)):
         ark_file = xvector_dir + '/xvector.{}.ark'.format(set_id)
         with open(scp_file, 'w') as scp, open(ark_file, 'wb') as ark:
             ranges = np.arange(len(uid))[int(set_id * 2000):int((set_id + 1) * 2000)]
@@ -403,7 +404,7 @@ def extract(test_loader, model, xvector_dir):
                 # print(ark.tell())
                 scp.write(str(uid[i]) + ' ' + str(ark_file) + ':' + str(ark.tell() - len_vec - 10) + '\n')
 
-    print('There are %d vectors. Saving to %s' % (len(uid), xvector_dir))
+    print('There are %d vectors. Saving to %s' % (len(uids), xvector_dir))
     torch.cuda.empty_cache()
 
 
