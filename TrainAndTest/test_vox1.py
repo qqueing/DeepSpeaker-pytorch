@@ -501,6 +501,10 @@ def sitw_test(sitw_test_loader, model, epoch):
 if __name__ == '__main__':
     main()
 
+# test easy spectrogram soft 161 vox1
+#   Test ERR is 1.6076%, Threshold is 0.31004807353019714
+#   mindcf-0.01 0.2094, mindcf-0.001 0.3767.
+
 # test hard spectrogram soft 161 vox1
 #   Test ERR is 2.9182%, Threshold is 0.35036733746528625
 #   mindcf-0.01 0.3369, mindcf-0.001 0.5494.
