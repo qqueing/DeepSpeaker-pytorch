@@ -298,7 +298,7 @@ def main():
     file_loader = read_vec_flt
     test_dir = ScriptVerifyDataset(dir=args.test_dir, xvectors_dir=args.xvector_dir,
                                    loader=file_loader)
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size * 512, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size * 64, shuffle=False, **kwargs)
     test(test_loader)
 
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
