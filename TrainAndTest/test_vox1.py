@@ -391,10 +391,11 @@ def extract(test_loader, model, xvector_dir):
     assert len(uids) == len(vectors)
     print('There are %d vectors' % len(uids))
     scp_file = xvector_dir + '/xvectors.scp'
+    scp = open(scp_file, 'w')
     # write scp and ark file
-    for set_id in range(np.ceil(len(uid) / 2000)):
+    for set_id in range(int(np.ceil(len(uid) / 2000))):
         ark_file = xvector_dir + '/xvector.{}.ark'.format(set_id)
-        with open(scp_file, 'w') as scp, open(ark_file, 'wb') as ark:
+        with open(ark_file, 'wb') as ark:
             ranges = np.arange(len(uid))[int(set_id * 2000):int((set_id + 1) * 2000)]
             for i in ranges:
                 vec = vectors[i]
@@ -403,7 +404,7 @@ def extract(test_loader, model, xvector_dir):
                 kaldi_io.write_vec_flt(ark, vec, key=key)
                 # print(ark.tell())
                 scp.write(str(uid[i]) + ' ' + str(ark_file) + ':' + str(ark.tell() - len_vec - 10) + '\n')
-
+    scp.close()
     print('There are %d vectors. Saving to %s' % (len(uids), xvector_dir))
     torch.cuda.empty_cache()
 
