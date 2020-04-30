@@ -289,7 +289,7 @@ def main():
         valid(valid_loader, model)
 
     verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    # extract(verify_loader, model, args.xvector_dir)
+    extract(verify_loader, model, args.xvector_dir)
 
     test_dir = ScriptVerifyDataset(dir=args.test_dir, xvectors_dir=args.xvector_dir,
                                    loader=file_loader)
