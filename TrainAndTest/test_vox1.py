@@ -63,6 +63,9 @@ parser.add_argument('--train-dir', type=str,
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc',
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--trials', type=str, default='trials',
+                    help='path to voxceleb1 test dataset')
+
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
@@ -293,11 +296,11 @@ def main():
         valid(valid_loader, model)
 
     verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    # extract(verify_loader, model, args.xvector_dir)
+    extract(verify_loader, model, args.xvector_dir)
 
     file_loader = read_vec_flt
-    test_dir = ScriptVerifyDataset(dir=args.test_dir, xvectors_dir=args.xvector_dir,
-                                   loader=file_loader)
+    test_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials,
+                                   xvectors_dir=args.xvector_dir, loader=file_loader)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size * 64, shuffle=False, **kwargs)
     test(test_loader)
 
@@ -352,7 +355,7 @@ def valid(valid_loader, model):
     torch.cuda.empty_cache()
 
 
-def extract(test_loader, model, xvector_dir):
+def extract(test_loader, model, xvector_dir, ark_num=5000):
     model.eval()
 
     if not os.path.exists(xvector_dir):
@@ -395,11 +398,10 @@ def extract(test_loader, model, xvector_dir):
     scp = open(scp_file, 'w')
     # write scp and ark file
     # pdb.set_trace()
-    for set_id in range(int(np.ceil(len(uids) / 2000))):
+    for set_id in range(int(np.ceil(len(uids) / ark_num))):
         ark_file = xvector_dir + '/xvector.{}.ark'.format(set_id)
         with open(ark_file, 'wb') as ark:
-
-            ranges = np.arange(len(uids))[int(set_id * 2000):int((set_id + 1) * 2000)]
+            ranges = np.arange(len(uids))[int(set_id * ark_num):int((set_id + 1) * ark_num)]
             for i in ranges:
                 vec = vectors[i]
                 len_vec = len(vec.tobytes())
