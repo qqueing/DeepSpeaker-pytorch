@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=13
+stage=1
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -73,7 +73,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-#stage=100
+stage=100
 
 if [ $stage -le 1 ]; then
   for name in dev test ; do
