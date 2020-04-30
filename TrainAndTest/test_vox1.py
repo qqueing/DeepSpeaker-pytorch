@@ -13,7 +13,6 @@ from __future__ import print_function
 
 import argparse
 import os
-import pdb
 import sys
 import time
 # Version conflict
@@ -394,19 +393,19 @@ def extract(test_loader, model, xvector_dir):
     scp_file = xvector_dir + '/xvectors.scp'
     scp = open(scp_file, 'w')
     # write scp and ark file
-    pdb.set_trace()
-    for set_id in range(int(np.ceil(len(uid) / 2000))):
+    # pdb.set_trace()
+    for set_id in range(int(np.ceil(len(uids) / 2000))):
         ark_file = xvector_dir + '/xvector.{}.ark'.format(set_id)
         with open(ark_file, 'wb') as ark:
 
-            ranges = np.arange(len(uid))[int(set_id * 2000):int((set_id + 1) * 2000)]
+            ranges = np.arange(len(uids))[int(set_id * 2000):int((set_id + 1) * 2000)]
             for i in ranges:
                 vec = vectors[i]
                 len_vec = len(vec.tobytes())
-                key = uid[i]
+                key = uids[i]
                 kaldi_io.write_vec_flt(ark, vec, key=key)
                 # print(ark.tell())
-                scp.write(str(uid[i]) + ' ' + str(ark_file) + ':' + str(ark.tell() - len_vec - 10) + '\n')
+                scp.write(str(uids[i]) + ' ' + str(ark_file) + ':' + str(ark.tell() - len_vec - 10) + '\n')
     scp.close()
     print('There are %d vectors. Saving to %s' % (len(uids), xvector_dir))
     torch.cuda.empty_cache()
