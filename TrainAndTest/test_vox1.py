@@ -18,6 +18,7 @@ import time
 # Version conflict
 import warnings
 
+import kaldi_io
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -29,7 +30,8 @@ from tqdm import tqdm
 
 from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset, KaldiExtractDataset, \
+    ScriptVerifyDataset
 from Process_Data.audio_processing import to2tensor, varLengthFeat
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_model
@@ -62,10 +64,12 @@ parser.add_argument('--test-dir', type=str,
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--valid', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-# parser.add_argument('--check-path',
-#                     help='folder to output model checkpoints')
+parser.add_argument('--xvector-dir',
+                    help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -197,9 +201,15 @@ else:
 
 # pdb.set_trace()
 file_loader = read_mat
+if not args.valid:
+    args.num_valid = 0
+
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
                                transform=transform, num_valid=args.num_valid)
-test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
+
+verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T,
+                                  filer_loader=file_loader, write_path=args.extract)
+
 
 # indices = list(range(len(test_dir)))
 # random.shuffle(indices)
@@ -212,8 +222,8 @@ test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=tr
 #     print('There are %d verification pairs in sitw eval.' % len(sitw_test_dir))
 # else:
 #     sitw_test_dir.partition(args.veri_pairs)
-
-valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
+if args.valid:
+    valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, loader=file_loader, spk_to_idx=train_dir.spk_to_idx,
                                valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
                                transform=transform)
 
@@ -268,28 +278,32 @@ def main():
         model.dropout.p = args.dropout_p
     except:
         pass
-
-
     start = args.start_epoch
     print('Epoch is : ' + str(start))
 
     if args.cuda:
         model.cuda()
     # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    if args.valid:
+        valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+        valid(valid_loader, model)
+
+    verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    extract(verify_loader, model, args.xvector_dir)
+
+    test_dir = ScriptVerifyDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test(test_loader, valid_loader, model)
+
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,
     #                                                shuffle=False, **kwargs)
     # sitw_dev_loader = torch.utils.data.DataLoader(sitw_dev_part, batch_size=args.test_batch_size, shuffle=False,
     #                                               **kwargs)
-
-    test(test_loader, valid_loader, model)
     # sitw_test(sitw_test_loader, model, epoch)
     # sitw_test(sitw_dev_loader, model, epoch)
 
 
-def test(test_loader, valid_loader, model):
-    # switch to evaluate mode
+def valid(valid_loader, model):
     model.eval()
 
     valid_pbar = tqdm(enumerate(valid_loader))
@@ -328,29 +342,78 @@ def test(test_loader, valid_loader, model):
             ))
 
     valid_accuracy = 100. * correct / total_datasize
+    print('  \33[91mValid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
     torch.cuda.empty_cache()
+
+
+def extract(test_loader, model, xvector_dir):
+    model.eval()
+
+    if not os.path.exists(xvector_dir):
+        os.makedirs(xvector_dir)
+        print('Creating xvector path: %s' % xvector_dir)
+
+    pbar = tqdm(enumerate(test_loader))
+    vectors = []
+    uids = []
+    for batch_idx, (data, uid) in pbar:
+
+        vec_shape = data.shape
+        # pdb.set_trace()
+        if vec_shape[1] != 1:
+            data = data.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
+
+        if args.cuda:
+            data = data.cuda()
+
+        data = Variable(data)
+
+        # compute output
+        _, out = model(data)
+
+        if vec_shape[1] != 1:
+            out = out.reshape(vec_shape[0], vec_shape[1], out.shape[-1]).mean(axis=1)
+
+        vec = out.squeeze().data.cpu().numpy()
+        vectors.append(vec)
+        uids.append(uid[0])
+
+        if batch_idx % args.log_interval == 0:
+            pbar.set_description('Test: [{}/{} ({:.0f}%)]'.format(
+                batch_idx, len(test_loader.dataset), 100. * batch_idx / len(test_loader)))
+
+    assert len(uids) == len(vectors)
+    scp_file = xvector_dir + '/xvectors.scp'
+    # write scp and ark file
+    for set_id in np.arange(np.ceil(len(uid) / 2000)):
+        ark_file = xvector_dir + '/xvector.{}.ark'.format(set_id)
+        with open(scp_file, 'w') as scp, open(ark_file, 'wb') as ark:
+            ranges = np.arange(len(uid))[set_id * 2000:(set_id + 1) * 2000]
+            for i in ranges:
+                vec = vectors[i]
+                len_vec = len(vec.tobytes())
+                key = uid[i]
+                kaldi_io.write_vec_flt(ark, vec, key=key)
+                # print(ark.tell())
+                scp.write(str(uid[i]) + ' ' + str(ark_file) + ':' + str(ark.tell() - len_vec - 10) + '\n')
+
+    print('There are %d vectors. Saving to %s' % (len(uid), xvector_dir))
+    torch.cuda.empty_cache()
+
+
+def test(test_loader, model):
+    # switch to evaluate mode
+    model.eval()
 
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
     for batch_idx, (data_a, data_p, label) in pbar:
 
-        vec_shape = data_a.shape
-        # pdb.set_trace()
-        if vec_shape[1] != 1:
-            data_a = data_a.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
-            data_p = data_p.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
-
-        if args.cuda:
-            data_a, data_p = data_a.cuda(), data_p.cuda()
-        data_a, data_p = Variable(data_a), Variable(data_p)
-
-        # compute output
-        _, out_a = model(data_a)
-        _, out_p = model(data_p)
+        out_a = torch.tensor(data_a)
+        out_p = torch.tensor(data_p)
 
         dists = l2_dist.forward(out_a, out_p)  # torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-        dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
-        dists = dists.data.cpu().numpy()
+        dists = dists.numpy()
 
         distances.append(dists)
         labels.append(label.numpy())
@@ -368,8 +431,7 @@ def test(test_loader, valid_loader, model):
     dist_type = 'cos' if args.cos_sim else 'l2'
     print('\nFor %s_distance, %d pairs:' % (dist_type, len(labels)))
     print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
-    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
-    print('  Valid Accuracy is %.4f %%.\33[0m' % valid_accuracy)
+    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f}.\33[0m'.format(mindcf_01, mindcf_001))
 
     torch.cuda.empty_cache()
 

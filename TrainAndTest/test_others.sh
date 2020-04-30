@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=20
+stage=25
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -134,7 +134,7 @@ if [ $stage -le 20 ]; then
   done
 fi
 
-stage=250
+#stage=25
 if [ $stage -le 25 ]; then
   model=LoResNet10
   feat=spect_wcmvn
@@ -160,6 +160,7 @@ if [ $stage -le 25 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --nj 12 \
       --model ${model} \
+      --xvector-dir Data/xvectors/LoResNet10/timit_spect/soft_var \
       --channels 4,16,64 \
       --embedding-size 128 \
       --resume Data/checkpoint/LoResNet10/timit_spect/soft_var/checkpoint_15.pth \
@@ -170,7 +171,7 @@ if [ $stage -le 25 ]; then
   done
 fi
 
-#stage=100
+stage=100
 if [ $stage -le 30 ]; then
   model=ResNet20
   feat=spect_wcmvn
@@ -191,6 +192,7 @@ if [ $stage -le 30 ]; then
   done
 fi
 
+stage=100
 if [ $stage -le 40 ]; then
   model=ExResNet34
 #  for loss in soft asoft ; do
