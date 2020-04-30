@@ -96,7 +96,7 @@ parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
 parser.add_argument('--statis-pooling', action='store_true', default=False,
                     help='using Cosine similarity')
-parser.add_argument('--channels', default='4,16,64', type=str,
+parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
