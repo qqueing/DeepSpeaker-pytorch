@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import pdb
 import sys
 import time
 # Version conflict
@@ -58,8 +59,10 @@ except AttributeError:
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 # Data options
 parser.add_argument('--train-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc',
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
+                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
@@ -69,8 +72,10 @@ parser.add_argument('--valid', action='store_true', default=False,
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
 parser.add_argument('--xvector-dir',
+                    default='Data/xvectors/LoResNet10/timit_spect/soft_var',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
+                    default='Data/checkpoint/LoResNet10/timit_spect/soft_var/checkpoint_15.pth',
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
@@ -84,13 +89,13 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 # Training options
 # Model options
 # ALSTM  ASiResNet34  ExResNet34  LoResNet10  ResNet20  SiResNet34  SuResCNN10  TDNN
-parser.add_argument('--model', type=str,
+parser.add_argument('--model', type=str, default='LoResNet10',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
 parser.add_argument('--statis-pooling', action='store_true', default=False,
                     help='using Cosine similarity')
-parser.add_argument('--channels', default='64,128,256', type=str,
+parser.add_argument('--channels', default='4,16,64', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
@@ -103,12 +108,12 @@ parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
-parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
+parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
+parser.add_argument('--num-valid', type=int, default=2, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=1, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
@@ -375,6 +380,7 @@ def extract(test_loader, model, xvector_dir):
         if vec_shape[1] != 1:
             out = out.reshape(vec_shape[0], vec_shape[1], out.shape[-1]).mean(axis=1)
 
+        pdb.set_trace()
         vec = out.squeeze().data.cpu().numpy()
         vectors.append(vec)
         uids.append(uid[0])
