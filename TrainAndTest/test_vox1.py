@@ -208,7 +208,7 @@ train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.inpu
                                transform=transform, num_valid=args.num_valid)
 
 verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T,
-                                  filer_loader=file_loader, write_path=args.extract)
+                                  filer_loader=file_loader, write_path=args.xvector_dir)
 
 
 # indices = list(range(len(test_dir)))
