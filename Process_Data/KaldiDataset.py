@@ -566,9 +566,9 @@ class KaldiExtractDataset(data.Dataset):
 
 
 class ScriptVerifyDataset(data.Dataset):
-    def __init__(self, dir, transform, loader=np.load, return_uid=False):
+    def __init__(self, dir, xvectors_dir, loader=np.load, return_uid=False):
 
-        feat_scp = dir + '/xvectors.scp'
+        feat_scp = xvectors_dir + '/xvectors.scp'
         trials = dir + '/trials'
 
         if not os.path.exists(feat_scp):

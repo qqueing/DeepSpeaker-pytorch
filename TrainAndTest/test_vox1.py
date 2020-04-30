@@ -289,9 +289,10 @@ def main():
         valid(valid_loader, model)
 
     verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    extract(verify_loader, model, args.xvector_dir)
+    # extract(verify_loader, model, args.xvector_dir)
 
-    test_dir = ScriptVerifyDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
+    test_dir = ScriptVerifyDataset(dir=args.test_dir, xvectors_dir=args.xvector_dir,
+                                   loader=file_loader, transform=transform_T)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     test(test_loader, valid_loader, model)
 
