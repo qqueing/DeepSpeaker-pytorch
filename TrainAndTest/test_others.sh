@@ -32,7 +32,7 @@ if [ $stage -le 5 ]; then
       --loss-type ${loss} \
       --trials trials_e \
       --num-valid 0 \
-      --gpu-id 1
+      --gpu-id 0
   done
 
 #  for loss in center ; do
