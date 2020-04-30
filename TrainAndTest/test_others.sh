@@ -30,7 +30,8 @@ if [ $stage -le 5 ]; then
       --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_24.pth \
       --xvector-dir Data/xvector/LoResNet10/spect/${loss}_wcmvn \
       --loss-type ${loss} \
-      --trials trials_e \
+      --trials trials_h \
+      --extract False \
       --num-valid 0 \
       --gpu-id 0
   done

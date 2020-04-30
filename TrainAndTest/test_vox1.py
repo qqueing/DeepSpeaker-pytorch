@@ -71,6 +71,9 @@ parser.add_argument('--sitw-dir', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--valid', action='store_true', default=False,
                     help='using Cosine similarity')
+parser.add_argument('--extract', action='store_true', default=True,
+                    help='using Cosine similarity')
+
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
 parser.add_argument('--xvector-dir', default='Data/xvectors/LoResNet10/timit_spect/soft_var',
@@ -294,8 +297,10 @@ def main():
         valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
         valid(valid_loader, model)
 
-    verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-    extract(verify_loader, model, args.xvector_dir)
+    if args.extract:
+        verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False,
+                                                    **kwargs)
+        extract(verify_loader, model, args.xvector_dir)
 
     file_loader = read_vec_flt
     test_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials,
