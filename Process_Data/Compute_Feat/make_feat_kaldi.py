@@ -49,6 +49,8 @@ parser.add_argument('--filter-type', type=str,
 
 parser.add_argument('--filters', type=int, default=24,
                     help='number of jobs to make feats (default: 10)')
+parser.add_argument('--multi-weight', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--numcep', type=int, default=24,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--windowsize', type=float, default=0.02, choices=[0.02, 0.025],
@@ -108,7 +110,8 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                         feat, duration = Make_Fbank(filename=temp_wav, filtertype=args.filter_type, use_energy=True,
                                                     lowfreq=args.lowfreq,
                                                     nfft=args.nfft, nfilt=args.filters, normalize=args.normalize,
-                                                    duration=True, windowsize=args.windowsize)
+                                                    duration=True, windowsize=args.windowsize,
+                                                    multi_weight=args.multi_weight)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=temp_wav, windowsize=args.windowsize,
                                                     lowfreq=args.lowfreq,
@@ -125,7 +128,8 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     if args.feat_type == 'fbank':
                         feat, duration = Make_Fbank(filename=pair[1], filtertype=args.filter_type, use_energy=True,
                                                     nfft=args.nfft, windowsize=args.windowsize, lowfreq=args.lowfreq,
-                                                    nfilt=args.filters, duration=True, normalize=args.normalize)
+                                                    nfilt=args.filters, duration=True, normalize=args.normalize,
+                                                    multi_weight=args.multi_weight)
                     elif args.feat_type == 'spectrogram':
                         feat, duration = Make_Spect(wav_path=pair[1], windowsize=args.windowsize,
                                                     lowfreq=args.lowfreq,

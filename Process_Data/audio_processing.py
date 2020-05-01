@@ -254,7 +254,8 @@ def Make_Fbank(filename,
                use_logscale=c.USE_LOGSCALE,
                use_energy=c.USE_ENERGY,
                normalize=c.NORMALIZE,
-               duration=False):
+               duration=False,
+               multi_weight=False):
 
     if not os.path.exists(filename):
         raise ValueError('wav file does not exist.')
@@ -271,7 +272,8 @@ def Make_Fbank(filename,
                                          lowfreq=lowfreq,
                                          winlen=windowsize,
                                          filtertype=filtertype,
-                                         winfunc=np.hamming)
+                                         winfunc=np.hamming,
+                                         multi_weight=multi_weight)
 
     if use_energy:
         energies = energies.reshape(energies.shape[0], 1)

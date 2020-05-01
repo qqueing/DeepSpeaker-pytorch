@@ -38,7 +38,7 @@ def amel2hz(mel):
     return 8000 - 700 * (10 ** (mel / 2595.0) - 1)
 
 def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
-                    highfreq=None, filtertype='mel'):
+                    highfreq=None, filtertype='mel', multi_weight=False):
     """Compute a Mel-filterbank. The filters are stored in the rows, the columns correspond
     to fft bins. The filters are returned as an array of size nfilt * (nfft/2 + 1)
 
@@ -116,20 +116,26 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
                     continue
 
         bin.append(highfreq_idx[-1])
-        fbank = np.zeros([nfilt, nfft // 2 + 1])
-        for j in range(0, nfilt):
-            for i in range(int(bin[j]), int(bin[j + 1])):
-                fbank[j, i] = (i - bin[j]) / (bin[j + 1] - bin[j])
 
-            for i in range(int(bin[j + 1]), int(bin[j + 2])):
-                fbank[j, i] = (bin[j + 2] - i) / (bin[j + 2] - bin[j + 1])
+    fbank = np.zeros([nfilt, nfft // 2 + 1])
+    for j in range(0, nfilt):
+        for i in range(int(bin[j]), int(bin[j + 1])):
+            fbank[j, i] = (i - bin[j]) / (bin[j + 1] - bin[j])
+
+        for i in range(int(bin[j + 1]), int(bin[j + 2])):
+            fbank[j, i] = (bin[j + 2] - i) / (bin[j + 2] - bin[j + 1])
+
+    if multi_weight:
+        y = np.array(c.TIMIT_FIlTER_VAR)
+        fbank = fbank * (y / y.max())
 
     return fbank
 
 
 def local_fbank(signal, samplerate=16000, winlen=0.025, winstep=0.01,
                 nfilt=26, nfft=512, lowfreq=0, highfreq=None, preemph=0.97,
-                filtertype='mel', winfunc=lambda x: np.hamming((x,))):
+                filtertype='mel', winfunc=lambda x: np.hamming((x,)),
+                multi_weight=False):
     """Compute Mel-filterbank energy features from an audio signal.
 
     :param signal: the audio signal from which to compute features. Should be an N*1 array
@@ -152,7 +158,7 @@ def local_fbank(signal, samplerate=16000, winlen=0.025, winstep=0.01,
     energy = np.sum(pspec, 1)  # this stores the total energy in each frame
     energy = np.where(energy == 0, np.finfo(float).eps, energy)  # if energy is zero, we get problems with log
 
-    fb = get_filterbanks(nfilt, nfft, samplerate, lowfreq, highfreq, filtertype)
+    fb = get_filterbanks(nfilt, nfft, samplerate, lowfreq, highfreq, filtertype, multi_weight=multi_weight)
     feat = np.dot(pspec, fb.T)  # compute the filterbank energies
     feat = np.where(feat == 0, np.finfo(float).eps, feat)  # if feat is zero, we get problems with log
 
