@@ -237,7 +237,7 @@ if [ $stage -le 9 ]; then
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/pyfb \
       --out-set ${name}_dfb24_wei \
       --multi-weight \
-      --filter-type mel \
+      --filter-type linear \
       --feat-type fbank \
       --nfft 320 \
       --windowsize 0.02 \
