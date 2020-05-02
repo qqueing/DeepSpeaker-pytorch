@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=2
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -69,28 +69,31 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=100
+stage=2
 if [ $stage -le 2 ]; then
   model=ExResNet34
   datasets=vox1
-  feat=fb64_noc
+  feat=fb64_wcmvn
   loss=soft
   python Lime/output_extract.py \
       --model ${model} \
       --start-epochs 30 \
       --epochs 30 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
       --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
       --loss-type ${loss} \
-      --check-path Data/checkpoint/ExResNet/spect/soft \
-      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss} \
+      --stride 1 \
+      --kernel-size 3,3 \
+      --check-path Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_var \
+      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
       --dropout-p 0.0 \
-      --gpu-id 1 \
+      --gpu-id 0 \
       --embedding-size 128 \
       --sample-utt 5000
 fi
 
+stage=100
 if [ $stage -le 3 ]; then
   model=ResNet20
   datasets=vox1
