@@ -380,8 +380,10 @@ def main():
             model_dict.update(filtered)
             model.load_state_dict(model_dict)
 
-            if isinstance(model.dropout_p, float):
+            try:
                 args.dropout_p = model.dropout_p
+            except:
+                pass
         else:
             print('=> no checkpoint found at %s' % resume_path.format(e))
             continue
