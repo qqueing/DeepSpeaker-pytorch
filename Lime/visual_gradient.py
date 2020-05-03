@@ -18,6 +18,7 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
+from python_speech_features import mel2hz
 from scipy import interpolate
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
@@ -27,6 +28,10 @@ parser.add_argument('--extract-path',
 # Training options
 parser.add_argument('--feat-dim', type=int, default=161, metavar='ES',
                     help='Dimensionality of the features')
+
+parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='spectrogram',
+                    help='choose the acoustic features type.')
+
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
 
@@ -164,6 +169,11 @@ def main():
     test_set_grad = test_data[1][0] + test_data[1][1]
 
     x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
+    if args.acoustic_feature == 'spectrogram':
+        m = np.arange(0, 2840, 2840 / (args.feat_dim + 1))
+        m = m[1:]
+        x = mel2hz(m)
+
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
 
     pdf = PdfPages(args.extract_path + '/grad.veri.pdf')
