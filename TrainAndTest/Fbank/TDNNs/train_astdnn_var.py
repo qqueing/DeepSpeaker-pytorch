@@ -254,7 +254,8 @@ def main():
     print('Parsed options: {}'.format(vars(args)))
     print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
-    model = ASTDNN(train_dir.num_spks, input_dim=args.feat_dim, dropout_p=args.dropout_p)
+    model = ASTDNN(train_dir.num_spks, input_dim=args.feat_dim, embedding_size=args.embedding_size,
+                   dropout_p=args.dropout_p)
 
     start_epoch = 0
     if args.save_init:
