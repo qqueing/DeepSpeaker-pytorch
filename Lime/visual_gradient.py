@@ -10,12 +10,14 @@
 @Overview:
 """
 import argparse
+import os
 import pathlib
 import pickle
 import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
 from scipy import interpolate
 
 parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
@@ -42,12 +44,13 @@ def main():
     print('Path is %s' % str(dir_path))
 
     # inputs [train/valid/test]
-    # if os.path.exists(args.extract_path + '/inputs.train.npy'):
-    #     train_data = np.load(args.extract_path + '/inputs.train.npy')
-    #     valid_data = np.load(args.extract_path + '/inputs.valid.npy')
-    #     test_data = np.load(args.extract_path + '/inputs.test.npy')
+    if os.path.exists(args.extract_path + '/inputs.train.npy'):
+        train_data = np.load(args.extract_path + '/inputs.train.npy')
+        valid_data = np.load(args.extract_path + '/inputs.valid.npy')
+        test_data = np.load(args.extract_path + '/inputs.test.npy')
+        veri_data = np.load(args.extract_path + '/inputs.veri.npy')
 
-    if True:
+    else:
 
         train_lst = list(dir_path.glob('*train*bin'))
         veri_lst = list(dir_path.glob('*ver*bin'))
@@ -156,11 +159,14 @@ def main():
 
     train_set_grad = train_data[1]
     valid_set_grad = valid_data[1]
+
     veri_set_grad = test_data[1][0] + test_data[1][1]
     test_set_grad = test_data[1][0] + test_data[1][1]
 
     x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
+
+    pdf = PdfPages(args.extract_path + '/grad.veri.pdf')
     plt.rc('font', family='Times New Roman')
 
     plt.figure(figsize=(12, 9))
@@ -185,7 +191,7 @@ def main():
     for s in train_set_grad, valid_set_grad, veri_set_grad, test_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / args.feat_dim)
+        xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / 161)
         ynew = f(xnew)
         # ynew = ynew - ynew.min()
         ynew = ynew / ynew.sum()
@@ -194,12 +200,16 @@ def main():
     # if not os.path.exists(args.extract_path + '/grad.npy'):
     ynew = veri_set_grad
     ynew = ynew / ynew.sum()
+
     np.save(args.extract_path + '/grad.veri.npy', ynew)
 
     # plt.legend(['Mel-scale', 'Train', 'Valid', 'Test_a', 'Test_b'], loc='upper right', fontsize=18)
     plt.legend(['Mel-scale', 'Train Set', 'Valid Set', 'train Verify Set', 'Test Set'], loc='upper right', fontsize=24)
-    plt.savefig(args.extract_path + "/grads.png")
-    plt.show()
+    pdf.savefig()
+    pdf.close()
+
+    # plt.savefig(args.extract_path + "/grads.png")
+    # plt.show()
 
     plt.figure(figsize=(8, 6))
     plt.title('Data distributions', fontsize=22)
