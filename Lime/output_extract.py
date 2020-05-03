@@ -69,6 +69,9 @@ parser.add_argument('--extract-path', help='folder to output model grads, etc')
 # ALSTM  ASiResNet34  ExResNet34  LoResNet10  ResNet20  SiResNet34  SuResCNN10  TDNN
 parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
+                    help='acoustic feature dimension')
+
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
