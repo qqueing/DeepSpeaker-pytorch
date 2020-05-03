@@ -85,6 +85,7 @@ if [ $stage -le 2 ]; then
       --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
       --loss-type ${loss} \
       --stride 1 \
+      --remove-vad \
       --kernel-size 3,3 \
       --check-path Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_var \
       --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
