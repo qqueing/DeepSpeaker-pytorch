@@ -108,7 +108,7 @@ parser.add_argument('--num-valid', type=int, default=2, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
 parser.add_argument('--test-input-per-file', type=int, default=4, metavar='IPFT',
                     help='input sample per file for testing (default: 8)')
-parser.add_argument('--test-batch-size', type=int, default=4, metavar='BST',
+parser.add_argument('--test-batch-size', type=int, default=1, metavar='BST',
                     help='input batch size for testing (default: 64)')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
@@ -326,7 +326,7 @@ def main():
                                                collate_fn=PadCollate(dim=2, fix_len=False,
                                                                      min_chunk_size=250, max_chunk_size=600),
                                                shuffle=True, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 4),
+    valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
                                                collate_fn=PadCollate(dim=2, fix_len=False,
                                                                      min_chunk_size=250, max_chunk_size=600),
                                                shuffle=False, **kwargs)
