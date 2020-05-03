@@ -73,8 +73,7 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--remove-vad', action='store_true', default=False, help='using Cosine similarity')
 
-
-parser.add_argument('--resnet-size', default=34, type=int,
+parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
 
 parser.add_argument('--channels', default='64,128,256', type=str,
