@@ -349,7 +349,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        train(train_loader, model, ce, optimizer, epoch)
+        # train(train_loader, model, ce, optimizer, epoch)
         test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)

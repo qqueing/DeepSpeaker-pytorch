@@ -375,6 +375,7 @@ class ASTDNN(nn.Module):
         x = self.frame4(x)
         x = self.frame5(x)
 
+        print(x.shape)
         x = self.attention_statistic(x)
         embedding_a = self.segment6(x)
 
