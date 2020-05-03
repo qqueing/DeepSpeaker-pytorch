@@ -353,8 +353,8 @@ class ASTDNN(nn.Module):
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-            # elif isinstance(m, NewTDNN):
-            #     nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, NewTDNN):
+                nn.init.kaiming_normal_(m.kernel.weight, mode='fan_out', nonlinearity='relu')
 
     def set_global_dropout(self, dropout_p):
         self.dropout_p = dropout_p

@@ -181,7 +181,6 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
-
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}

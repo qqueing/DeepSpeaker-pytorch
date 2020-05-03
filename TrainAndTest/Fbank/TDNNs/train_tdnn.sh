@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=10
 waited=0
 while [ `ps 45442 | wc -l` -eq 2 ]; do
   sleep 60
@@ -51,16 +51,31 @@ if [ $stage -le 5 ]; then
   done
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 10 ]; then
   model=ASTDNN
-  feat=fb40
+  feat=fb40_wcmvn
   for loss in soft ; do
-    python TrainAndTest/Fbank/TDNNs/train_astdnn_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
-      --check-path Data/checkpoint/${model}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
+#    python TrainAndTest/Fbank/TDNNs/train_astdnn_kaldi.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
+#      --check-path Data/checkpoint/${model}/${feat}/${loss} \
+#      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
+#      --epochs 18 \
+#      --batch-size 128 \
+#      --milestones 9,14  \
+#      --feat-dim 40 \
+#      --embedding-size 128 \
+#      --num-valid 2 \
+#      --loss-type ${loss} \
+#      --input-per-spks 240 \
+#      --lr 0.01
+
+    python TrainAndTest/Fbank/TDNNs/train_astdnn_var.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
+      --check-path Data/checkpoint/${model}/${feat}/${loss}_var \
+      --resume Data/checkpoint/${model}/${feat}/${loss}_var/checkpoint_1.pth \
       --epochs 18 \
       --batch-size 128 \
       --milestones 9,14  \
