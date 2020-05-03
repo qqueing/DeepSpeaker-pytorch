@@ -168,7 +168,7 @@ def main():
     test_set_grad = test_data[1][0] + test_data[1][1]
 
     x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
-    if args.acoustic_feature == 'spectrogram':
+    if args.acoustic_feature == 'fbank':
         m = np.linspace(0, 2840.0230467083188, args.feat_dim)
         x = mel2hz(m)
 
