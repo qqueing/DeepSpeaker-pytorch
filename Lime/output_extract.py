@@ -71,6 +71,9 @@ parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
+parser.add_argument('--remove-vad', action='store_true', default=False, help='using Cosine similarity')
+
+
 parser.add_argument('--resnet-size', default=34, type=int,
                     metavar='RES', help='The channels of convs layers)')
 
@@ -157,12 +160,12 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 transform = transforms.Compose([
     # concateinputfromMFB(remove_vad=False),
-    varLengthFeat(),
+    varLengthFeat(remove_vad=args.remove_vad),
     to2tensor()
 ])
 transform_T = transforms.Compose([
     # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=False),
-    varLengthFeat(),
+    varLengthFeat(remove_vad=args.remove_vad),
     to2tensor()
 ])
 file_loader = read_mat
