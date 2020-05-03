@@ -165,7 +165,7 @@ def main():
     train_set_grad = train_data[1]
     valid_set_grad = valid_data[1]
 
-    veri_set_grad = test_data[1][0] + test_data[1][1]
+    veri_set_grad = veri_data[1][0] + veri_data[1][1]
     test_set_grad = test_data[1][0] + test_data[1][1]
 
     x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
