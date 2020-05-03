@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=20
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -69,7 +69,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=2
+stage=20
 if [ $stage -le 2 ]; then
   model=ExResNet34
   datasets=vox1
@@ -92,10 +92,10 @@ if [ $stage -le 2 ]; then
       --dropout-p 0.0 \
       --gpu-id 0 \
       --embedding-size 128 \
-      --sample-utt 5000
+      --sample-utt 10000
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 3 ]; then
   model=ResNet20
   datasets=vox1
@@ -148,7 +148,7 @@ if [ $stage -le 20 ]; then
     --check-path Data/checkpoint/LoResNet10/timit_spect/soft_var \
     --epochs 15 \
     --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
-    --sample-utt 4000 \
+    --sample-utt 10000 \
     --embedding-size 128 \
     --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_var \
     --model ${model} \
@@ -156,7 +156,7 @@ if [ $stage -le 20 ]; then
     --dropout-p 0.25
 fi
 
-#stage=500
+stage=500
 
 if [ $stage -le 30 ]; then
   model=LoResNet10
