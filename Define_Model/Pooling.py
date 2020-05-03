@@ -43,7 +43,7 @@ class AttentionStatisticPooling(nn.Module):
         # alpha_ht_ht = x*x.mul(alpha)
         sigma = torch.sqrt(sigma_power)
 
-        mean_sigma = torch.cat((mean.squeeze(), sigma), 1)
+        mean_sigma = torch.cat((mean.squeeze(1), sigma), 1)
 
         return mean_sigma
 
