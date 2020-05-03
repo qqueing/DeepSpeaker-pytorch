@@ -313,7 +313,7 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=1000):
 
             input_grads = []
             inputs_uids = []
-    print('Saving pairs into %s.' % file_dir)
+    print('Saving pairs into %s.\n' % file_dir)
     torch.cuda.empty_cache()
 
 def main():
