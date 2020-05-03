@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=1
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
@@ -22,7 +22,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-#stage=20
+stage=200
 if [ $stage -le 2 ]; then
   for model in LoResNet10 ; do
     python Lime/visual_gradient.py \
