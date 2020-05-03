@@ -453,7 +453,7 @@ def train(train_loader, model, ce, optimizer, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description(
-                'Train Epoch {:2d}: [{:7d}/{:7d} ({:3.0f}%)] Batch Lenght: {:3d} Avg Loss: {:.4f} Accuracy: {:.4f}%'.format(
+                'Train Epoch {:2d}: [{:7d}/{:7d} ({:3.0f}%)] Batch Length: {:3d} Avg Loss: {:.4f} Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
@@ -468,8 +468,12 @@ def train(train_loader, model, ce, optimizer, epoch):
                 'criterion': ce},
                check_path)
 
-    print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch, 100 * float(
-        correct) / total_datasize, total_loss / len(train_loader)))
+    print('\n\33[91mTrain Epoch {}: Batch Length: {} Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch,
+                                                                                                         100 * float(
+                                                                                                             correct) / total_datasize,
+                                                                                                         data.shape[2],
+                                                                                                         total_loss / len(
+                                                                                                             train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 

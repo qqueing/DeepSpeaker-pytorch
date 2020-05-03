@@ -415,11 +415,12 @@ def train(train_loader, model, ce, optimizer, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description(
-                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.4f} Batch Accuracy: {:.4f}%'.format(
+                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Batch Length: {:3d} Avg Loss: {:.4f} Batch Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100. * batch_idx / len(train_loader),
+                    data.shape[1],
                     total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
 
