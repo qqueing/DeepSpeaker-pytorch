@@ -109,11 +109,11 @@ def get_filterbanks(nfilt=20, nfft=512, samplerate=16000, lowfreq=0,
             num_wei = 0.
             for i in range(nfft // 2 + 1):
                 num_wei += weight[i]
-                if num_wei > (j + 1) / (nfilt + 2):
-                    bin.append(i - 1)
-                    break
-                else:
+                if num_wei < (j + 1) / (nfilt + 2):
                     continue
+                else:
+                    bin.append(i)
+                    break
 
         bin.append(highfreq_idx[-1])
 
