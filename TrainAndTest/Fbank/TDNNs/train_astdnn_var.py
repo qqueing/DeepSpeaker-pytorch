@@ -420,7 +420,7 @@ def train(train_loader, model, ce, optimizer, epoch):
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100. * batch_idx / len(train_loader),
-                    data.shape[1],
+                    data.shape[2],
                     total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
 
