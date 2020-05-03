@@ -79,6 +79,7 @@ if [ $stage -le 2 ]; then
       --model ${model} \
       --start-epochs 30 \
       --epochs 30 \
+      --resnet-size 34 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
       --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
