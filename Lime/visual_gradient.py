@@ -56,7 +56,6 @@ def main():
         veri_data = np.load(args.extract_path + '/inputs.veri.npy')
 
     else:
-
         train_lst = list(dir_path.glob('*train*bin'))
         veri_lst = list(dir_path.glob('*ver*bin'))
         valid_lst = list(dir_path.glob('*valid*bin'))
@@ -170,8 +169,7 @@ def main():
 
     x = np.arange(args.feat_dim) * 8000 / (args.feat_dim - 1)  # [0-8000]
     if args.acoustic_feature == 'spectrogram':
-        m = np.arange(0, 2840, 2840 / (args.feat_dim + 1))
-        m = m[1:]
+        m = np.linspace(0, 2840.0230467083188, args.feat_dim)
         x = mel2hz(m)
 
     # y = np.sum(all_data, axis=2)  # [5, 2, 162]
@@ -186,7 +184,7 @@ def main():
     plt.ylabel('Weight', fontsize=24)
     plt.yticks(fontsize=22)
 
-    m = np.arange(0, 2840)
+    m = np.arange(0, 2840.0230467083188)
     m = 700 * (10 ** (m / 2595.0) - 1)
     n = np.array([m[i] - m[i - 1] for i in range(1, len(m))])
     n = 1 / n
@@ -201,7 +199,7 @@ def main():
     for s in train_set_grad, valid_set_grad, veri_set_grad, test_set_grad:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), (np.max(x) - np.min(x)) / 161)
+        xnew = np.linspace(np.min(x), np.max(x), 161)
         ynew = f(xnew)
         # ynew = ynew - ynew.min()
         ynew = ynew / ynew.sum()
