@@ -71,6 +71,10 @@ parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
+parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
+                    help='kernel size of conv filters')
+parser.add_argument('--stride', default=2, type=int, metavar='ST',
+                    help='kernel size of conv filters')
 parser.add_argument('--start-epochs', type=int, default=36, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--epochs', type=int, default=36, metavar='E',
@@ -308,21 +312,32 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=1000):
     torch.cuda.empty_cache()
 
 def main():
-    class_to_idx = train_dir.spk_to_idx
-
-    print('\nNumber of Speakers: {}.'.format(len(class_to_idx)))
+    print('\nNumber of Speakers: {}.'.format(train_dir.num_spks))
     # print the experiment configuration
     print('Current time is \33[91m{}\33[0m.'.format(str(time.asctime())))
     print('Parsed options: {}'.format(vars(args)))
 
     # instantiate model and initialize weights
+
     channels = args.channels.split(',')
     channels = [int(x) for x in channels]
 
-    model_kwargs = {'embedding_size': args.embedding_size,
-                    'num_classes': len(class_to_idx),
+    kernel_size = args.kernel_size.split(',')
+    kernel_size = [int(x) for x in kernel_size]
+    padding = [int((x - 1) / 2) for x in kernel_size]
+
+    kernel_size = tuple(kernel_size)
+    padding = tuple(padding)
+
+    model_kwargs = {'input_dim': args.feat_dim,
+                    'kernel_size': kernel_size,
+                    'stride': args.stride,
+                    'padding': padding,
                     'channels': channels,
                     'alpha': args.alpha,
+                    'resnet_size': args.resnet_size,
+                    'embedding_size': args.embedding_size,
+                    'num_classes': len(train_dir.speakers),
                     'dropout_p': args.dropout_p}
 
     print('Model options: {}'.format(model_kwargs))
