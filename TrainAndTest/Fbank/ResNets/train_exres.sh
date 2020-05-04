@@ -121,7 +121,7 @@ if [ $stage -le 10 ]; then
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
-      --gpu-id 0 \
+      --gpu-id 1 \
       --num-valid 2 \
       --loss-type ${loss}
   done
