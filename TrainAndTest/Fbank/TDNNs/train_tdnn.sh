@@ -80,11 +80,40 @@ if [ $stage -le 10 ]; then
       --batch-size 128 \
       --milestones 9,14  \
       --feat-dim 40 \
+      --remove-vad \
       --embedding-size 512 \
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 240 \
       --lr 0.01 \
-      --gpu-id 0
+      --gpu-id 1
+
+    python TrainAndTest/test_vox1.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
+      --nj 12 \
+      --model ASTDNN \
+      --embedding-size 512 \
+      --feat-dim 40 \
+      --remove-vad \
+      --resume Data/checkpoint/${model}/${feat}/${loss}_svar/checkpoint_18.pth \
+      --loss-type soft \
+      --num-valid 2 \
+      --gpu-id 1
+
+    python Lime/output_extract.py \
+    --model ASTDNN \
+    --start-epochs 18 \
+    --epochs 18 \
+    --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+    --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
+    --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
+    --loss-type soft \
+    --remove-vad \
+    --check-path Data/checkpoint/${model}/${feat}/${loss}_svar \
+    --extract-path Data/gradient/${model}/${feat}/${loss}_svar \
+    --gpu-id 1 \
+    --embedding-size 512 \
+    --sample-utt 5000
   done
 fi
