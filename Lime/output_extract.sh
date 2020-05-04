@@ -69,7 +69,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=20
+stage=2
 if [ $stage -le 2 ]; then
   model=ExResNet34
   datasets=vox1
@@ -116,7 +116,7 @@ if [ $stage -le 2 ]; then
       --sample-utt 5000
 fi
 
-#stage=100
+stage=100
 if [ $stage -le 3 ]; then
   model=ResNet20
   datasets=vox1
