@@ -2,7 +2,7 @@
 
 stage=10
 waited=0
-while [ `ps 45442 | wc -l` -eq 2 ]; do
+while [ `ps 97966 | wc -l` -eq 2 ]; do
   sleep 60
   waited=$(expr $waited + 1)
   echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
@@ -80,7 +80,7 @@ if [ $stage -le 10 ]; then
       --batch-size 128 \
       --milestones 9,14  \
       --feat-dim 40 \
-      --embedding-size 128 \
+      --embedding-size 512 \
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 240 \
