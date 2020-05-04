@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=3
+waited=0
+while [ `ps 15414 | wc -l` -eq 2 ]; do
+  sleep 60
+  waited=$(expr $waited + 1)
+  echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
+done
+
 if [ $stage -le 0 ]; then
   for model in LoResNet10 ; do
     python Lime/output_extract.py \
@@ -139,7 +146,7 @@ if [ $stage -le 3 ]; then
       --sample-utt 5000
 fi
 
-#stage=300
+stage=300
 
 if [ $stage -le 20 ]; then
   model=LoResNet10
