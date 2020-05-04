@@ -231,6 +231,7 @@ if [ $stage -le 40 ]; then
       --resume Data/checkpoint/ExResNet/spect/soft/checkpoint_30.pth \
       --input-per-spks 192 \
       --time-dim 1 \
+      --extract \
       --num-valid 2 \
       --loss-type ${loss}
   done
