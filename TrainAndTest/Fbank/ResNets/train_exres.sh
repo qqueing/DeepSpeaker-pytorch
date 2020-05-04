@@ -117,8 +117,8 @@ if [ $stage -le 10 ]; then
       --test-batch-size 1 \
       --test-input-per-file 1 \
       --lr 0.1 \
-      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_var/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_svar \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_svar/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 1 \
