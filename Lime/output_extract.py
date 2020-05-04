@@ -103,6 +103,8 @@ parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
                     help='random seed (default: 0)')
+parser.add_argument('--time-dim', default=1, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
 
 parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
                     help='acoustic feature dimension')
@@ -344,6 +346,7 @@ def main():
                     'alpha': args.alpha,
                     'resnet_size': args.resnet_size,
                     'embedding_size': args.embedding_size,
+                    'time_dim': args.time_dim,
                     'num_classes': len(train_dir.speakers),
                     'dropout_p': args.dropout_p}
 
