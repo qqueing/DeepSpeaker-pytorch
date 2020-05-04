@@ -116,6 +116,8 @@ parser.add_argument('--embedding-size', type=int, default=1024, metavar='ES',
 parser.add_argument('--avg-size', type=int, default=4, metavar='ES',
                     help='Dimensionality of the embedding')
 
+parser.add_argument('--time-dim', default=2, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
 parser.add_argument('--batch-size', type=int, default=128, metavar='BS',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
@@ -289,6 +291,7 @@ def main():
                     'channels': channels,
                     'stride': args.stride,
                     'avg_size': args.avg_size,
+                    'time_dim': args.time_dim,
                     'kernel_size': kernel_size,
                     'padding': padding,
                     'dropout_p': args.dropout_p}
