@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=40
+stage=5
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -30,7 +30,7 @@ if [ $stage -le 5 ]; then
       --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_24.pth \
       --xvector-dir Data/xvector/LoResNet10/spect/${loss}_wcmvn \
       --loss-type ${loss} \
-      --trials trials_h \
+      --trials trials_2 \
       --num-valid 0 \
       --gpu-id 0
   done
@@ -56,7 +56,7 @@ fi
 #    --lr 0.01 \
 #    --epochs 10
 
-#stage=200
+stage=200
 if [ $stage -le 15 ]; then
   model=ASTDNN
   feat=fb40
