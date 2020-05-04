@@ -465,8 +465,12 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
                 'criterion': ce},
                check_path)
 
-    print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch, 100 * float(
-        correct) / total_datasize, total_loss / len(train_loader)))
+    print('\n\33[91mTrain Epoch {}: Batch Length: {} Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch,
+                                                                                                         100 * float(
+                                                                                                             correct) / total_datasize,
+                                                                                                         data.shape[2],
+                                                                                                         total_loss / len(
+                                                                                                             train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 

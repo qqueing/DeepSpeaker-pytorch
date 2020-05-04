@@ -108,6 +108,8 @@ parser.add_argument('--remove-vad', action='store_true', default=False,
 
 parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
                     help='acoustic feature dimension')
+parser.add_argument('--time-dim', default=2, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
@@ -262,6 +264,7 @@ def main():
                     'num_classes': train_dir.num_spks,
                     'alpha': args.alpha,
                     'channels': channels,
+                    'time_dim': args.time_dim,
                     'kernel_size': kernel_size,
                     'padding': padding,
                     'dropout_p': args.dropout_p}

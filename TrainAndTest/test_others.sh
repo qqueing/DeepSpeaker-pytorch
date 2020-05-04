@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=40
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
@@ -56,7 +56,7 @@ fi
 #    --lr 0.01 \
 #    --epochs 10
 
-stage=200
+#stage=200
 if [ $stage -le 15 ]; then
   model=ASTDNN
   feat=fb40
@@ -173,7 +173,7 @@ if [ $stage -le 25 ]; then
   done
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 30 ]; then
   model=ResNet20
   feat=spect_wcmvn
@@ -194,15 +194,32 @@ if [ $stage -le 30 ]; then
   done
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 40 ]; then
   model=ExResNet34
 #  for loss in soft asoft ; do
   for loss in soft ; do
-    echo -e "\n\033[1;4;31m Test ${model} with ${loss}\033[0m\n"
+#    echo -e "\n\033[1;4;31m Test ${model} with ${loss}\033[0m\n"
+#    python -W ignore TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
+#      --nj 12 \
+#      --epochs 30 \
+#      --model ExResNet34 \
+#      --remove-vad \
+#      --resnet-size 34 \
+#      --embedding-size 128 \
+#      --feat-dim 64 \
+#      --kernel-size 3,3 \
+#      --resume Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_var/checkpoint_30.pth \
+#      --input-per-spks 192 \
+#      --num-valid 2 \
+#      --loss-type ${loss}
+
+    echo -e "\n\033[1;4;31m Test ${model} with ${loss} vox_noc \033[0m\n"
     python -W ignore TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
       --nj 12 \
       --epochs 30 \
       --model ExResNet34 \
@@ -211,8 +228,9 @@ if [ $stage -le 40 ]; then
       --embedding-size 128 \
       --feat-dim 64 \
       --kernel-size 3,3 \
-      --resume Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_var/checkpoint_30.pth \
+      --resume Data/checkpoint/ExResNet/spect/soft/checkpoint_30.pth \
       --input-per-spks 192 \
+      --time-dim 1 \
       --num-valid 2 \
       --loss-type ${loss}
   done
