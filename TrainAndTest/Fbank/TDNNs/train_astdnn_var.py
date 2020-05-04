@@ -327,11 +327,11 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size,
                                                collate_fn=PadCollate(dim=2, fix_len=False,
-                                                                     min_chunk_size=250, max_chunk_size=600),
+                                                                     min_chunk_size=250, max_chunk_size=450),
                                                shuffle=True, **kwargs)
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
                                                collate_fn=PadCollate(dim=2, fix_len=False,
-                                                                     min_chunk_size=250, max_chunk_size=600),
+                                                                     min_chunk_size=250, max_chunk_size=450),
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     # sitw_test_loader = torch.utils.data.DataLoader(sitw_test_dir, batch_size=args.test_batch_size,

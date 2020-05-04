@@ -74,8 +74,8 @@ if [ $stage -le 10 ]; then
     python TrainAndTest/Fbank/TDNNs/train_astdnn_var.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
-      --check-path Data/checkpoint/${model}/${feat}/${loss}_var \
-      --resume Data/checkpoint/${model}/${feat}/${loss}_var/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${feat}/${loss}_svar \
+      --resume Data/checkpoint/${model}/${feat}/${loss}_svar/checkpoint_1.pth \
       --epochs 18 \
       --batch-size 128 \
       --milestones 9,14  \
