@@ -68,8 +68,15 @@ if [ $stage -le 20 ]; then
 fi
 
 if [ $stage -le 30 ]; then
+#    python Lime/visual_gradient.py \
+#      --extract-path Data/gradient/ExResNet34/vox1/fb64_wcmvn/soft_var/epoch_30 \
+#      --feat-dim 64 \
+#      --acoustic-feature fbank
+
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/ExResNet34/vox1/fb64_wcmvn/soft_var/epoch_30 \
+      --extract-path Data/gradient/ExResNet34/vox1/fb64_noc/soft_noc/epoch_30 \
       --feat-dim 64 \
       --acoustic-feature fbank
+
 fi
+
