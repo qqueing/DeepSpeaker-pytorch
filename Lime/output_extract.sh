@@ -115,8 +115,8 @@ if [ $stage -le 2 ]; then
       --stride 1 \
       --remove-vad \
       --kernel-size 3,3 \
-      --check-path Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_14 \
-      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_11 \
+      --check-path Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_fix \
+      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_fix \
       --dropout-p 0.0 \
       --gpu-id 1 \
       --time-dim 1 \
