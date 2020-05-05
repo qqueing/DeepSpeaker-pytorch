@@ -245,6 +245,8 @@ def main():
     model_kwargs = {'input_dim': args.feat_dim,
                     'kernel_size': kernel_size,
                     'stride': args.stride,
+                    'avg_size': args.avg_size,
+                    'time_dim': args.time_dim,
                     'padding': padding,
                     'resnet_size': args.resnet_size,
                     'embedding_size': args.embedding_size,

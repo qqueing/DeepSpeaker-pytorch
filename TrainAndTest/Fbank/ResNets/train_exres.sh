@@ -99,7 +99,7 @@ if [ $stage -le 10 ]; then
   feat=fb64_wcmvn
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
-    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_var.py \
+    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
       --nj 14 \
@@ -118,8 +118,8 @@ if [ $stage -le 10 ]; then
       --test-batch-size 1 \
       --test-input-per-file 1 \
       --lr 0.1 \
-      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_14 \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_14/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 1 \
