@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=40
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
