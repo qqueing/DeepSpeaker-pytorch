@@ -61,8 +61,9 @@ parser.add_argument('--train-dir', type=str,
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
-
+parser.add_argument('--nj', default=14, type=int, metavar='NJOB', help='num of job')
+parser.add_argument('--remove-vad', action='store_true', default=False,
+                    help='using Cosine similarity')
 # Model options
 parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'ExResNet34', 'SuResCNN10'],
                     help='path to voxceleb1 test dataset')
@@ -76,6 +77,11 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--dropout-p', type=float, default=0., metavar='BST',
                     help='input batch size for testing (default: 64)')
+
+parser.add_argument('--avg-size', type=int, default=4, metavar='ES',
+                    help='Dimensionality of the embedding')
+parser.add_argument('--time-dim', default=2, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
 
 parser.add_argument('--check-path',
                     help='folder to output model checkpoints')
