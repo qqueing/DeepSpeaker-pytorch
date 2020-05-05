@@ -113,12 +113,12 @@ if [ $stage -le 20 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
       --nj 12 \
       --model ${model} \
-      --channels 4,16,64 \
+      --channels 4,32,128 \
       --embedding-size 128 \
       --alpha 9.8 \
       --extract \
       --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
-      --xvector-dir Data/xvectors/LoResNet10/libri/spect_noc/soft \
+      --xvector-dir Data/xvectors/LoResNet10/libri/spect_noc/soft_128 \
       --loss-type ${loss} \
       --dropout-p 0.25 \
       --num-valid 2 \
