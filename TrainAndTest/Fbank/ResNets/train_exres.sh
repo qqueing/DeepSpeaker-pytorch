@@ -103,8 +103,8 @@ if [ $stage -le 10 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
       --nj 12 \
-      --epochs 25 \
-      --milestones 10,15,20 \
+      --epochs 22 \
+      --milestones 10,14,18 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \
