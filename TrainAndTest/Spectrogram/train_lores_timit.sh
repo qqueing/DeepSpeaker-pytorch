@@ -104,6 +104,7 @@ if [ $stage -le 6 ]; then
 #      --weight-decay 0.001 \
 #      --dropout-p 0.25 \
 #      --loss-type ${loss}
+
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
@@ -112,17 +113,17 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_03 \
-      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_03/checkpoint_1.pth \
-      --channels 4,16,64 \
+      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_fix_43 \
+      --resume Data/checkpoint/LoResNet10/${datasets}/spect_noc/${loss}_fix_43/checkpoint_1.pth \
+      --channels 4,32,128 \
       --statis-pooling \
       --alpha 9.8 \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
-      --weight-decay 0.002 \
-      --veri-pairs 20000 \
-      --dropout-p 0.3 \
+      --weight-decay 0.001 \
+      --veri-pairs 9600 \
+      --dropout-p 0.25 \
       --loss-type ${loss}
 #
 #    python TrainAndTest/Spectrogram/train_lores10_var.py \
