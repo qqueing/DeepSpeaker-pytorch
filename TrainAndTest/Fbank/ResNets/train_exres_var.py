@@ -315,7 +315,10 @@ def main():
             model_dict.update(filtered)
             model.load_state_dict(model_dict)
             #
-            model.dropout.p = args.dropout_p
+            try:
+                model.dropout.p = args.dropout_p
+            except:
+                pass
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
