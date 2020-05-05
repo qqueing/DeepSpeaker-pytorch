@@ -105,18 +105,18 @@ if [ $stage -le 2 ]; then
   loss=soft
   python Lime/output_extract.py \
       --model ${model} \
-      --start-epochs 20 \
-      --epochs 20 \
+      --start-epochs 40 \
+      --epochs 40 \
       --resnet-size 34 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
       --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
       --loss-type ${loss} \
       --stride 1 \
       --remove-vad \
       --kernel-size 3,3 \
-      --check-path Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_fix \
-      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_fix \
+      --check-path Data/checkpoint/ExResNet34/soft_de/kaldi \
+      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_kaldi \
       --dropout-p 0.0 \
       --gpu-id 1 \
       --time-dim 1 \
