@@ -105,8 +105,8 @@ if [ $stage -le 2 ]; then
   loss=soft
   python Lime/output_extract.py \
       --model ${model} \
-      --start-epochs 22 \
-      --epochs 22 \
+      --start-epochs 20 \
+      --epochs 20 \
       --resnet-size 34 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
