@@ -110,6 +110,10 @@ parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
                     help='acoustic feature dimension')
 parser.add_argument('--time-dim', default=2, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
+parser.add_argument('--stride', default=1, type=int, metavar='KE',
+                    help='kernel size of conv filters')
+parser.add_argument('--avg-size', type=int, default=4, metavar='ES',
+                    help='Dimensionality of the embedding')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,
