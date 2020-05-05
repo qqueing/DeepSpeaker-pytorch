@@ -104,7 +104,7 @@ if [ $stage -le 2 ]; then
   feat=fb64_wcmvn
   loss=soft
   python Lime/output_extract.py \
-      --model SimpleResNet \
+      --model SimpleResNet34 \
       --start-epochs 40 \
       --epochs 40 \
       --resnet-size 34 \
