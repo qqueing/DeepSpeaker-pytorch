@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=20
+stage=30
 
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
@@ -155,7 +155,7 @@ if [ $stage -le 20 ]; then
   done
 fi
 
-stage=250
+#stage=250
 if [ $stage -le 25 ]; then
   model=LoResNet10
   feat=spect_wcmvn
@@ -213,7 +213,7 @@ if [ $stage -le 30 ]; then
   done
 fi
 
-#stage=100
+stage=100
 if [ $stage -le 40 ]; then
   model=ExResNet34
 #  for loss in soft asoft ; do
