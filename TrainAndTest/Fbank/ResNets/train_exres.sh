@@ -127,3 +127,39 @@ if [ $stage -le 10 ]; then
       --loss-type ${loss}
   done
 fi
+
+if [ $stage -le 12 ]; then
+#  for loss in soft asoft ; do
+  model=SiResNet34
+  datasets=vox1
+  feat=fb64_wcmvn
+  for loss in soft ; do
+    echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
+    python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
+      --nj 14 \
+      --epochs 20 \
+      --milestones 8,12,16 \
+      --model ${model} \
+      --resnet-size 34 \
+      --embedding-size 128 \
+      --feat-dim 64 \
+      --remove-vad \
+      --stride 1 \
+      --time-dim 1 \
+      --avg-size 1 \
+      --kernel-size 3,3 \
+      --batch-size 64 \
+      --test-batch-size 32 \
+      --test-input-per-file 2 \
+      --lr 0.1 \
+      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_1.pth \
+      --input-per-spks 192 \
+      --veri-pairs 9600 \
+      --gpu-id 1 \
+      --num-valid 2 \
+      --loss-type ${loss}
+  done
+fi

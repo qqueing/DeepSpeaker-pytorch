@@ -65,7 +65,7 @@ parser.add_argument('--nj', default=14, type=int, metavar='NJOB', help='num of j
 parser.add_argument('--remove-vad', action='store_true', default=False,
                     help='using Cosine similarity')
 # Model options
-parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'ExResNet34', 'SuResCNN10'],
+parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=34, type=int,
                     metavar='RES', help='The channels of convs layers)')
