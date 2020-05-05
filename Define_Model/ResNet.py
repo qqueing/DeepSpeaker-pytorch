@@ -238,7 +238,7 @@ class ExporingResNet(nn.Module):
         # [64, 128, 8, 37]
         freq_dim = avg_size
         time_dim = time_dim
-        self.avgpool = nn.AdaptiveAvgPool2d((freq_dim, time_dim))
+        self.avgpool = nn.AdaptiveAvgPool2d((time_dim, freq_dim))
         # 300 is the length of features
         # self.fc1 = nn.Linear(num_filter[3] * time_dim, embedding_size)
         self.fc1 = nn.Sequential(
@@ -296,7 +296,7 @@ class ExporingResNet(nn.Module):
 
     def _forward(self, x):
         # pdb.set_trace()
-        print(x.shape)
+        # print(x.shape)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
