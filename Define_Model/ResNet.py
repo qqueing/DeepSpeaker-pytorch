@@ -192,7 +192,7 @@ class ExporingResNet(nn.Module):
     def __init__(self, resnet_size=34, block=BasicBlock,
                  kernel_size=5, stride=1, padding=2,
                  num_classes=1000, embedding_size=128,
-                 time_dim=2,
+                 time_dim=2, avg_size=4,
                  zero_init_residual=False, groups=1, width_per_group=64,
                  replace_stride_with_dilation=None,
                  norm_layer=None, **kwargs):
@@ -236,7 +236,7 @@ class ExporingResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filter[3], layers[3], stride=2)
 
         # [64, 128, 8, 37]
-        freq_dim = 4
+        freq_dim = avg_size
         time_dim = time_dim
         self.avgpool = nn.AdaptiveAvgPool2d((freq_dim, time_dim))
         # 300 is the length of features
@@ -296,6 +296,7 @@ class ExporingResNet(nn.Module):
 
     def _forward(self, x):
         # pdb.set_trace()
+        print(x.shape)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
