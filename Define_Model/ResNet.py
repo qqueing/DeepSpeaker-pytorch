@@ -42,7 +42,7 @@ class SimpleResNet(nn.Module):
                  groups=1,
                  width_per_group=64,
                  replace_stride_with_dilation=None,
-                 norm_layer=None):
+                 norm_layer=None, **kwargs):
         super(SimpleResNet, self).__init__()
 
         if norm_layer is None:
@@ -127,33 +127,7 @@ class SimpleResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def pre_forward(self, x):
-        # pdb.set_trace()
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        # print(x.shape)
-
-        x = self.layer1(x)
-        # print(x.shape)
-        x = self.layer2(x)
-        # print(x.shape)
-        x = self.layer3(x)
-        # print(x.shape)
-        x = self.layer4(x)
-        # print(x.shape)
-
-        x = self.avgpool(x)
-        # print(x.shape)
-        x = x.view(x.size(0), -1)
-        x = self.fc1(x)
-        # x = torch.flatten(x, 1)
-        # print(x.shape)
-        return x
-
-    def pre_forward_norm(self, x):
+    def _forward(self, x):
         # pdb.set_trace()
         x = self.conv1(x)
         x = self.bn1(x)
@@ -172,14 +146,11 @@ class SimpleResNet(nn.Module):
         x = self.fc1(x)
 
         x = self.l2_norm(x)
-        x = x * self.alpha
+        embeddings = x * self.alpha
 
-        return x
+        x = self.fc2(embeddings)
 
-    def _forward(self, x):
-        x = self.fc2(x)
-
-        return x
+        return x, embeddings
 
     # Allow for accessing forward method in a inherited class
     forward = _forward
