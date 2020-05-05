@@ -112,6 +112,7 @@ if [ $stage -le 10 ]; then
       --remove-vad \
       --stride 1 \
       --time-dim 1 \
+      --avg-size 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
       --test-batch-size 1 \
