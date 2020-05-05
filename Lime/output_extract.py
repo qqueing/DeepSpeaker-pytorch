@@ -106,8 +106,6 @@ parser.add_argument('--lambda-min', type=int, default=5, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--lambda-max', type=float, default=0.05, metavar='S',
                     help='random seed (default: 0)')
-parser.add_argument('--time-dim', default=2, type=int, metavar='FEAT',
-                    help='acoustic feature dimension')
 
 parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
                     help='acoustic feature dimension')
