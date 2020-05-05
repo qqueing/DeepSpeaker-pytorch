@@ -103,8 +103,8 @@ if [ $stage -le 10 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
       --nj 14 \
-      --epochs 10 \
-      --milestones 4,4 \
+      --epochs 20 \
+      --milestones 8,12,16 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \
@@ -119,7 +119,7 @@ if [ $stage -le 10 ]; then
       --test-input-per-file 2 \
       --lr 0.01 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
-      --resume Data/checkpoint/ExResNet34/soft_de/kaldi/checkpoint_40.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 1 \
