@@ -35,7 +35,7 @@ def conv3x3(in_planes, out_planes, stride=1):
 
 class SimpleResNet(nn.Module):
 
-    def __init__(self, layers, block=BasicBlock,
+    def __init__(self, block=BasicBlock,
                  num_classes=1000,
                  embedding_size=128,
                  zero_init_residual=False,
@@ -44,7 +44,7 @@ class SimpleResNet(nn.Module):
                  replace_stride_with_dilation=None,
                  norm_layer=None, **kwargs):
         super(SimpleResNet, self).__init__()
-
+        layers = [3, 4, 6, 3]
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
