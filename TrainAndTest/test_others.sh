@@ -118,7 +118,7 @@ if [ $stage -le 20 ]; then
       --alpha 9.8 \
       --extract \
       --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
-      --extract Data/xvectors/LoResNet10/libri/spect_noc/soft \
+      --xvector-dir Data/xvectors/LoResNet10/libri/spect_noc/soft \
       --loss-type ${loss} \
       --dropout-p 0.25 \
       --num-valid 2 \
