@@ -102,7 +102,7 @@ if [ $stage -le 10 ]; then
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_var.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
-      --nj 12 \
+      --nj 14 \
       --epochs 22 \
       --milestones 10,14,18 \
       --model ${model} \
