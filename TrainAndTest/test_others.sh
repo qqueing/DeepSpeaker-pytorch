@@ -216,6 +216,7 @@ if [ $stage -le 40 ]; then
       --time-dim 1 \
       --avg-size 1 \
       --resume Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_14/checkpoint_22.pth \
+      --xvector-dir Data/xvectors/ExResNet34/vox1/fb64_wcmvn/soft_14 \
       --input-per-spks 192 \
       --num-valid 2 \
       --extract \

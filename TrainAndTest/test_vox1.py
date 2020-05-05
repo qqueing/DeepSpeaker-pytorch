@@ -76,7 +76,7 @@ parser.add_argument('--extract', action='store_true', default=False,
 
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
-parser.add_argument('--xvector-dir', default='Data/xvectors/LoResNet10/timit_spect/soft_var',
+parser.add_argument('--xvector-dir',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
                     default='Data/checkpoint/LoResNet10/timit_spect/soft_var/checkpoint_15.pth',
