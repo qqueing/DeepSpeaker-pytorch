@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=9
+stage=13
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -244,7 +244,7 @@ if [ $stage -le 9 ]; then
   done
 fi
 
-stage=100
+#stage=100
 #if [ $stage -le 10 ]; then
 #  for name in train test ; do
 #    python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -317,8 +317,8 @@ if [ $stage -le 13 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
-      --out-set ${name}_dfb24_fix_f1 \
-      --filter-type dnn.libri.fix \
+      --out-set ${name}_lfb24 \
+      --filter-type linear \
       --feat-type fbank \
       --nfft 320 \
       --windowsize 0.02 \
