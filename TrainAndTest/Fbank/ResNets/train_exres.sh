@@ -119,7 +119,7 @@ if [ $stage -le 10 ]; then
       --test-input-per-file 2 \
       --lr 0.01 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_22.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_14/checkpoint_22.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 1 \
