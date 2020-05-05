@@ -268,6 +268,8 @@ def main():
                     'num_classes': train_dir.num_spks,
                     'alpha': args.alpha,
                     'channels': channels,
+                    'stride': args.stride,
+                    'avg_size': args.avg_size,
                     'time_dim': args.time_dim,
                     'kernel_size': kernel_size,
                     'padding': padding,
