@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=10
+stage=5
 waited=0
 while [ `ps 97966 | wc -l` -eq 2 ]; do
   sleep 60
@@ -30,15 +30,16 @@ fi
 #stage=1
 if [ $stage -le 5 ]; then
   model=TDNN
-  feat=fb40
+  feat=fb40_wcmvn
   for loss in soft ; do
-    python TrainAndTest/Fbank/TDNNs/train_tdnn_kaldi.py \
+    python TrainAndTest/Fbank/TDNNs/train_tdnn_var.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --batch-size 64 \
+      --remove-vad \
       --epochs 18 \
       --milestones 11,16  \
       --feat-dim 40 \
@@ -46,12 +47,12 @@ if [ $stage -le 5 ]; then
       --weight-decay 0.0005 \
       --num-valid 2 \
       --loss-type ${loss} \
-      --input-per-spks 240 \
+      --input-per-spks 192 \
       --lr 0.01
   done
 fi
 
-#stage=100
+stage=100
 if [ $stage -le 10 ]; then
   model=ASTDNN
   feat=fb40_wcmvn
@@ -71,7 +72,8 @@ if [ $stage -le 10 ]; then
 #      --input-per-spks 240 \
 #      --lr 0.01
 
-    python TrainAndTest/Fbank/TDNNs/train_astdnn_var.py \
+    python TrainAndTest/Fbank/TDNNs/train_tdnn_var.py \
+      --model ASTDNN \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
       --check-path Data/checkpoint/${model}/${feat}/${loss}_svar \
