@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=40
+stage=20
 
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
@@ -116,9 +116,11 @@ if [ $stage -le 20 ]; then
       --channels 4,16,64 \
       --embedding-size 128 \
       --alpha 9.8 \
-      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft_03/checkpoint_15.pth \
+      --extract \
+      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
+      --extract Data/xvectors/LoResNet10/libri/spect_noc/soft \
       --loss-type ${loss} \
-      --dropout-p 0.3 \
+      --dropout-p 0.25 \
       --num-valid 2 \
       --gpu-id 1
 
@@ -137,7 +139,7 @@ if [ $stage -le 20 ]; then
   done
 fi
 
-#stage=25
+stage=250
 if [ $stage -le 25 ]; then
   model=LoResNet10
   feat=spect_wcmvn
