@@ -139,8 +139,8 @@ if [ $stage -le 15 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
       --nj 14 \
-      --epochs 20 \
-      --milestones 8,12,16 \
+      --epochs 40 \
+      --milestones 15,25,33 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \
