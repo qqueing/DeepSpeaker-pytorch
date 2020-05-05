@@ -120,6 +120,7 @@ if [ $stage -le 2 ]; then
       --dropout-p 0.0 \
       --gpu-id 1 \
       --time-dim 1 \
+      --avg-size 1 \
       --embedding-size 128 \
       --sample-utt 5000
 fi

@@ -75,13 +75,16 @@ parser.add_argument('--remove-vad', action='store_true', default=False, help='us
 
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
-
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--stride', default=2, type=int, metavar='ST',
                     help='kernel size of conv filters')
+parser.add_argument('--time-dim', default=2, type=int, metavar='FEAT',
+                    help='acoustic feature dimension')
+parser.add_argument('--avg-size', type=int, default=4, metavar='ES',
+                    help='Dimensionality of the embedding')
 parser.add_argument('--start-epochs', type=int, default=36, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--epochs', type=int, default=36, metavar='E',
@@ -345,6 +348,8 @@ def main():
                     'padding': padding,
                     'channels': channels,
                     'alpha': args.alpha,
+                    'avg_size': args.avg_size,
+                    'time_dim': args.time_dim,
                     'resnet_size': args.resnet_size,
                     'embedding_size': args.embedding_size,
                     'time_dim': args.time_dim,
