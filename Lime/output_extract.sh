@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=3
+stage=2
 waited=0
 while [ `ps 15414 | wc -l` -eq 2 ]; do
   sleep 60
@@ -101,7 +101,7 @@ if [ $stage -le 2 ]; then
 #      --embedding-size 128 \
 #      --sample-utt 10000
 
-  feat=fb64_noc
+  feat=fb64_wcmvn
   loss=soft
   python Lime/output_extract.py \
       --model ${model} \
@@ -115,8 +115,8 @@ if [ $stage -le 2 ]; then
       --stride 1 \
       --remove-vad \
       --kernel-size 3,3 \
-      --check-path Data/checkpoint/ExResNet/spect/soft \
-      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_noc \
+      --check-path Data/checkpoint/ExResNet34/vox1/fb64_wcmvn/soft_svar \
+      --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_svar \
       --dropout-p 0.0 \
       --gpu-id 1 \
       --time-dim 1 \
@@ -124,7 +124,7 @@ if [ $stage -le 2 ]; then
       --sample-utt 5000
 fi
 
-#stage=100
+stage=100
 if [ $stage -le 3 ]; then
   model=ResNet20
   datasets=vox1
