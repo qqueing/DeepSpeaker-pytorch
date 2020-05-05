@@ -416,8 +416,10 @@ def train(train_loader, model, ce, optimizer, epoch):
             predicted_one_labels)
         correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
         total_datasize += len(predicted_one_labels)
-        total_loss += loss.item()
+        total_loss += float(loss.item())
 
+        if np.isnan(total_loss):
+            raise Exception('Nan loss detected!')
         # compute gradient and update weights
         optimizer.zero_grad()
         loss.backward()
