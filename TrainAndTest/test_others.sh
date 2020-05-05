@@ -108,7 +108,22 @@ if [ $stage -le 20 ]; then
 #      --dropout-p 0.25 \
 #      --num-valid 1 \
 #      --gpu-id 1
-    python TrainAndTest/test_vox1.py \
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 4,32,128 \
+#      --embedding-size 128 \
+#      --alpha 9.8 \
+#      --extract \
+#      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
+#      --xvector-dir Data/xvectors/LoResNet10/libri/spect_noc/soft_128 \
+#      --loss-type ${loss} \
+#      --dropout-p 0.25 \
+#      --num-valid 2 \
+#      --gpu-id 1
+      python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
       --nj 12 \
@@ -117,12 +132,13 @@ if [ $stage -le 20 ]; then
       --embedding-size 128 \
       --alpha 9.8 \
       --extract \
-      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft/checkpoint_15.pth \
+      --resume Data/checkpoint/LoResNet10/libri/spect_noc/soft_fix_43/checkpoint_15.pth \
       --xvector-dir Data/xvectors/LoResNet10/libri/spect_noc/soft_128 \
       --loss-type ${loss} \
       --dropout-p 0.25 \
       --num-valid 2 \
       --gpu-id 1
+
 
 #    python TrainAndTest/test_vox1.py \
 #      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
