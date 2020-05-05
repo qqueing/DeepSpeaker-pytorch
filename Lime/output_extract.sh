@@ -104,18 +104,18 @@ if [ $stage -le 2 ]; then
   feat=fb64_wcmvn
   loss=soft
   python Lime/output_extract.py \
-      --model SiResNet34 \
-      --start-epochs 40 \
-      --epochs 40 \
+      --model ExResNet34 \
+      --start-epochs 30 \
+      --epochs 30 \
       --resnet-size 34 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64/test_noc \
       --sitw-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/sitw \
       --loss-type ${loss} \
       --stride 1 \
       --remove-vad \
       --kernel-size 3,3 \
-      --check-path Data/checkpoint/ExResNet34/soft_de/kaldi \
+      --check-path Data/checkpoint/ExResNet/spect/soft \
       --extract-path Data/gradient/${model}/${datasets}/${feat}/${loss}_kaldi \
       --dropout-p 0.0 \
       --gpu-id 1 \
