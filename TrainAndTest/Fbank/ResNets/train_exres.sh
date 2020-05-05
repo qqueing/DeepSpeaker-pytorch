@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=10
+stage=15
 waited=0
 while [ `ps 75486 | wc -l` -eq 2 ]; do
   sleep 60
@@ -128,7 +128,7 @@ if [ $stage -le 10 ]; then
   done
 fi
 
-if [ $stage -le 12 ]; then
+if [ $stage -le 15 ]; then
 #  for loss in soft asoft ; do
   model=SiResNet34
   datasets=vox1
