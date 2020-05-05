@@ -217,6 +217,7 @@ if [ $stage -le 40 ]; then
       --input-per-spks 192 \
       --num-valid 2 \
       --extract \
+      --gpu-id 1 \
       --loss-type ${loss}
 
 #    echo -e "\n\033[1;4;31m Test ${model} with ${loss} vox_noc \033[0m\n"
