@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=13
+stage=9
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -235,7 +235,7 @@ if [ $stage -le 9 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/pyfb \
-      --out-set ${name}_dfb24_var \
+      --out-set ${name}_dfb24_var_f1 \
       --filter-type dnn.timit.var \
       --feat-type fbank \
       --nfft 320 \
@@ -244,7 +244,7 @@ if [ $stage -le 9 ]; then
   done
 fi
 
-#stage=100
+stage=100
 #if [ $stage -le 10 ]; then
 #  for name in train test ; do
 #    python Process_Data/Compute_Feat/make_feat_kaldi.py \
