@@ -33,12 +33,11 @@ from tqdm import tqdm
 
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
-from Define_Model.TDNN import ASTDNN
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
-from TrainAndTest.common_func import create_optimizer
+from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -76,6 +75,9 @@ parser.add_argument('--save-init', action='store_true', default=True, help='need
 parser.add_argument('--resume', type=str,
                     metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+
+parser.add_argument('--model', type=str, default='ASTDNN',
+                    help='path to voxceleb1 test dataset')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -255,8 +257,17 @@ def main():
     print('Parsed options: {}'.format(vars(args)))
     print('Number of Speakers: {}.\n'.format(train_dir.num_spks))
 
-    model = ASTDNN(num_classes=train_dir.num_spks, input_dim=args.feat_dim, embedding_size=args.embedding_size,
-                   dropout_p=args.dropout_p)
+    model_kwargs = {'embedding_size': args.embedding_size,
+                    'num_classes': train_dir.num_spks,
+                    'input_dim': args.feat_dim,
+                    'dropout_p': args.dropout_p}
+
+    print('Model options: {}'.format(model_kwargs))
+    model = create_model(args.model, **model_kwargs)
+
+    # model = ASTDNN(num_classes=train_dir.num_spks, input_dim=args.feat_dim,
+    #                embedding_size=args.embedding_size,
+    #                dropout_p=args.dropout_p)
 
     start_epoch = 0
     if args.save_init:

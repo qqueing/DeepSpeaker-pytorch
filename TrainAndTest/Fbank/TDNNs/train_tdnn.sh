@@ -43,7 +43,7 @@ if [ $stage -le 5 ]; then
       --milestones 11,16  \
       --feat-dim 40 \
       --embedding-size 128 \
-      --weight-decay 0.001 \
+      --weight-decay 0.0005 \
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 240 \
