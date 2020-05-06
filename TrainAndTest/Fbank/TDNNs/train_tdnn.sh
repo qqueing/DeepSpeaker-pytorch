@@ -40,8 +40,8 @@ if [ $stage -le 5 ]; then
       --resume Data/checkpoint/${model}/${feat}/${loss}_norm/checkpoint_1.pth \
       --batch-size 64 \
       --remove-vad \
-      --epochs 18 \
-      --milestones 10,15  \
+      --epochs 16 \
+      --milestones 8,12  \
       --feat-dim 40 \
       --embedding-size 128 \
       --weight-decay 0.0005 \
