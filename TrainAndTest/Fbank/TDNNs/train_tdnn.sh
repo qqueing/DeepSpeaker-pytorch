@@ -2,7 +2,7 @@
 
 stage=5
 waited=0
-while [ `ps 147061 | wc -l` -eq 2 ]; do
+while [ `ps 110743 | wc -l` -eq 2 ]; do
   sleep 60
   waited=$(expr $waited + 1)
   echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
@@ -36,8 +36,8 @@ if [ $stage -le 5 ]; then
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
-      --check-path Data/checkpoint/${model}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${feat}/${loss}_norm \
+      --resume Data/checkpoint/${model}/${feat}/${loss}_norm/checkpoint_1.pth \
       --batch-size 64 \
       --remove-vad \
       --epochs 18 \
