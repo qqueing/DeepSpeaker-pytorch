@@ -49,6 +49,7 @@ if [ $stage -le 5 ]; then
       --loss-type ${loss} \
       --input-per-spks 192 \
       --gpu-id 0 \
+      --veri-pairs 9600 \
       --lr 0.01
   done
 fi
