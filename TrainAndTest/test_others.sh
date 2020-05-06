@@ -289,7 +289,7 @@ if [ $stage -le 50 ]; then
       --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss}_fix \
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
       --input-per-spks 192 \
-      --gpu-id 1 \
+      --gpu-id 0 \
       --num-valid 2 \
       --loss-type ${loss}
   done
