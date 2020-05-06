@@ -430,7 +430,7 @@ def train(train_loader, model, ce, optimizer, epoch):
                 param.grad.data *= (1. / args.loss_ratio)
 
         # torch.nn.utils.clip_grad_norm_()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
 
         optimizer.step()
 
