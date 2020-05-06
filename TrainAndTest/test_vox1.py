@@ -32,8 +32,7 @@ from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset, KaldiExtractDataset, \
     ScriptVerifyDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
+from Process_Data.audio_processing import to2tensor, varLengthFeat, concateinputfromMFB
 from TrainAndTest.common_func import create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -162,7 +161,7 @@ parser.add_argument('--seed', type=int, default=123456, metavar='S',
 parser.add_argument('--log-interval', type=int, default=12, metavar='LI',
                     help='how many batches to wait before logging training status')
 
-parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
+parser.add_argument('--input-length', choices=['var', 'fix'], default='var',
                     help='choose the acoustic features type.')
 parser.add_argument('--makemfb', action='store_true', default=False,
                     help='need to make mfb file')
@@ -193,7 +192,7 @@ sys.stdout = NewLogger(os.path.join(os.path.dirname(args.resume), 'test.log'))
 
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
-if args.acoustic_feature == 'fbank':
+if args.input_length == 'var':
     transform = transforms.Compose([
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
         varLengthFeat(remove_vad=args.remove_vad),
@@ -207,12 +206,13 @@ if args.acoustic_feature == 'fbank':
 
 else:
     transform = transforms.Compose([
-        truncatedinput(),
-        toMFB(),
-        totensor(),
-        # tonormal()
+        concateinputfromMFB(remove_vad=args.remove_vad),
+        to2tensor()
     ])
-    file_loader = read_audio
+    transform_T = transforms.Compose([
+        concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
+        to2tensor()
+    ])
 
 # pdb.set_trace()
 file_loader = read_mat
