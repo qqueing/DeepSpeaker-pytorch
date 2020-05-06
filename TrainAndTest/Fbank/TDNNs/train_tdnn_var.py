@@ -386,6 +386,7 @@ def train(train_loader, model, ce, optimizer, epoch):
     ce_criterion, xe_criterion = ce
     pbar = tqdm(enumerate(train_loader))
     output_softmax = nn.Softmax(dim=1)
+    skip_step = 0
 
     for batch_idx, (data, label) in pbar:
         if args.cuda:
@@ -420,7 +421,9 @@ def train(train_loader, model, ce, optimizer, epoch):
 
         if np.isnan(float(loss.item())):
             total_loss += 0
-            print('Nan loss detected!')
+            skip_step += 1
+            optimizer.zero_grad()
+            continue
         else:
             total_loss += float(loss.item())
             # raise Exception('Nan loss detected!')
