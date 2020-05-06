@@ -48,6 +48,7 @@ if [ $stage -le 5 ]; then
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 192 \
+      --gpu-id 0 \
       --lr 0.01
   done
 fi
