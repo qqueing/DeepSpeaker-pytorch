@@ -423,6 +423,7 @@ def train(train_loader, model, ce, optimizer, epoch):
             total_loss += 0
             skip_step += 1
             optimizer.zero_grad()
+            print('Skip for 1 batch.')
             continue
         else:
             total_loss += float(loss.item())
