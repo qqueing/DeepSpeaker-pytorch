@@ -155,10 +155,10 @@ if [ $stage -le 15 ]; then
       --test-input-per-file 2 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_1.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
       --input-per-spks 192 \
-      --veri-pairs 9600 \
-      --gpu-id 1 \
+      --veri-pairs 40000 \
+      --gpu-id 0 \
       --num-valid 2 \
       --loss-type ${loss}
   done

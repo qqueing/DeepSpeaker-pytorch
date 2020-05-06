@@ -23,7 +23,6 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
 from kaldi_io import read_mat
-from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
@@ -179,8 +178,8 @@ if args.cuda:
 
 # create logger
 # Define visulaize SummaryWriter instance
-writer = SummaryWriter(args.check_path, filename_suffix='exploring')
-sys.stdout = NewLogger(os.path.join(args.check_path, 'log.txt'))
+# writer = SummaryWriter(args.check_path, filename_suffix='test')
+sys.stdout = NewLogger(os.path.join(args.check_path, 'test.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -342,13 +341,13 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        train(train_loader, model, optimizer, ce, scheduler, epoch)
+        # train(train_loader, model, optimizer, ce, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
         # break
 
-    writer.close()
+    # writer.close()
 
 
 def train(train_loader, model, optimizer, ce, scheduler, epoch):
@@ -422,8 +421,8 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
 
     print('\33[91mFor Softmax Exporing-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(
         100 * float(correct) / total_datasize, total_loss / len(train_loader)))
-    writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
-    writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
+    # writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
+    # writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
     torch.cuda.empty_cache()
 
@@ -467,7 +466,7 @@ def test(test_loader, valid_loader, model, epoch):
                 ))
 
     valid_accuracy = 100. * correct / total_datasize
-    writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
+    # writer.add_scalar('Test/Valid_Accuracy', valid_accuracy, epoch)
 
     torch.cuda.empty_cache()
 
@@ -505,12 +504,12 @@ def test(test_loader, valid_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/EER', 100. * eer, epoch)
-    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
+    # writer.add_scalar('Test/EER', 100. * eer, epoch)
+    # writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
     mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
-    writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
-    writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+    # writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    # writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
 
     dist_type = 'cos' if args.cos_sim else 'l2'
     print('For %s_distance, ' % dist_type)
