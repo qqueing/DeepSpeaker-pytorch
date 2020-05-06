@@ -204,7 +204,7 @@ if args.input_length == 'var':
         to2tensor()
     ])
 
-else:
+elif args.input_length == 'fix':
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=args.remove_vad),
         to2tensor()
@@ -213,6 +213,8 @@ else:
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
         to2tensor()
     ])
+else:
+    raise ValueError('input length must be var or fix.')
 
 # pdb.set_trace()
 file_loader = read_mat
