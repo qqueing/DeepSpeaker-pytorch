@@ -285,6 +285,7 @@ if [ $stage -le 50 ]; then
       --time-dim 1 \
       --avg-size 1 \
       --kernel-size 3,3 \
+      --extract \
       --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss}_fix \
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
       --input-per-spks 192 \
