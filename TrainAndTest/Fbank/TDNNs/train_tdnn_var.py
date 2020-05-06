@@ -393,36 +393,37 @@ def train(train_loader, model, ce, optimizer, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        classfier, feats = model(data)
-        true_labels = label.cuda()
-        # cos_theta, phi_theta = classfier
-        classfier_label = classfier
+        with torch.autograd.tect_anomaly():
+            classfier, feats = model(data)
+            true_labels = label.cuda()
+            # cos_theta, phi_theta = classfier
+            classfier_label = classfier
 
-        if args.loss_type == 'soft':
-            loss = ce_criterion(classfier, true_labels)
-        elif args.loss_type == 'asoft':
-            classfier_label, _ = classfier
-            loss = xe_criterion(classfier, true_labels)
-        elif args.loss_type == 'center':
-            loss_cent = ce_criterion(classfier, true_labels)
-            loss_xent = xe_criterion(feats, true_labels)
-            loss = args.loss_ratio * loss_xent + loss_cent
-        elif args.loss_type == 'amsoft':
-            loss = xe_criterion(classfier, true_labels)
+            if args.loss_type == 'soft':
+                loss = ce_criterion(classfier, true_labels)
+            elif args.loss_type == 'asoft':
+                classfier_label, _ = classfier
+                loss = xe_criterion(classfier, true_labels)
+            elif args.loss_type == 'center':
+                loss_cent = ce_criterion(classfier, true_labels)
+                loss_xent = xe_criterion(feats, true_labels)
+                loss = args.loss_ratio * loss_xent + loss_cent
+            elif args.loss_type == 'amsoft':
+                loss = xe_criterion(classfier, true_labels)
 
-        predicted_labels = output_softmax(classfier_label)
-        predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
-            predicted_one_labels)
-        correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
-        total_datasize += len(predicted_one_labels)
-        total_loss += float(loss.item())
+            pred_labels = output_softmax(classfier_label)
+            pred_one_labels = torch.max(pred_labels, dim=1)[1]
+            batch_correct = float((pred_one_labels.cuda() == true_labels.cuda()).sum().item())
+            minibatch_acc = batch_correct / len(pred_one_labels)
+            correct += batch_correct
+            total_datasize += len(pred_one_labels)
+            total_loss += float(loss.item())
 
-        if np.isnan(total_loss):
-            raise Exception('Nan loss detected!')
-        # compute gradient and update weights
-        optimizer.zero_grad()
-        loss.backward()
+            # if np.isnan(total_loss):
+            #     raise Exception('Nan loss detected!')
+            # compute gradient and update weights
+            optimizer.zero_grad()
+            loss.backward()
 
         if args.loss_type == 'center' and args.loss_ratio != 0:
             for param in xe_criterion.parameters():

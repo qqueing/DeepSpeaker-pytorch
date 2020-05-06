@@ -38,7 +38,7 @@ if [ $stage -le 5 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
-      --batch-size 64 \
+      --batch-size 80 \
       --remove-vad \
       --epochs 18 \
       --milestones 12  \
@@ -48,7 +48,7 @@ if [ $stage -le 5 ]; then
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 192 \
-      --lr 0.001
+      --lr 0.01
   done
 fi
 
