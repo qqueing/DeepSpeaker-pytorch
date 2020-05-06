@@ -41,7 +41,7 @@ if [ $stage -le 5 ]; then
       --batch-size 64 \
       --remove-vad \
       --epochs 18 \
-      --milestones 12  \
+      --milestones 10,15  \
       --feat-dim 40 \
       --embedding-size 128 \
       --weight-decay 0.0005 \
