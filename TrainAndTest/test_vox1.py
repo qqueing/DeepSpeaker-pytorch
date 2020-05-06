@@ -385,6 +385,7 @@ def extract(test_loader, model, xvector_dir, ark_num=50000):
         vec_shape = data.shape
         # pdb.set_trace()
         if vec_shape[1] != 1:
+            print(data.shape)
             data = data.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
         if args.cuda:
