@@ -393,7 +393,7 @@ def train(train_loader, model, ce, optimizer, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        with torch.autograd.tect_anomaly():
+        with torch.autograd.detect_anomaly():
             classfier, feats = model(data)
             true_labels = label.cuda()
             # cos_theta, phi_theta = classfier
