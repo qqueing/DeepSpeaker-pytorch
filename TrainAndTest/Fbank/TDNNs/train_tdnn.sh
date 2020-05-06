@@ -30,12 +30,12 @@ fi
 #stage=1
 if [ $stage -le 5 ]; then
   model=TDNN
-  feat=fb40_kaldi
+  feat=fb40_wcmvn
   for loss in soft ; do
     python TrainAndTest/Fbank/TDNNs/train_tdnn_var.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/test \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --batch-size 64 \

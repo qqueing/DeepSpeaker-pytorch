@@ -35,7 +35,7 @@ from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, tonormal
+from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -67,7 +67,7 @@ parser.add_argument('--test-dir', type=str,
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
-parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
+parser.add_argument('--nj', default=14, type=int, metavar='NJOB', help='num of job')
 
 parser.add_argument('--check-path',
                     help='folder to output model checkpoints')
@@ -204,14 +204,14 @@ if args.acoustic_feature == 'fbank':
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=True),
         varLengthFeat(remove_vad=args.remove_vad),
         to2tensor(),
-        tonormal()
+        # tonormal()
 
     ])
     transform_T = transforms.Compose([
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=True),
         varLengthFeat(remove_vad=args.remove_vad),
         to2tensor(),
-        tonormal()
+        # tonormal()
     ])
 
 else:
