@@ -285,6 +285,7 @@ if [ $stage -le 50 ]; then
       --time-dim 1 \
       --avg-size 1 \
       --kernel-size 3,3 \
+      --valid \
       --extract \
       --input-length fix \
       --test-input-per-file 1 \
