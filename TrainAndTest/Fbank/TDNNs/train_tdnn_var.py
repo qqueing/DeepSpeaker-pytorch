@@ -417,10 +417,13 @@ def train(train_loader, model, ce, optimizer, epoch):
         minibatch_acc = batch_correct / len(pred_one_labels)
         correct += batch_correct
         total_datasize += len(pred_one_labels)
-        total_loss += float(loss.item())
 
-        # if np.isnan(total_loss):
-        #     raise Exception('Nan loss detected!')
+        if np.isnan(float(loss.item())):
+            total_loss += 0
+            print('Nan loss detected!')
+        else:
+            total_loss += float(loss.item())
+            # raise Exception('Nan loss detected!')
         # compute gradient and update weights
         optimizer.zero_grad()
         loss.backward()
@@ -430,7 +433,7 @@ def train(train_loader, model, ce, optimizer, epoch):
                 param.grad.data *= (1. / args.loss_ratio)
 
         # torch.nn.utils.clip_grad_norm_()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
 
         optimizer.step()
 
