@@ -39,6 +39,7 @@ if [ $stage -le 5 ]; then
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --batch-size 64 \
+      --remove-vad \
       --epochs 18 \
       --milestones 12  \
       --feat-dim 40 \
