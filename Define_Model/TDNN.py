@@ -280,7 +280,7 @@ class XVectorTDNN(nn.Module):
 
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=1)
-        std_x = x.std(dim=1, unbiased=False)
+        std_x = x.var(dim=1, unbiased=False).add_(1e-10).sqrt()
         mean_std = torch.cat((mean_x, std_x), 1)
         return mean_std
 
