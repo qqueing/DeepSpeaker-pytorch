@@ -287,7 +287,7 @@ if [ $stage -le 50 ]; then
       --kernel-size 3,3 \
       --extract \
       --input-length fix \
-      --test-input-per-file 4 \
+      --test-input-per-file 1 \
       --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss}_fix \
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
       --input-per-spks 192 \

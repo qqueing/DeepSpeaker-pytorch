@@ -385,12 +385,11 @@ def extract(test_loader, model, xvector_dir, ark_num=50000):
         vec_shape = data.shape
         # pdb.set_trace()
         if vec_shape[1] != 1:
-            print(data.shape)
+            # print(data.shape)
             data = data.reshape(vec_shape[0] * vec_shape[1], 1, vec_shape[2], vec_shape[3])
 
         if args.cuda:
             data = data.cuda()
-
         data = Variable(data)
 
         # compute output
@@ -405,7 +404,7 @@ def extract(test_loader, model, xvector_dir, ark_num=50000):
         uids.append(uid[0])
 
         if batch_idx % args.log_interval == 0:
-            pbar.set_description('Test: [{}/{} ({:.0f}%)]'.format(
+            pbar.set_description('Extracting: [{}/{} ({:.0f}%)]'.format(
                 batch_idx, len(test_loader.dataset), 100. * batch_idx / len(test_loader)))
 
     assert len(uids) == len(vectors)
