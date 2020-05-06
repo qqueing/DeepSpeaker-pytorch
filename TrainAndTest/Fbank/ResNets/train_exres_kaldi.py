@@ -487,9 +487,13 @@ def test(test_loader, valid_loader, model, epoch):
         _, out_a = model(data_a)
         _, out_p = model(data_p)
 
-        dists = l2_dist.forward(out_a, out_p)
+
         if vec_shape[1] != 1:
-            dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+            # dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
+            out_a = out_a.reshape(vec_shape[0], vec_shape[1], args.embedding_size).mean(axis=1)
+            out_p = out_p.reshape(vec_shape[0], vec_shape[1], args.embedding_size).mean(axis=1)
+
+        dists = l2_dist.forward(out_a, out_p)
         dists = dists.data.cpu().numpy()
         distances.append(dists)
         labels.append(label.data.cpu().numpy())
