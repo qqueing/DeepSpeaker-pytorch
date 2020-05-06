@@ -37,8 +37,8 @@ if [ $stage -le 5 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_2.pth \
-      --batch-size 80 \
+      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
+      --batch-size 64 \
       --remove-vad \
       --epochs 18 \
       --milestones 12  \
