@@ -151,8 +151,8 @@ if [ $stage -le 15 ]; then
       --avg-size 1 \
       --kernel-size 3,3 \
       --batch-size 64 \
-      --test-batch-size 32 \
-      --test-input-per-file 2 \
+      --test-batch-size 64 \
+      --test-input-per-file 4 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
