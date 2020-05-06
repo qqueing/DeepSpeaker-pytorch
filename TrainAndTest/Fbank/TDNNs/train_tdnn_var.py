@@ -35,7 +35,7 @@ from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate
+from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, tonormal
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -203,12 +203,15 @@ if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=True),
         varLengthFeat(remove_vad=args.remove_vad),
-        to2tensor()
+        to2tensor(),
+        tonormal()
+
     ])
     transform_T = transforms.Compose([
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=True),
         varLengthFeat(remove_vad=args.remove_vad),
-        to2tensor()
+        to2tensor(),
+        tonormal()
     ])
 
 else:
