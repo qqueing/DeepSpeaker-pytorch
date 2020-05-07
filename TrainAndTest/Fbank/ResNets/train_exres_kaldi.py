@@ -156,6 +156,8 @@ parser.add_argument('--seed', type=int, default=123456, metavar='S',
 parser.add_argument('--log-interval', type=int, default=15, metavar='LI',
                     help='how many batches to wait before logging training status')
 
+parser.add_argument('--acoustic-feature', choices=['fbank', 'spectrogram', 'mfcc'], default='fbank',
+                    help='choose the acoustic features type.')
 parser.add_argument('--mfb', action='store_true', default=True,
                     help='start from MFB file')
 parser.add_argument('--makemfb', action='store_true', default=False,
@@ -194,7 +196,7 @@ opt_kwargs = {'lr': args.lr,
 
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
-if args.mfb:
+if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
