@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=30
 waited=0
 while [ `ps 15414 | wc -l` -eq 2 ]; do
   sleep 60
@@ -125,7 +125,7 @@ if [ $stage -le 2 ]; then
       --sample-utt 5000
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 3 ]; then
   model=ResNet20
   datasets=vox1
@@ -147,7 +147,7 @@ if [ $stage -le 3 ]; then
       --sample-utt 5000
 fi
 
-stage=300
+#stage=300
 
 if [ $stage -le 20 ]; then
   model=LoResNet10
@@ -251,7 +251,7 @@ if [ $stage -le 30 ]; then
         --nj 14 \
         --start-epochs 18 \
         --model ${model} \
-        --embedding-size 512 \
+        --embedding-size 128 \
         --sample-utt 5000 \
         --feat-dim 40 \
         --remove-vad \
