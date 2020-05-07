@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=50
+stage=15
 
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
@@ -59,24 +59,43 @@ fi
 
 #stage=200
 if [ $stage -le 15 ]; then
-  model=ASTDNN
-  feat=fb40
+  model=TDNN
+#  feat=fb40
+#  for loss in soft ; do
+#    echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
+#      --nj 12 \
+#      --model ${model} \
+#      --embedding-size 128 \
+#      --feat-dim 40 \
+#      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_18.pth
+#      --loss-type soft \
+#      --num-valid 2 \
+#      --gpu-id 1
+#  done
+
+  feat=fb40_wcmvn
   for loss in soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
     python TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_no_sil \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_no_sil \
-      --nj 12 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
+      --nj 14 \
       --model ${model} \
       --embedding-size 128 \
       --feat-dim 40 \
-      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_18.pth
+      --remove-vad \
+      --resume Data/checkpoint/TDNN/fb40_wcmvn/soft/checkpoint_18.pth \
       --loss-type soft \
       --num-valid 2 \
       --gpu-id 1
   done
+
 fi
 
+stage=200
 if [ $stage -le 20 ]; then
   model=LoResNet10
   feat=spect
