@@ -183,7 +183,7 @@ if args.cuda:
 # create logger
 # Define visulaize SummaryWriter instance
 # writer = SummaryWriter(args.check_path, filename_suffix='test')
-sys.stdout = NewLogger(os.path.join(args.check_path, 'test.txt'))
+sys.stdout = NewLogger(os.path.join(args.check_path, 'log.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -239,7 +239,7 @@ def main():
     # print the experiment configuration
     print('\nCurrent time is \33[91m{}\33[0m'.format(str(time.asctime())))
     print('Parsed options: {}'.format(vars(args)))
-    print('Number of Classes: {}\n'.format(len(train_dir.speakers)))
+    print('Number of Classes: {}\n'.format(train_dir.num_spks))
 
     # instantiate
     # model and initialize weights
@@ -417,14 +417,16 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
                     100. * minibatch_acc))
 
     # options for vox1
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
-    torch.save({'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'criterion': ce},
-               check_path)
+    if epoch % 2 == 1:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
+        torch.save({'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'criterion': ce},
+                   check_path)
 
-    print('\33[91mFor Softmax Exporing-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(
-        100 * float(correct) / total_datasize, total_loss / len(train_loader)))
+    print('\33[91mFor Softmax Exporing-Res34 ' \
+          'Train Accuracy: {:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(100 * float(correct) / total_datasize,
+                                                                            total_loss / len(train_loader)))
     # writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     # writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
