@@ -32,7 +32,7 @@ from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
+from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB, to2tensor
 from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -182,12 +182,12 @@ if args.mfb:
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
-        totensor(),
+        to2tensor(),
     ])
     transform_T = transforms.Compose([
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=True),
         # varLengthFeat(),
-        totensor(),
+        to2tensor(),
     ])
     file_loader = read_mat
 
