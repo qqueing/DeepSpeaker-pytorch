@@ -33,7 +33,7 @@ from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import varLengthFeat, to2tensor
+from Process_Data.audio_processing import varLengthFeat, to2tensor, totensor
 from TrainAndTest.common_func import create_model
 
 # Version conflict
@@ -71,6 +71,9 @@ parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
+
+parser.add_argument('--revert', action='store_true', default=False, help='using Cosine similarity')
+
 parser.add_argument('--remove-vad', action='store_true', default=False, help='using Cosine similarity')
 
 parser.add_argument('--resnet-size', default=8, type=int,
@@ -160,16 +163,28 @@ if args.cuda:
 kwargs = {'num_workers': args.nj, 'pin_memory': False} if args.cuda else {}
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
-transform = transforms.Compose([
-    # concateinputfromMFB(remove_vad=False),
-    varLengthFeat(remove_vad=args.remove_vad),
-    to2tensor()
-])
-transform_T = transforms.Compose([
-    # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=False),
-    varLengthFeat(remove_vad=args.remove_vad),
-    to2tensor()
-])
+if not args.revert:
+    transform = transforms.Compose([
+        # concateinputfromMFB(remove_vad=False),
+        varLengthFeat(remove_vad=args.remove_vad),
+        to2tensor()
+    ])
+    transform_T = transforms.Compose([
+        # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=False),
+        varLengthFeat(remove_vad=args.remove_vad),
+        to2tensor()
+    ])
+else:
+    transform = transforms.Compose([
+        # concateinputfromMFB(remove_vad=False),
+        varLengthFeat(remove_vad=args.remove_vad),
+        totensor()
+    ])
+    transform_T = transforms.Compose([
+        # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=False),
+        varLengthFeat(remove_vad=args.remove_vad),
+        totensor()
+    ])
 file_loader = read_mat
 
 
@@ -237,6 +252,9 @@ def train_extract(train_loader, model, file_dir, set_name, save_per_num=2500):
 
         grad = data.grad.cpu().numpy().squeeze().astype(np.float32)
         data = data.data.cpu().numpy().squeeze().astype(np.float32)
+        if args.revert:
+            grad = grad.transpose()
+            data = data.transpose()
 
         input_grads.append([data, grad])
         inputs_uids.append(uid)
@@ -292,6 +310,13 @@ def test_extract(test_loader, model, file_dir, set_name, save_per_num=1500):
         grad_b = data_a.grad.cpu().numpy().squeeze().astype(np.float32)
         data_a = data_a.data.cpu().numpy().squeeze().astype(np.float32)
         data_b = data_b.data.cpu().numpy().squeeze().astype(np.float32)
+
+        if args.revert:
+            grad_a = grad_a.transpose()
+            data_a = data_a.transpose()
+
+            grad_b = grad_b.transpose()
+            data_b = data_b.transpose()
 
         input_grads.append((label, grad_a, grad_b, data_a, data_b))
         inputs_uids.append([uid_a, uid_b])
