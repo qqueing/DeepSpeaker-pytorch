@@ -88,7 +88,7 @@ if [ $stage -le 40 ]; then
 #      --acoustic-feature fbank
 
     python Lime/visual_gradient.py \
-      --extract-path Data/gradient/TDNN/fb40_wcmvn/soft \
+      --extract-path Data/gradient/TDNN/fb40_wcmvn/soft/epoch_18 \
       --feat-dim 40 \
       --acoustic-feature fbank
 
