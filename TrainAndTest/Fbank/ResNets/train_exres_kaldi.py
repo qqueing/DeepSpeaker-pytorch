@@ -12,6 +12,7 @@
 # from __future__ import print_function
 import argparse
 import os
+import pdb
 import random
 import sys
 import time
@@ -440,7 +441,7 @@ def test(test_loader, valid_loader, model, epoch):
         data = Variable(data.cuda())
         print(model.conv1.weight)
         print(data)
-        raise ValueError('Conv1')
+        pdb.set_trace()
         # compute output
         out, _ = model(data)
         if args.loss_type == 'asoft':
