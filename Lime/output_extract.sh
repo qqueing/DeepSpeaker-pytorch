@@ -258,7 +258,6 @@ if [ $stage -le 40 ]; then
         --resume Data/checkpoint/TDNN/fb40_wcmvn/soft \
         --extract-path Data/gradient/TDNN/fb40_wcmvn/soft \
         --loss-type soft \
-        --num-valid 2 \
         --gpu-id 0
     done
 fi
