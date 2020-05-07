@@ -892,6 +892,22 @@ class tonormal(object):
             Tensor: Normalized image.
         """
         # TODO: make efficient
+        tensor = (tensor - torch.mean(tensor))
+
+        return tensor
+
+
+class mvnormal(object):
+
+    def __call__(self, tensor):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+
+        Returns:
+            Tensor: Normalized image.
+        """
+        # TODO: make efficient
         tensor = (tensor - torch.mean(tensor)) / torch.std(tensor).add_(1e-10)
 
         return tensor
