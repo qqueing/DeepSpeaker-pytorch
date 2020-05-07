@@ -224,9 +224,7 @@ if not args.valid:
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
                                transform=transform, num_valid=args.num_valid)
 
-verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T,
-                                  filer_loader=file_loader)
-
+verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
 
 # indices = list(range(len(test_dir)))
 # random.shuffle(indices)

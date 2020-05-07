@@ -88,8 +88,9 @@ if [ $stage -le 15 ]; then
       --feat-dim 40 \
       --remove-vad \
       --extract \
-      --resume Data/checkpoint/TDNN/fb40_wcmvn/soft/checkpoint_18.pth \
-      --xvector-dir Data/xvectors/TDNN/fb40_wcmvn/soft \
+      --valid \
+      --resume Data/checkpoint/TDNN/fb40_wcmvn/soft_fix/checkpoint_40.pth \
+      --xvector-dir Data/xvectors/TDNN/fb40_wcmvn/soft_fix \
       --loss-type soft \
       --num-valid 2 \
       --gpu-id 1
