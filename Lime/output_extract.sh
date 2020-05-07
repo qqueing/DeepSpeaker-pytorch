@@ -268,19 +268,18 @@ if [ $stage -le 50 ]; then
     for loss in soft ; do
       echo -e "\033[31m==> Loss type: ${loss} \033[0m"
       python Lime/output_extract.py \
-        --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
-        --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
+        --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
+        --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
         --nj 14 \
-        --start-epochs 40 \
-        --epochs 40 \
+        --start-epochs 26 \
+        --epochs 26 \
         --model ${model} \
         --embedding-size 128 \
         --sample-utt 5000 \
-        --feat-dim 40 \
+        --feat-dim 64 \
         --remove-vad \
-        --revert \
-        --check-path Data/checkpoint/SiResNet34/vox1/fb64_wcmvn/soft_fix \
-        --extract-path Data/gradient/SiResNet34/vox1/fb64_wcmvn/soft_fix \
+        --check-path Data/checkpoint/SiResNet34/vox1/fb64_kaldi/soft_fix \
+        --extract-path Data/gradient/SiResNet34/vox1/fb64_kaldi/soft_fix \
         --loss-type soft \
         --gpu-id 0
     done
