@@ -379,6 +379,9 @@ def extract(test_loader, model, xvector_dir, ark_num=50000):
     vectors = []
     uids = []
     for batch_idx, (data, uid) in pbar:
+        print(model.conv1.weight)
+        print(data)
+        raise ValueError('Conv1')
 
         vec_shape = data.shape
         # pdb.set_trace()

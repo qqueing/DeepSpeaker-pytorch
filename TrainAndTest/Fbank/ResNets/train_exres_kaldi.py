@@ -438,7 +438,9 @@ def test(test_loader, valid_loader, model, epoch):
     total_datasize = 0.
     for batch_idx, (data, label) in valid_pbar:
         data = Variable(data.cuda())
-
+        print(model.conv1.weight)
+        print(data)
+        raise ValueError('Conv1')
         # compute output
         out, _ = model(data)
         if args.loss_type == 'asoft':

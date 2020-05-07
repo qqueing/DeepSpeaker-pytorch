@@ -303,14 +303,12 @@ if [ $stage -le 50 ]; then
       --embedding-size 128 \
       --feat-dim 64 \
       --remove-vad \
-      --stride 1 \
-      --time-dim 1 \
-      --avg-size 1 \
-      --kernel-size 3,3 \
       --valid \
+      --kernel-size 3,3 \
+      --stride 1 \
       --extract \
       --input-length fix \
-      --test-input-per-file 1 \
+      --test-input-per-file 4 \
       --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss}_fix \
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
       --input-per-spks 192 \
