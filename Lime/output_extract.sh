@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=40
 waited=0
 while [ `ps 15414 | wc -l` -eq 2 ]; do
   sleep 60
@@ -240,7 +240,7 @@ if [ $stage -le 30 ]; then
     --dropout-p 0.25
 fi
 
-if [ $stage -le 30 ]; then
+if [ $stage -le 40 ]; then
   model=TDNN
   feat=fb40_wcmvn
     for loss in soft ; do
