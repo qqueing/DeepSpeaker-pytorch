@@ -61,8 +61,7 @@ parser.add_argument('--train-dir', type=str,
 parser.add_argument('--test-dir', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=14, type=int, metavar='NJOB', help='num of job')
-parser.add_argument('--remove-vad', action='store_true', default=False,
-                    help='using Cosine similarity')
+
 # Model options
 parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
@@ -200,13 +199,11 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=args.remove_vad),  # num_frames=np.random.randint(low=300, high=500)),
-        # varLengthFeat(),
         to2tensor(),
         mvnormal()
     ])
     transform_T = transforms.Compose([
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
-        # varLengthFeat(),
         to2tensor(),
         mvnormal()
     ])
