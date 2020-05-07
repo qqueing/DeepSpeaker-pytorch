@@ -12,7 +12,6 @@
 # from __future__ import print_function
 import argparse
 import os
-import pdb
 import random
 import sys
 import time
@@ -344,7 +343,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        # train(train_loader, model, optimizer, ce, scheduler, epoch)
+        train(train_loader, model, optimizer, ce, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
@@ -441,9 +440,9 @@ def test(test_loader, valid_loader, model, epoch):
     total_datasize = 0.
     for batch_idx, (data, label) in valid_pbar:
         data = Variable(data.cuda())
-        print(model.conv1.weight)
-        print(data)
-        pdb.set_trace()
+        # print(model.conv1.weight)
+        # print(data)
+        # pdb.set_trace()
         # compute output
         out, _ = model(data)
         if args.loss_type == 'asoft':

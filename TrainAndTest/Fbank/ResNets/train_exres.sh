@@ -157,7 +157,7 @@ if [ $stage -le 15 ]; then
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
       --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
       --input-per-spks 192 \
-      --veri-pairs 40000 \
+      --veri-pairs 9600 \
       --gpu-id 0 \
       --num-valid 2 \
       --loss-type ${loss}
