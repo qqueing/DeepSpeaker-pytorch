@@ -255,7 +255,7 @@ if [ $stage -le 40 ]; then
         --sample-utt 5000 \
         --feat-dim 40 \
         --remove-vad \
-        --resume Data/checkpoint/TDNN/fb40_wcmvn/soft \
+        --check-path Data/checkpoint/TDNN/fb40_wcmvn/soft \
         --extract-path Data/gradient/TDNN/fb40_wcmvn/soft \
         --loss-type soft \
         --gpu-id 0
