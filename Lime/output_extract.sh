@@ -251,7 +251,7 @@ if [ $stage -le 30 ]; then
         --nj 14 \
         --start-epochs 18 \
         --model ${model} \
-        --embedding-size 128 \
+        --embedding-size 512 \
         --sample-utt 5000 \
         --feat-dim 40 \
         --remove-vad \
