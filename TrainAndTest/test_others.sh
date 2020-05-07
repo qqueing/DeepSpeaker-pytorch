@@ -87,6 +87,7 @@ if [ $stage -le 15 ]; then
       --embedding-size 128 \
       --feat-dim 40 \
       --remove-vad \
+      --extract \
       --resume Data/checkpoint/TDNN/fb40_wcmvn/soft/checkpoint_18.pth \
       --xvector-dir Data/xvectors/TDNN/fb40_wcmvn/soft \
       --loss-type soft \
