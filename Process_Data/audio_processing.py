@@ -892,7 +892,7 @@ class tonormal(object):
             Tensor: Normalized image.
         """
         # TODO: make efficient
-        tensor = (tensor - torch.mean(tensor))
+        tensor = tensor - torch.mean(tensor)
 
         return tensor
 
