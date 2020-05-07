@@ -139,8 +139,8 @@ if [ $stage -le 15 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
       --nj 16 \
-      --epochs 25 \
-      --milestones 12,16,22 \
+      --epochs 12 \
+      --milestones 4,8 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \
@@ -153,9 +153,9 @@ if [ $stage -le 15 ]; then
       --batch-size 64 \
       --test-batch-size 4 \
       --test-input-per-file 4 \
-      --lr 0.1 \
+      --lr 0.01 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_1.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_10.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 0 \
