@@ -239,3 +239,26 @@ if [ $stage -le 30 ]; then
     --channels 4,16,64 \
     --dropout-p 0.25
 fi
+
+if [ $stage -le 30 ]; then
+  model=TDNN
+  feat=fb40_wcmvn
+    for loss in soft ; do
+      echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+      python Lime/output_extract.py \
+        --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb40_wcmvn \
+        --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb40_wcmvn \
+        --nj 14 \
+        --start-epochs 18 \
+        --model ${model} \
+        --embedding-size 128 \
+        --sample-utt 5000 \
+        --feat-dim 40 \
+        --remove-vad \
+        --resume Data/checkpoint/TDNN/fb40_wcmvn/soft \
+        --extract-path Data/gradient/TDNN/fb40_wcmvn/soft \
+        --loss-type soft \
+        --num-valid 2 \
+        --gpu-id 1
+    done
+fi
