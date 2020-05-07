@@ -750,7 +750,7 @@ def normalize_frames(m, Scale=True):
     :return:
     """
     if Scale:
-        return (m - np.mean(m, axis=0)) / (np.std(m, axis=0) + 2e-12)
+        return (m - np.mean(m, axis=0)) / (np.std(m, axis=0) + 1e-12)
 
     return (m - np.mean(m, axis=0))
 
@@ -908,6 +908,6 @@ class mvnormal(object):
             Tensor: Normalized image.
         """
         # TODO: make efficient
-        tensor = (tensor - torch.mean(tensor)) / torch.std(tensor).add_(1e-8)
+        tensor = (tensor - torch.mean(tensor, dim=-2)) / torch.std(tensor, dim=-2).add_(1e-12)
 
         return tensor.float()

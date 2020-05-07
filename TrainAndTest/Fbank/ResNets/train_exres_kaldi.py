@@ -102,6 +102,8 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
+parser.add_argument('--remove-vad', action='store_true', default=False,
+                    help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=128, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
@@ -197,13 +199,13 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
-        concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
+        concateinputfromMFB(remove_vad=args.remove_vad),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
         to2tensor(),
         mvnormal()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=True),
+        concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
         # varLengthFeat(),
         to2tensor(),
         mvnormal()
