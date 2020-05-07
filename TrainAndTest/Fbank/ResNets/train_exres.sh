@@ -132,15 +132,15 @@ if [ $stage -le 15 ]; then
 #  for loss in soft asoft ; do
   model=SiResNet34
   datasets=vox1
-  feat=fb64_wcmvn
+  feat=fb64_kaldi
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
-      --nj 14 \
-      --epochs 28 \
-      --milestones 14,19,24 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
+      --nj 16 \
+      --epochs 25 \
+      --milestones 12,16,22 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \

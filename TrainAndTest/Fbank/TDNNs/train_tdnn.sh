@@ -30,7 +30,7 @@ fi
 #stage=1
 if [ $stage -le 5 ]; then
   model=TDNN
-  feat=fb40_wcmvn
+  feat=fb40
   for loss in soft ; do
     python TrainAndTest/Fbank/TDNNs/train_tdnn_var.py \
       --model ${model} \
