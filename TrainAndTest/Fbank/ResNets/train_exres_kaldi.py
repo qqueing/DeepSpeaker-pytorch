@@ -421,8 +421,9 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
                     'criterion': ce},
                    check_path)
 
-    print('\33[91mFor Softmax Exporing-Res34 ' \
-          'Train Accuracy: {:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(100 * float(correct) / total_datasize,
+    print('\33[91mFor epoch {:2d} Exporing-Res34 ' \
+          'Train Accuracy: {:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(epoch,
+                                                                            100 * float(correct) / total_datasize,
                                                                             total_loss / len(train_loader)))
     # writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     # writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)

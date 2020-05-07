@@ -132,15 +132,15 @@ if [ $stage -le 15 ]; then
 #  for loss in soft asoft ; do
   model=SiResNet34
   datasets=vox1
-  feat=fb64_kaldi
+  feat=fb64_cmvn
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Fbank/ResNets/train_exres_kaldi.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/dev_no_sil \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/test_no_sil \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64 \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64 \
       --nj 16 \
-      --epochs 12 \
-      --milestones 4,8 \
+      --epochs 16 \
+      --milestones 8,8 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \
@@ -154,8 +154,8 @@ if [ $stage -le 15 ]; then
       --test-batch-size 4 \
       --test-input-per-file 4 \
       --lr 0.01 \
-      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_10.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss} \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_10.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 0 \
