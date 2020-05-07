@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=15
+stage=50
 
 if [ $stage -le 0 ]; then
   for loss in asoft soft ; do
@@ -98,7 +98,7 @@ if [ $stage -le 15 ]; then
 
 fi
 
-stage=200
+#stage=200
 if [ $stage -le 20 ]; then
   model=LoResNet10
   feat=spect
