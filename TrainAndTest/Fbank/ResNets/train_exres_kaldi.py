@@ -421,8 +421,8 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
                     'criterion': ce},
                    check_path)
 
-    print('\33[91mFor epoch {:2d} Exporing-Res34 ' \
-          'Train Accuracy: {:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(epoch,
+    print('For epoch {:2d} Exporing-Res34:\n ' \
+          '\33[91m  Train Accuracy: {:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(epoch,
                                                                             100 * float(correct) / total_datasize,
                                                                             total_loss / len(train_loader)))
     # writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
