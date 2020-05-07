@@ -13,7 +13,6 @@ from __future__ import print_function
 
 import argparse
 import os
-import pdb
 import sys
 import time
 # Version conflict
@@ -337,9 +336,9 @@ def valid(valid_loader, model):
 
     for batch_idx, (data, label) in valid_pbar:
         data = Variable(data.cuda())
-        print(model.conv1.weight)
-        print(data)
-        pdb.set_trace()
+        # print(model.conv1.weight)
+        # print(data)
+        # pdb.set_trace()
 
         # compute output
         out, _ = model(data)
