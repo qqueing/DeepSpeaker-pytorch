@@ -204,7 +204,7 @@ if args.acoustic_feature == 'fbank':
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=True),
         varLengthFeat(remove_vad=args.remove_vad),
         to2tensor(),
-        # tonormal()
+        tonormal()
 
     ])
     transform_T = transforms.Compose([
