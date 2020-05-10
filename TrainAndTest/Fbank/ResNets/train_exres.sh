@@ -139,8 +139,8 @@ if [ $stage -le 15 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64 \
       --nj 16 \
-      --epochs 22 \
-      --milestones 10,15,19 \
+      --epochs 13 \
+      --milestones 1,5,10 \
       --model ${model} \
       --resnet-size 34 \
       --embedding-size 128 \
@@ -155,7 +155,7 @@ if [ $stage -le 15 ]; then
       --test-input-per-file 4 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_1.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_9.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 0 \
