@@ -908,6 +908,7 @@ class mvnormal(object):
             Tensor: Normalized image.
         """
         # TODO: make efficient
-        tensor = (tensor - torch.mean(tensor, dim=-2)) / torch.std(tensor, dim=-2).add_(1e-12)
+        tensor = (tensor - torch.mean(tensor, dim=-2, keepdim=True)) / torch.std(tensor, dim=-2, keepdim=True).add_(
+            1e-12)
 
         return tensor.float()
