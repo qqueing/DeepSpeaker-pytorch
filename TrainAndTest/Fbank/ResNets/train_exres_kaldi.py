@@ -263,13 +263,13 @@ def main():
 
     model = create_model(args.model, **model_kwargs)
 
-    start = 0
+    start = 1
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
-            start = checkpoint['epoch']
+            args.start_epoch = checkpoint['epoch']
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
@@ -315,7 +315,7 @@ def main():
 
     start += args.start_epoch
     print('Start epoch is : ' + str(start))
-    end = start + args.epochs
+    end = args.epochs + 1
 
     # pdb.set_trace()
     train_loader = torch.utils.data.DataLoader(train_dir,
@@ -414,7 +414,7 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
                     100. * minibatch_acc))
 
     # options for vox1
-    if epoch % 2 == 1:
+    if epoch % 2 == 1 or epoch == args.epochs:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
         torch.save({'epoch': epoch,
                     'state_dict': model.state_dict(),
