@@ -155,7 +155,7 @@ if [ $stage -le 15 ]; then
       --test-input-per-file 4 \
       --lr 0.1 \
       --check-path Data/checkpoint/${model}/${datasets}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_10.pth \
+      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}/checkpoint_1.pth \
       --input-per-spks 192 \
       --veri-pairs 9600 \
       --gpu-id 0 \
