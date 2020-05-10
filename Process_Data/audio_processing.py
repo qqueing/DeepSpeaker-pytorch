@@ -875,10 +875,10 @@ class to2tensor(object):
         Returns:
             Tensor: Converted image.
         """
-        if isinstance(pic, np.ndarray):
+        # if isinstance(pic, np.ndarray):
             # handle numpy array
-            img = torch.from_numpy(pic)
-            return img
+        img = torch.tensor(pic, dtype=torch.float32)
+        return img
 
 
 class tonormal(object):
