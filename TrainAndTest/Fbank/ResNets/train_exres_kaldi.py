@@ -342,7 +342,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        # train(train_loader, model, optimizer, ce, scheduler, epoch)
+        train(train_loader, model, optimizer, ce, scheduler, epoch)
         test(test_loader, valid_loader, model, epoch)
 
         scheduler.step()
