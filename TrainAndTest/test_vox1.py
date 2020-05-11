@@ -32,7 +32,7 @@ from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset, KaldiExtractDataset, \
     ScriptVerifyDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, concateinputfromMFB, totensor
+from Process_Data.audio_processing import to2tensor, varLengthFeat, concateinputfromMFB, totensor, mvnormal
 from TrainAndTest.common_func import create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -103,6 +103,8 @@ parser.add_argument('--channels', default='64,128,256', type=str,
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
 parser.add_argument('--remove-vad', action='store_true', default=False,
+                    help='using Cosine similarity')
+parser.add_argument('--mvnorm', action='store_true', default=False,
                     help='using Cosine similarity')
 
 parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
@@ -215,6 +217,10 @@ elif args.input_length == 'fix':
     ])
 else:
     raise ValueError('input length must be var or fix.')
+
+if args.mvnorm:
+    transform.transforms.append(mvnormal())
+    transform_T.transforms.append(mvnormal())
 
 # pdb.set_trace()
 file_loader = read_mat

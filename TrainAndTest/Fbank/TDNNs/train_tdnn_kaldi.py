@@ -32,7 +32,7 @@ from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB, to2tensor
+from Process_Data.audio_processing import concateinputfromMFB, to2tensor, mvnormal
 from TrainAndTest.common_func import create_optimizer, create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -86,6 +86,8 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 
 # Training options
 parser.add_argument('--cos-sim', action='store_true', default=True,
+                    help='using Cosine similarity')
+parser.add_argument('--remove-vad', action='store_true', default=False,
                     help='using Cosine similarity')
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
@@ -180,6 +182,19 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.mfb:
     transform = transforms.Compose([
+        concateinputfromMFB(remove_vad=args.remove_vad),  # num_frames=np.random.randint(low=300, high=500)),
+        to2tensor(),
+        mvnormal()
+    ])
+    transform_T = transforms.Compose([
+        concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
+        to2tensor(),
+        mvnormal()
+    ])
+    file_loader = read_mat
+
+else:
+    transform = transforms.Compose([
         concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
         to2tensor(),
@@ -190,14 +205,6 @@ if args.mfb:
         to2tensor(),
     ])
     file_loader = read_mat
-
-else:
-    transform = transforms.Compose([
-        truncatedinput(),
-        toMFB(),
-        totensor(),
-        # tonormal()
-    ])
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
                                loader=file_loader, num_valid=args.num_valid)

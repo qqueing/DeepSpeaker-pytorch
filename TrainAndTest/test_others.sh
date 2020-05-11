@@ -290,12 +290,12 @@ if [ $stage -le 50 ]; then
 #  for loss in soft asoft ; do
   model=SiResNet34
   datasets=vox1
-  feat=fb64_wcmvn
+  feat=fb64_mvnorm
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/test_vox1.py \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64_wcmvn \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb64 \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb64 \
       --nj 14 \
       --epochs 40 \
       --model ${model} \
@@ -307,10 +307,11 @@ if [ $stage -le 50 ]; then
       --kernel-size 3,3 \
       --stride 1 \
       --extract \
+      --mvnorm \
       --input-length fix \
       --test-input-per-file 4 \
-      --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss}_fix \
-      --resume Data/checkpoint/${model}/${datasets}/${feat}/${loss}_fix/checkpoint_40.pth \
+      --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss} \
+      --resume Data/checkpoint/SiResNet34/vox1/fb64_cmvn/soft/checkpoint_21.pth  \
       --input-per-spks 192 \
       --gpu-id 0 \
       --num-valid 2 \
