@@ -21,6 +21,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
+from kaldi_io import read_mat
 from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR
