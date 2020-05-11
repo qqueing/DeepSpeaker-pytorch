@@ -277,6 +277,9 @@ if [ $stage -le 50 ]; then
         --embedding-size 128 \
         --sample-utt 5000 \
         --feat-dim 64 \
+        --kernel-size 3,3 \
+        --stride 1 \
+        --input-length fix \
         --remove-vad \
         --mvnorm \
         --check-path Data/checkpoint/SiResNet34/vox1/fb64_cmvn/soft \

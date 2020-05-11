@@ -33,7 +33,7 @@ from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import varLengthFeat, to2tensor, totensor, mvnormal
+from Process_Data.audio_processing import varLengthFeat, to2tensor, mvnormal, concateinputfromMFB
 from TrainAndTest.common_func import create_model
 
 # Version conflict
@@ -73,7 +73,8 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 
 parser.add_argument('--revert', action='store_true', default=False, help='using Cosine similarity')
-
+parser.add_argument('--input-length', choices=['var', 'fix'], default='var',
+                    help='choose the acoustic features type.')
 parser.add_argument('--remove-vad', action='store_true', default=False, help='using Cosine similarity')
 parser.add_argument('--mvnorm', action='store_true', default=False,
                     help='using Cosine similarity')
@@ -165,27 +166,25 @@ if args.cuda:
 kwargs = {'num_workers': args.nj, 'pin_memory': False} if args.cuda else {}
 l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDistance(2)
 
-if not args.revert:
+if args.input_length == 'var':
     transform = transforms.Compose([
-        # concateinputfromMFB(remove_vad=False),
+        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
         varLengthFeat(remove_vad=args.remove_vad),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=False),
+        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
         varLengthFeat(remove_vad=args.remove_vad),
         to2tensor()
     ])
-else:
+elif args.input_length == 'fix':
     transform = transforms.Compose([
-        # concateinputfromMFB(remove_vad=False),
-        varLengthFeat(remove_vad=args.remove_vad),
-        totensor()
+        concateinputfromMFB(remove_vad=args.remove_vad),
+        to2tensor()
     ])
     transform_T = transforms.Compose([
-        # concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=False),
-        varLengthFeat(remove_vad=args.remove_vad),
-        totensor()
+        concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
+        to2tensor()
     ])
 
 if args.mvnorm:
