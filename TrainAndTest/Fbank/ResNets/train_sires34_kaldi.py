@@ -287,8 +287,7 @@ def train(train_loader, model, optimizer, criterion, scheduler, epoch):
         data, label = Variable(data), Variable(label)
 
         # pdb.set_trace()
-        feats = model.pre_forward_norm(data)
-        classfier = model(feats)
+        classfier, _ = model(data)
 
         predicted_labels = output_softmax(classfier)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
@@ -345,9 +344,7 @@ def test(test_loader, valid_loader, model, epoch):
         data = Variable(data.cuda())
         # compute output
         # pdb.set_trace()
-        out = model.pre_forward_norm(data)
-        cls = model(out)
-
+        cls, _ = model(data)
         predicted_labels = cls
         true_labels = Variable(label.cuda())
 
@@ -386,8 +383,8 @@ def test(test_loader, valid_loader, model, epoch):
         data_a, data_p, label = Variable(data_a), Variable(data_p), Variable(label)
 
         # compute output
-        out_a = model.pre_forward_norm(data_a)
-        out_p = model.pre_forward_norm(data_p)
+        _, out_a = model(data_a)
+        _, out_p = model(data_p)
 
         dists = l2_dist.forward(out_a, out_p)
         dists = dists.reshape(vec_shape[0], vec_shape[1]).mean(axis=1)
