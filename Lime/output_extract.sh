@@ -282,6 +282,6 @@ if [ $stage -le 50 ]; then
         --check-path Data/checkpoint/SiResNet34/vox1/fb64_cmvn/soft \
         --extract-path Data/gradient/SiResNet34/vox1/fb64_cmvn/soft \
         --loss-type soft \
-        --gpu-id 0
+        --gpu-id 1
     done
 fi
