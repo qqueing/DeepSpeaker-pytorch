@@ -13,6 +13,7 @@
 import argparse
 import os
 import random
+import sys
 import time
 import warnings
 
@@ -31,7 +32,8 @@ from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
 from Process_Data.audio_processing import toMFB, truncatedinput, concateinputfromMFB, to2tensor
 from TrainAndTest.common_func import create_optimizer
-from eval_metrics import evaluate_kaldi_eer
+from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
+from logger import NewLogger
 
 warnings.filterwarnings("ignore")
 # Version conflict
@@ -145,6 +147,8 @@ if args.cuda:
 
 # Define visulaize SummaryWriter instance
 writer = SummaryWriter(args.check_path, filename_suffix='kaldi_192')
+sys.stdout = NewLogger(os.path.join(args.check_path, 'log.txt'))
+
 
 kwargs = {'num_workers': 12, 'pin_memory': True} if args.cuda else {}
 if not os.path.exists(args.check_path):
@@ -393,12 +397,18 @@ def test(test_loader, valid_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    writer.add_scalar('Test/EER', 100. * eer, epoch)
-    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
+    # writer.add_scalar('Test/EER', 100. * eer, epoch)
+    # writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
-    print(
-        '\33[91mFor {}_distance, Test set ERR is {:.8f} when threshold is {:.8f}. Valid Accuracy is {}.\n\33[0m'.format( \
-            'cos' if args.cos_sim else 'l2', 100. * eer, eer_threshold, valid_accuracy))
+    mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
+    # writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    # writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+
+    dist_type = 'cos' if args.cos_sim else 'l2'
+    print('For %s_distance, ' % dist_type)
+    print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
+    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f},'.format(mindcf_01, mindcf_001))
+    print('  Valid Accuracy is %.4f %%.\33[0m\n' % valid_accuracy)
 
 
 if __name__ == '__main__':
