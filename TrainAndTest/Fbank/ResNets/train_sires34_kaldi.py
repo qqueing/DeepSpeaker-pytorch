@@ -29,7 +29,7 @@ from tqdm import tqdm
 from Define_Model.ResNet import SimpleResNet
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
-from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB
+from Process_Data.audio_processing import toMFB, truncatedinput, concateinputfromMFB, to2tensor
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer
 
@@ -66,16 +66,16 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
 
-parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34_test/soft/kaldi',
+parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/vox1/soft/kaldi',
                     help='folder to output model checkpoints')
 parser.add_argument('--resume',
-                    default='Data/checkpoint/SiResNet34_test/soft/kaldi/checkpoint_1.pth',
+                    default='Data/checkpoint/SiResNet34/vox1/soft/kaldi/checkpoint_1.pth',
                     type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--epochs', type=int, default=30, metavar='E',
+parser.add_argument('--epochs', type=int, default=22, metavar='E',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--min-softmax-epoch', type=int, default=40, metavar='MINEPOCH',
                     help='minimum epoch for initial parameter using softmax (default: 2')
@@ -161,13 +161,13 @@ if args.mfb:
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=True),  # num_frames=np.random.randint(low=300, high=500)),
         # varLengthFeat(),
-        totensor()
+        to2tensor()
     ])
 else:
     transform = transforms.Compose([
         truncatedinput(),
         toMFB(),
-        totensor(),
+        to2tensor(),
         # tonormal()
     ])
 
@@ -204,7 +204,7 @@ def main():
         model.cuda()
 
     optimizer = create_optimizer(model.parameters(), args.optimizer, **opt_kwargs)
-    scheduler = MultiStepLR(optimizer, milestones=[18, 24], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[10, 14, 20], gamma=0.1)
     # criterion = AngularSoftmax(in_feats=args.embedding_size,
     #                           num_classes=len(train_dir.classes))
     start = 0
@@ -217,8 +217,8 @@ def main():
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            scheduler.load_state_dict(checkpoint['scheduler'])
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # scheduler.load_state_dict(checkpoint['scheduler'])
             # criterion.load_state_dict(checkpoint['criterion'])
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
@@ -236,8 +236,8 @@ def main():
                                                shuffle=False, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, -1)
-    torch.save({'epoch': -1, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
+    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
+    torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
                 'scheduler': scheduler.state_dict()},
                # 'criterion': criterion.state_dict()
                check_path)
