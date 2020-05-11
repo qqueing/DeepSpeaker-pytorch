@@ -313,7 +313,7 @@ if [ $stage -le 50 ]; then
       --xvector-dir Data/xvectors/${model}/${datasets}/${feat}/${loss} \
       --resume Data/checkpoint/SiResNet34/vox1/fb64_cmvn/soft/checkpoint_21.pth  \
       --input-per-spks 192 \
-      --gpu-id 0 \
+      --gpu-id 1 \
       --num-valid 2 \
       --loss-type ${loss}
   done
