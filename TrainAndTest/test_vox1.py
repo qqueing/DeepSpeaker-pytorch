@@ -32,7 +32,7 @@ from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptValidDataset, KaldiExtractDataset, \
     ScriptVerifyDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, concateinputfromMFB, totensor, mvnormal
+from Process_Data.audio_processing import to2tensor, varLengthFeat, concateinputfromMFB, mvnormal
 from TrainAndTest.common_func import create_model
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
@@ -209,11 +209,11 @@ if args.input_length == 'var':
 elif args.input_length == 'fix':
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=args.remove_vad),
-        totensor()
+        to2tensor()
     ])
     transform_T = transforms.Compose([
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
-        totensor()
+        to2tensor()
     ])
 else:
     raise ValueError('input length must be var or fix.')
