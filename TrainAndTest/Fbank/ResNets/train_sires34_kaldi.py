@@ -68,6 +68,10 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
                     help='acoustic feature dimension')
 parser.add_argument('--test-pairs-path', type=str, default='Data/dataset/voxceleb1/test_trials/ver_list.txt',
                     help='path to pairs file')
+parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
+                    help='number of epochs to train (default: 10)')
+parser.add_argument('--num-valid', type=int, default=5, metavar='IPFT',
+                    help='input sample per file for testing (default: 8)')
 
 parser.add_argument('--check-path', default='Data/checkpoint/SiResNet34/vox1/soft/kaldi',
                     help='folder to output model checkpoints')
