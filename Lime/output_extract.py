@@ -33,7 +33,7 @@ from Define_Model.SoftmaxLoss import AngleLinear, AdditiveMarginLinear
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, \
     ScriptTestDataset, ScriptValidDataset
-from Process_Data.audio_processing import varLengthFeat, to2tensor, totensor
+from Process_Data.audio_processing import varLengthFeat, to2tensor, totensor, mvnormal
 from TrainAndTest.common_func import create_model
 
 # Version conflict
@@ -75,6 +75,8 @@ parser.add_argument('--feat-dim', default=64, type=int, metavar='N',
 parser.add_argument('--revert', action='store_true', default=False, help='using Cosine similarity')
 
 parser.add_argument('--remove-vad', action='store_true', default=False, help='using Cosine similarity')
+parser.add_argument('--mvnorm', action='store_true', default=False,
+                    help='using Cosine similarity')
 
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
@@ -185,8 +187,12 @@ else:
         varLengthFeat(remove_vad=args.remove_vad),
         totensor()
     ])
-file_loader = read_mat
 
+if args.mvnorm:
+    transform.transforms.append(mvnormal())
+    transform_T.transforms.append(mvnormal())
+
+file_loader = read_mat
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks,
                                loader=file_loader, transform=transform, return_uid=True)
