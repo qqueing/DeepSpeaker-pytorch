@@ -12,7 +12,6 @@
 # from __future__ import print_function
 import argparse
 import os
-import random
 import sys
 import time
 import warnings
@@ -29,7 +28,8 @@ from tqdm import tqdm
 
 from Define_Model.ResNet import SimpleResNet
 from Define_Model.model import PairwiseDistance
-from Process_Data.KaldiDataset import KaldiTrainDataset, KaldiTestDataset, KaldiValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, \
+    ScriptTestDataset, ScriptValidDataset
 from Process_Data.audio_processing import toMFB, truncatedinput, concateinputfromMFB, to2tensor
 from TrainAndTest.common_func import create_optimizer
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -175,17 +175,20 @@ else:
         # tonormal()
     ])
 
-train_dir = KaldiTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform)
-test_dir = KaldiTestDataset(dir=args.test_dir, transform=transform)
+file_loader = read_mat
+train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
+                               loader=file_loader, num_valid=args.num_valid)
+test_dir = ScriptTestDataset(dir=args.test_dir, transform=transform, loader=file_loader)
+if len(test_dir) < args.veri_pairs:
+    args.veri_pairs = len(test_dir)
+    print('There are %d verification pairs.' % len(test_dir))
+else:
+    test_dir.partition(args.veri_pairs)
 
-indices = list(range(len(test_dir)))
-random.shuffle(indices)
-indices = indices[:6400]
-test_part = torch.utils.data.Subset(test_dir, indices)
-
-valid_dir = KaldiValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
-                              valid_uid2feat=train_dir.valid_uid2feat, valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
-                              transform=transform)
+valid_dir = ScriptValidDataset(valid_set=train_dir.valid_set, spk_to_idx=train_dir.spk_to_idx,
+                               valid_uid2feat=train_dir.valid_uid2feat,
+                               valid_utt2spk_dict=train_dir.valid_utt2spk_dict,
+                               transform=transform, loader=file_loader)
 
 
 # train_dir = ClassificationDataset(voxceleb=voxceleb2_dev, dir=args.dataroot, loader=file_loader, transform=transform)
