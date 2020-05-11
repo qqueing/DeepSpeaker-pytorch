@@ -246,7 +246,7 @@ def main():
     valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=int(args.batch_size / 2),
                                                # collate_fn=PadCollate(dim=2, fix_len=True),
                                                shuffle=False, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_part, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
     criterion = nn.CrossEntropyLoss().cuda()
     check_path = '{}/checkpoint_{}.pth'.format(args.check_path, 0)
     torch.save({'epoch': 0, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
