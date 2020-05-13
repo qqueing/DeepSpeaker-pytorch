@@ -270,7 +270,7 @@ def main():
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
-            args.start_epoch = checkpoint['epoch']
+            start = checkpoint['epoch']
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
@@ -309,7 +309,7 @@ def main():
     # print('Scheduler options: {}'.format(milestones))
     scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
 
-    if args.save_init:
+    if args.save_init and not args.finetune:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
         torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
                     'scheduler': scheduler.state_dict()}, check_path)

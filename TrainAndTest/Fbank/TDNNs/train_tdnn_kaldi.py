@@ -75,7 +75,7 @@ parser.add_argument('--check-path', help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='using Cosine similarity')
 parser.add_argument('--resume', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 
-parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
+parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
@@ -250,13 +250,13 @@ def main():
     if args.cuda:
         model.cuda()
 
-    start = 1
+    start = 0
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
-            args.start_epoch = checkpoint['epoch']
+            start = checkpoint['epoch']
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
