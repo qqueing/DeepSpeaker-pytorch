@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=15
+stage=16
 waited=0
 while [ `ps 103374 | wc -l` -eq 2 ]; do
   sleep 60
@@ -146,5 +146,36 @@ if [ $stage -le 15 ]; then
       --gpu-id 1 \
       --veri-pairs 9600 \
       --lr 0.01
+  done
+fi
+
+if [ $stage -le 16 ]; then
+  model=ETDNN
+  feat=fb80
+  for loss in amsoft center ; do
+    python TrainAndTest/Fbank/TDNNs/train_tdnn_kaldi.py \
+      --model ${model} \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb80 \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb80 \
+      --check-path Data/checkpoint/${model}/${feat}/${loss} \
+      --resume Data/checkpoint/ETDNN/fb80/soft/checkpoint_20.pth \
+      --batch-size 64 \
+      --remove-vad \
+      --epochs 10 \
+      --finetune \
+      --milestones 6  \
+      --feat-dim 80 \
+      --embedding-size 128 \
+      --weight-decay 0.0005 \
+      --num-valid 2 \
+      --loss-type ${loss} \
+      --m 4 \
+      --margin 0.35 \
+      --s 15 \
+      --loss-ratio 0.01 \
+      --input-per-spks 192 \
+      --gpu-id 1 \
+      --veri-pairs 9600 \
+      --lr 0.001
   done
 fi
