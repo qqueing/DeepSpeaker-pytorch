@@ -143,7 +143,7 @@ if [ $stage -le 15 ]; then
       --num-valid 2 \
       --loss-type ${loss} \
       --input-per-spks 192 \
-      --gpu-id 0 \
+      --gpu-id 1 \
       --veri-pairs 9600 \
       --lr 0.01
   done
