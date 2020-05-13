@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=2
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
