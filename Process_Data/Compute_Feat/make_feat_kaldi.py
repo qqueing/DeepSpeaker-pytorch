@@ -34,8 +34,7 @@ parser.add_argument('--data-dir', type=str,
 parser.add_argument('--data-format', type=str,
                     default='wav', choices=['flac', 'wav'],
                     help='number of jobs to make feats (default: 10)')
-parser.add_argument('--out-dir', type=str,
-                    default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect',
+parser.add_argument('--out-dir', type=str, required=True,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--out-set', type=str, default='dev_reverb',
                     help='number of jobs to make feats (default: 10)')
@@ -47,7 +46,7 @@ parser.add_argument('--filter-type', type=str,
                     default='mel',
                     help='number of jobs to make feats (default: 10)')
 
-parser.add_argument('--filters', type=int, default=24,
+parser.add_argument('--filters', type=int, required=True,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--multi-weight', action='store_true', default=False,
                     help='using Cosine similarity')
@@ -60,7 +59,7 @@ parser.add_argument('--stride', type=float, default=0.01,
 parser.add_argument('--lowfreq', type=int, default=0,
                     help='number of jobs to make feats (default: 10)')
 
-parser.add_argument('--nfft', type=int, default=None,
+parser.add_argument('--nfft', type=int, required=True,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--normalize', action='store_true', default=False,
                     help='using Cosine similarity')
