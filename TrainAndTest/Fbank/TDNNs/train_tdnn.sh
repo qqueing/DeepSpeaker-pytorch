@@ -149,6 +149,7 @@ if [ $stage -le 15 ]; then
   done
 fi
 
+stage=100
 if [ $stage -le 16 ]; then
   model=ETDNN
   feat=fb80
