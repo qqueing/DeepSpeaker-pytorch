@@ -539,8 +539,6 @@ class ETDNN(nn.Module):
         x = self.statistic_pooling(x)
         embeddings = self.segment11(x)
 
-        x = self.leakyrelu(embeddings)
-        x = self.batchnorm(x)
-        logits = self.classifier(x)
+        logits = self.classifier(embeddings)
 
         return logits, embeddings
