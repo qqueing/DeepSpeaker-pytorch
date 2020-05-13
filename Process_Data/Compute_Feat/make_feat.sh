@@ -84,6 +84,7 @@ if [ $stage -le 2 ]; then
       --out-set ${name}_fb80 \
       --feat-type fbank \
       --filter-type mel \
+      --nfft 512 \
       --filters 80 \
       --windowsize 0.025
   done
