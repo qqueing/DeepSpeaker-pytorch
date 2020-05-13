@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=16
+stage=15
 waited=0
 while [ `ps 103374 | wc -l` -eq 2 ]; do
   sleep 60
@@ -133,7 +133,7 @@ if [ $stage -le 15 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb80 \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
-      --batch-size 64 \
+      --batch-size 128 \
       --remove-vad \
       --epochs 20 \
       --milestones 10,14  \
@@ -142,7 +142,7 @@ if [ $stage -le 15 ]; then
       --weight-decay 0.0005 \
       --num-valid 2 \
       --loss-type ${loss} \
-      --input-per-spks 192 \
+      --input-per-spks 224 \
       --gpu-id 1 \
       --veri-pairs 9600 \
       --lr 0.01
@@ -159,7 +159,7 @@ if [ $stage -le 16 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb80 \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
       --resume Data/checkpoint/ETDNN/fb80/soft/checkpoint_20.pth \
-      --batch-size 64 \
+      --batch-size 128 \
       --remove-vad \
       --epochs 30 \
       --finetune \
@@ -173,7 +173,7 @@ if [ $stage -le 16 ]; then
       --margin 0.35 \
       --s 15 \
       --loss-ratio 0.01 \
-      --input-per-spks 192 \
+      --input-per-spks 224 \
       --gpu-id 1 \
       --veri-pairs 9600 \
       --lr 0.001
