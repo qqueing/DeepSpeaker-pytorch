@@ -466,7 +466,7 @@ class TDNNLeaky(nn.Module):
 
 class ETDNN(nn.Module):
     def __init__(self, num_classes, embedding_size=256, batch_norm=True,
-                 input_dim=80, dropout_p=0.0):
+                 input_dim=80, dropout_p=0.0, **kwargs):
         super(ETDNN, self).__init__()
         self.num_classes = num_classes
         self.input_dim = input_dim
