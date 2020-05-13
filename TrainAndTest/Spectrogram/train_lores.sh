@@ -147,8 +147,8 @@ if [ $stage -le 15 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --input-per-spks 224 \
       --nj 12 \
       --epochs 24 \
@@ -162,7 +162,7 @@ if [ $stage -le 15 ]; then
       --loss-type ${loss} \
       --lr 0.1 \
       --num-valid 2 \
-      --gpu-id 1 \
+      --gpu-id 0 \
       --dropout-p 0.25
   done
 
@@ -170,8 +170,8 @@ if [ $stage -le 15 ]; then
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --input-per-spks 224 \
       --nj 12 \
       --epochs 12 \
@@ -190,7 +190,7 @@ if [ $stage -le 15 ]; then
       --s 15 \
       --m 4 \
       --loss-ratio 0.01 \
-      --gpu-id 1 \
+      --gpu-id 0 \
       --dropout-p 0.25
   done
 fi
