@@ -64,7 +64,7 @@ parser.add_argument('--test-dir', type=str,
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
 
 # Model options
-parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'ExResNet34', 'TDNN'],
+parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'ETDNN', 'TDNN'],
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--feat-dim', default=40, type=int, metavar='N',
                     help='acoustic feature dimension')
