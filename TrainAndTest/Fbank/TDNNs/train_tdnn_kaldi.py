@@ -89,6 +89,9 @@ parser.add_argument('--cos-sim', action='store_true', default=True,
                     help='using Cosine similarity')
 parser.add_argument('--remove-vad', action='store_true', default=False,
                     help='using Cosine similarity')
+parser.add_argument('--mvnorm', action='store_true', default=False,
+                    help='using Cosine similarity')
+
 parser.add_argument('--embedding-size', type=int, default=512, metavar='ES',
                     help='Dimensionality of the embedding')
 parser.add_argument('--batch-size', type=int, default=64, metavar='BS',
@@ -183,13 +186,11 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 if args.mfb:
     transform = transforms.Compose([
         concateinputfromMFB(remove_vad=args.remove_vad),  # num_frames=np.random.randint(low=300, high=500)),
-        to2tensor(),
-        mvnormal()
+        to2tensor()
     ])
     transform_T = transforms.Compose([
         concateinputfromMFB(input_per_file=args.test_input_per_file, remove_vad=args.remove_vad),
-        to2tensor(),
-        mvnormal()
+        to2tensor()
     ])
     file_loader = read_mat
 
@@ -205,6 +206,10 @@ else:
         to2tensor(),
     ])
     file_loader = read_mat
+
+if args.mvnorm:
+    transform.transforms.append(mvnormal())
+    transform_T.transforms.append(mvnormal())
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, transform=transform,
                                loader=file_loader, num_valid=args.num_valid)
@@ -242,14 +247,14 @@ def main():
     if args.cuda:
         model.cuda()
 
-    start = 0
+    start = 1
 
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
             print('=> loading checkpoint {}'.format(args.resume))
             checkpoint = torch.load(args.resume)
-            start = checkpoint['epoch']
+            args.start_epoch = checkpoint['epoch']
             checkpoint = torch.load(args.resume)
             filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
             model.load_state_dict(filtered)
@@ -292,7 +297,7 @@ def main():
 
     start += args.start_epoch
     print('Start epoch is : ' + str(start))
-    end = start + args.epochs
+    end = args.epochs + 1
 
     # pdb.set_trace()
     train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
@@ -385,11 +390,12 @@ def train(train_loader, model, optimizer, ce, epoch):
                     100. * minibatch_acc))
 
     # options for vox1
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
-    torch.save({'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'criterion': ce},
-               check_path)
+    if epoch % 2 == 1 or epoch == args.epochs:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
+        torch.save({'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'criterion': ce},
+                   check_path)
 
     print('\33[91mFor Softmax Exporing-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(
         100 * float(correct) / total_datasize, total_loss / len(train_loader)))
