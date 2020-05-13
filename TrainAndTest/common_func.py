@@ -12,7 +12,7 @@
 import torch.optim as optim
 
 from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet, ResNet, SimpleResNet
-from Define_Model.TDNN import ASTDNN, XVectorTDNN
+from Define_Model.TDNN import ASTDNN, XVectorTDNN, ETDNN
 
 
 def create_optimizer(parameters, optimizer, **kwargs):
