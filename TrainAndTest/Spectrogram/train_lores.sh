@@ -61,7 +61,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=100
+#stage=100
 # kernel size trianing
 if [ $stage -le 4 ]; then
   for kernel in '3,3' '3,7' '5,7' ; do
