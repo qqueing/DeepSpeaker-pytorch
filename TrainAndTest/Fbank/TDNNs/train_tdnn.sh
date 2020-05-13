@@ -161,7 +161,7 @@ if [ $stage -le 16 ]; then
       --resume Data/checkpoint/ETDNN/fb80/soft/checkpoint_20.pth \
       --batch-size 64 \
       --remove-vad \
-      --epochs 10 \
+      --epochs 30 \
       --finetune \
       --milestones 6  \
       --feat-dim 80 \
