@@ -121,3 +121,30 @@ if [ $stage -le 10 ]; then
     --sample-utt 5000
   done
 fi
+
+#stage=1
+if [ $stage -le 15 ]; then
+  model=ETDNN
+  feat=fb80
+  for loss in soft ; do
+    python TrainAndTest/Fbank/TDNNs/train_tdnn_kaldi.py \
+      --model ${model} \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb80 \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb80 \
+      --check-path Data/checkpoint/${model}/${feat}/${loss} \
+      --resume Data/checkpoint/${model}/${feat}/${loss}_norm/checkpoint_1.pth \
+      --batch-size 64 \
+      --remove-vad \
+      --epochs 16 \
+      --milestones 8,12  \
+      --feat-dim 40 \
+      --embedding-size 128 \
+      --weight-decay 0.0005 \
+      --num-valid 2 \
+      --loss-type ${loss} \
+      --input-per-spks 192 \
+      --gpu-id 0 \
+      --veri-pairs 9600 \
+      --lr 0.01
+  done
+fi

@@ -75,7 +75,7 @@ parser.add_argument('--check-path', help='folder to output model checkpoints')
 parser.add_argument('--save-init', action='store_true', default=True, help='using Cosine similarity')
 parser.add_argument('--resume', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 
-parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
+parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--epochs', type=int, default=20, metavar='E',
                     help='number of epochs to train (default: 10)')
@@ -108,6 +108,9 @@ parser.add_argument('--input-per-spks', type=int, default=224, metavar='IPFT',
 # loss configure
 parser.add_argument('--loss-type', type=str, default='soft', choices=['soft', 'asoft', 'center', 'amsoft'],
                     help='path to voxceleb1 test dataset')
+parser.add_argument('--finetune', action='store_true', default=False,
+                    help='using Cosine similarity')
+
 parser.add_argument('--m', type=float, default=4, metavar='M',
                     help='the margin value for the angualr softmax loss function (default: 3.0')
 parser.add_argument('--margin', type=float, default=0.3, metavar='MARGIN',
@@ -248,7 +251,6 @@ def main():
         model.cuda()
 
     start = 1
-
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -284,13 +286,22 @@ def main():
                                     lr=args.lr, weight_decay=args.weight_decay,
                                     momentum=args.momentum)
 
+    if args.finetune:
+        if args.loss_type == 'asoft' or args.loss_type == 'amsoft':
+            classifier_params = list(map(id, model.classifier.parameters()))
+            rest_params = filter(lambda p: id(p) not in classifier_params, model.parameters())
+            optimizer = torch.optim.SGD([{'params': model.classifier.parameters(), 'lr': args.lr * 5},
+                                         {'params': rest_params}],
+                                        lr=args.lr, weight_decay=args.weight_decay,
+                                        momentum=args.momentum)
+
     milestones = args.milestones.split(',')
     milestones = [int(x) for x in milestones]
     milestones.sort()
     # print('Scheduler options: {}'.format(milestones))
     scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
 
-    if args.save_init:
+    if args.save_init and not args.finetune:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start)
         torch.save({'epoch': start, 'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict(),
                     'scheduler': scheduler.state_dict()}, check_path)
@@ -363,11 +374,12 @@ def train(train_loader, model, optimizer, ce, epoch):
 
         predicted_labels = output_softmax(classfier_label)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
-            predicted_one_labels)
-        correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
+        minibatch_correct = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
+        minibatch_acc = minibatch_correct / len(predicted_one_labels)
+        correct += minibatch_correct
+
         total_datasize += len(predicted_one_labels)
-        total_loss += loss.item()
+        total_loss += float(loss.item())
         # pdb.set_trace()
         # compute gradient and update weights
         optimizer.zero_grad()
@@ -397,9 +409,14 @@ def train(train_loader, model, optimizer, ce, epoch):
                     'criterion': ce},
                    check_path)
 
-    print('\33[91mFor Softmax Exporing-Res34 Train set Accuracy:{:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(
-        100 * float(correct) / total_datasize, total_loss / len(train_loader)))
-    writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
+    print('For {} with {} Epoch {:2d}: \n\33[91m Train set Accuracy:{:.4f}%.' \
+          ' Average loss is {:.4f}.\33[0m\n'.format(args.model,
+                                                    args.loss_type,
+                                                    epoch,
+                                                    100 * float(correct) / total_datasize,
+                                                    total_loss / len(train_loader)))
+
+    writer.add_scalar('Train/Accuracy', 100. * correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
     torch.cuda.empty_cache()

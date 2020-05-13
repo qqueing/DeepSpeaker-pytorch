@@ -23,6 +23,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
 from kaldi_io import read_mat
+from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
@@ -181,7 +182,7 @@ if args.cuda:
 
 # create logger
 # Define visulaize SummaryWriter instance
-# writer = SummaryWriter(args.check_path, filename_suffix='test')
+writer = SummaryWriter(args.check_path, filename_suffix='test')
 sys.stdout = NewLogger(os.path.join(args.check_path, 'log.txt'))
 
 kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
@@ -387,11 +388,12 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
 
         predicted_labels = output_softmax(classfier_label)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
-            predicted_one_labels)
-        correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
+        minibatch_correct = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
+        minibatch_acc = minibatch_correct / len(predicted_one_labels)
+        correct += minibatch_correct
+
         total_datasize += len(predicted_one_labels)
-        total_loss += loss.item()
+        total_loss += float(loss.item())
         # pdb.set_trace()
         # compute gradient and update weights
         optimizer.zero_grad()
@@ -421,12 +423,15 @@ def train(train_loader, model, optimizer, ce, scheduler, epoch):
                     'criterion': ce},
                    check_path)
 
-    print('For epoch {:2d} Exporing-Res34:\n ' \
-          '\33[91m  Train Accuracy: {:.4f}%. Average loss is {:.4f}.\33[0m\n'.format(epoch,
-                                                                            100 * float(correct) / total_datasize,
-                                                                            total_loss / len(train_loader)))
-    # writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
-    # writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
+    print('For {} with {} Epoch {:2d}: \n\33[91m Train set Accuracy:{:.4f}%.' \
+          ' Average loss is {:.4f}.\33[0m\n'.format(args.model,
+                                                    args.loss_type,
+                                                    epoch,
+                                                    100 * float(correct) / total_datasize,
+                                                    total_loss / len(train_loader)))
+
+    writer.add_scalar('Train/Accuracy', 100. * correct / total_datasize, epoch)
+    writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
     torch.cuda.empty_cache()
 
@@ -514,12 +519,12 @@ def test(test_loader, valid_loader, model, epoch):
 
     # err, accuracy= evaluate_eer(distances,labels)
     eer, eer_threshold, accuracy = evaluate_kaldi_eer(distances, labels, cos=args.cos_sim, re_thre=True)
-    # writer.add_scalar('Test/EER', 100. * eer, epoch)
-    # writer.add_scalar('Test/Threshold', eer_threshold, epoch)
+    writer.add_scalar('Test/EER', 100. * eer, epoch)
+    writer.add_scalar('Test/Threshold', eer_threshold, epoch)
 
     mindcf_01, mindcf_001 = evaluate_kaldi_mindcf(distances, labels)
-    # writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
-    # writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
+    writer.add_scalar('Test/mindcf-0.01', mindcf_01, epoch)
+    writer.add_scalar('Test/mindcf-0.001', mindcf_001, epoch)
 
     dist_type = 'cos' if args.cos_sim else 'l2'
     print('For %s_distance, ' % dist_type)
