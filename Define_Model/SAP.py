@@ -11,7 +11,7 @@
 """
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
 HIDDEN_DIM = 3
 FEATURE_WIDTH = 2
 FEATURE_LENGTH = 3
@@ -48,29 +48,6 @@ class SelfAttention(nn.Module):
 
         return outputs, weight_para
 
-
-class SelfAttentive(nn.Module):
-    def __init__(self, hidden_dim):
-        super().__init__()
-        self.hidden_dim = hidden_dim
-        self.projection = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, 1)
-        )
-
-    def forward(self, encoder_outputs):
-        # (B, L, H) -> (B , L, 1)
-        energy = self.projection(encoder_outputs)
-        weights = F.softmax(energy.squeeze(-1), dim=2)
-        # (B, L, H) * (B, L, 1) -> (B, H)
-        outputs = (encoder_outputs * weights.unsqueeze(-1)).sum(dim=2)
-        return outputs, weights
-
-sa = SelfAttentive(hidden_dim=257)
-a = torch.ones((1, 1, 345, 257))
-out, wei = sa(a)
-print(out.shape, wei.shape)
 
 
 

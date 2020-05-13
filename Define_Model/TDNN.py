@@ -491,12 +491,14 @@ class ETDNN(nn.Module):
         self.frame9 = NewTDNN(input_dim=512, output_dim=1500, context_size=1, dilation=1,
                               activation='leakyrelu', batch_norm=batch_norm, dropout_p=dropout_p)
 
-        self.segment11 = nn.Linear(3000, embedding_size)
-        self.leakyrelu = nn.LeakyReLU()
-        self.batchnorm = nn.BatchNorm1d(embedding_size)
+        # self.segment11 = nn.Linear(3000, embedding_size)
+        # self.leakyrelu = nn.LeakyReLU()
+        # self.batchnorm = nn.BatchNorm1d(embedding_size)
+        self.segment11 = nn.Sequential(nn.Linear(3000, embedding_size),
+                                       nn.LeakyReLU(),
+                                       nn.BatchNorm1d(embedding_size))
 
         self.classifier = nn.Linear(embedding_size, num_spk)
-        self.drop = nn.Dropout(p=self.dropout_p)
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
@@ -507,13 +509,13 @@ class ETDNN(nn.Module):
 
     def statistic_pooling(self, x):
         mean_x = x.mean(dim=1)
-        std_x = x.std(dim=1)
+        # std_x = x.std(dim=1)
+        std_x = x.var(dim=1, unbiased=False).add_(1e-12).sqrt()
         mean_std = torch.cat((mean_x, std_x), 1)
         return mean_std
 
     def set_global_dropout(self, dropout_p):
         self.dropout_p = dropout_p
-        self.drop = nn.Dropout(p=self.dropout_p)
 
         for m in self.modules():
             if isinstance(m, NewTDNN):
@@ -521,7 +523,8 @@ class ETDNN(nn.Module):
 
     def forward(self, x):
         # pdb.set_trace()
-        x = x.squeeze(1).float()
+        if x.shape[1] == 1:
+            x = x.squeeze(1).float()
 
         x = self.frame1(x)
         x = self.affine2(x)

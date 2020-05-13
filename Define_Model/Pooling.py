@@ -13,6 +13,34 @@ import torch
 import torch.nn as nn
 
 
+class SelfAttentionPooling(nn.Module):
+    def __init__(self, input_dim, hidden_dim):
+        super(SelfAttentionPooling, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.input_dim = input_dim
+        self.attention_linear = nn.Linear(input_dim, self.hidden_dim)
+        self.attention_activation = nn.Sigmoid()
+        self.attention_vector = nn.Parameter(torch.rand(self.hidden_dim, 1))
+        self.attention_soft = nn.Tanh()
+
+    def forward(self, x):
+        """
+        :param x:   [batch, length,feat_dim] vector
+        :return:   [batch, feat_dim] vector
+        """
+        x = x.squeeze()
+        assert len(x.shape) == 3
+
+        fx = self.attention_activation(self.attention_linear(x))
+        vf = fx.matmul(self.attention_vector)
+        alpha = self.attention_soft(vf)
+
+        alpha_ht = x.mul(alpha)
+        mean = torch.sum(alpha_ht, dim=-2)
+
+        return mean
+
+
 class AttentionStatisticPooling(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super(AttentionStatisticPooling, self).__init__()
@@ -39,7 +67,7 @@ class AttentionStatisticPooling(nn.Module):
         alpha_ht = x.mul(alpha)
         mean = torch.sum(alpha_ht, dim=-2, keepdim=True)
 
-        sigma_power = torch.sum(torch.pow(x - mean, 2).mul(alpha), dim=-2).add_(1e-10)
+        sigma_power = torch.sum(torch.pow(x - mean, 2).mul(alpha), dim=-2).add_(1e-12)
         # alpha_ht_ht = x*x.mul(alpha)
         sigma = torch.sqrt(sigma_power)
 
@@ -48,29 +76,6 @@ class AttentionStatisticPooling(nn.Module):
         return mean_sigma
 
 
-class AttentionPooling(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
-        super(AttentionPooling, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.input_dim = input_dim
-        self.attention_linear = nn.Linear(input_dim, self.hidden_dim)
-        self.attention_activation = nn.Sigmoid()
-        self.attention_vector = nn.Parameter(torch.rand(self.hidden_dim, 1))
-        self.attention_soft = nn.Tanh()
 
-    def forward(self, x):
-        """
-        :param x:   [batch, length,feat_dim] vector
-        :return:   [batch, feat_dim] vector
-        """
-        x = x.squeeze()
-        assert len(x.shape) == 3
 
-        fx = self.attention_activation(self.attention_linear(x))
-        vf = fx.matmul(self.attention_vector)
-        alpha = self.attention_soft(vf)
 
-        alpha_ht = x.mul(alpha)
-        mean = torch.sum(alpha_ht, dim=-2)
-
-        return mean
