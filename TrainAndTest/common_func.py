@@ -49,6 +49,7 @@ __factory = {
     'ResNet': ResNet,
     'ASTDNN': ASTDNN,
     'TDNN': XVectorTDNN,
+    'ETDNN': ETDNN,
 }
 
 

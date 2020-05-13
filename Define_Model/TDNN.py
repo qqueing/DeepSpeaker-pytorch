@@ -465,10 +465,10 @@ class TDNNLeaky(nn.Module):
 
 
 class ETDNN(nn.Module):
-    def __init__(self, num_spk, embedding_size=256, batch_norm=True,
+    def __init__(self, num_classes, embedding_size=256, batch_norm=True,
                  input_dim=80, dropout_p=0.0):
         super(ETDNN, self).__init__()
-        self.num_spk = num_spk
+        self.num_classes = num_classes
         self.input_dim = input_dim
         self.dropout_p = dropout_p
 
@@ -498,7 +498,7 @@ class ETDNN(nn.Module):
                                        nn.LeakyReLU(),
                                        nn.BatchNorm1d(embedding_size))
 
-        self.classifier = nn.Linear(embedding_size, num_spk)
+        self.classifier = nn.Linear(embedding_size, num_classes)
 
         for m in self.modules():  # 对于各层参数的初始化
             if isinstance(m, nn.BatchNorm1d):  # weight设置为1，bias为0
