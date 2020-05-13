@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=15
 waited=0
 while [ `ps 103374 | wc -l` -eq 2 ]; do
   sleep 60
@@ -54,7 +54,7 @@ if [ $stage -le 5 ]; then
   done
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 10 ]; then
   model=ASTDNN
   feat=fb40_wcmvn
@@ -132,12 +132,12 @@ if [ $stage -le 15 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/dev_fb80 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb/test_fb80 \
       --check-path Data/checkpoint/${model}/${feat}/${loss} \
-      --resume Data/checkpoint/${model}/${feat}/${loss}_norm/checkpoint_1.pth \
+      --resume Data/checkpoint/${model}/${feat}/${loss}/checkpoint_1.pth \
       --batch-size 64 \
       --remove-vad \
-      --epochs 16 \
-      --milestones 8,12  \
-      --feat-dim 40 \
+      --epochs 20 \
+      --milestones 10,14  \
+      --feat-dim 80 \
       --embedding-size 128 \
       --weight-decay 0.0005 \
       --num-valid 2 \
