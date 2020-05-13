@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=1
+stage=1.3
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -39,7 +39,7 @@ if [ $stage -le 0 ]; then
   done
 fi
 
-if [ $stage -le 1 ]; then
+if [ $stage -le 1.2 ]; then
   for name in dev test ; do
 #    python Process_Data/Compute_Feat/make_feat_kaldi.py \
 #      --nj 16 \
@@ -73,15 +73,15 @@ if [ $stage -le 1 ]; then
   done
 fi
 
-stage=100
+#stage=100
 
-if [ $stage -le 1 ]; then
+if [ $stage -le 1.3 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb80 \
-      --out-set ${name}_kaldi \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb \
+      --out-set ${name}_fb80 \
       --feat-type fbank \
       --filter-type mel \
       --filters 80 \
@@ -89,6 +89,7 @@ if [ $stage -le 1 ]; then
   done
 fi
 
+stage=200.0
 if [ $stage -le 2 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -293,12 +294,12 @@ if [ $stage -le 12 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
-      --out-set ${name}_fb40 \
+      --out-set ${name}_fb80 \
       --filter-type mel \
       --feat-type fbank \
-      --nfft 320 \
-      --windowsize 0.02 \
-      --filters 40
+      --nfft 512 \
+      --windowsize 0.025 \
+      --filters 80
 
 #     python Process_Data/Compute_Feat/make_feat_kaldi.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
@@ -312,6 +313,7 @@ if [ $stage -le 12 ]; then
   done
 fi
 
+stage=100
 if [ $stage -le 13 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
