@@ -65,11 +65,10 @@ if [ $stage -le 6 ]; then
       --resnet-size 10 \
       --kernel-size 3,3 \
       --embedding-size 128 \
-      --extract \
       --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
       --xvector-dir Data/xvector/LoResNet10/spect/soft_dp25 \
       --loss-type ${loss} \
-      --trials trials \
+      --trials trials.backup \
       --num-valid 0 \
       --gpu-id 1
   done
