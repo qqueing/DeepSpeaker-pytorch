@@ -143,28 +143,28 @@ fi
 
 if [ $stage -le 15 ]; then
 #  for loss in soft ; do # 32,128,512; 8,32,128
-  for loss in soft ; do # 32,128,512; 8,32,128
-    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
-    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --model LoResNet10 \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
-      --input-per-spks 224 \
-      --nj 12 \
-      --epochs 24 \
-      --resnet-size 10 \
-      --embedding-size 128 \
-      --kernel-size 3,3 \
-      --milestones 10,15,20 \
-      --channels 64,128,256,512 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
-      --loss-type ${loss} \
-      --lr 0.1 \
-      --num-valid 2 \
-      --gpu-id 0 \
-      --dropout-p 0.25
-  done
+#  for loss in soft ; do # 32,128,512; 8,32,128
+#    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+#    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+#      --model LoResNet10 \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
+#      --input-per-spks 224 \
+#      --nj 12 \
+#      --epochs 24 \
+#      --resnet-size 10 \
+#      --embedding-size 128 \
+#      --kernel-size 3,3 \
+#      --milestones 10,15,20 \
+#      --channels 64,128,256,512 \
+#      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
+#      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
+#      --loss-type ${loss} \
+#      --lr 0.1 \
+#      --num-valid 2 \
+#      --gpu-id 0 \
+#      --dropout-p 0.25
+#  done
 
   for loss in amsoft center asoft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
@@ -175,7 +175,7 @@ if [ $stage -le 15 ]; then
       --input-per-spks 224 \
       --nj 12 \
       --epochs 12 \
-      --resnet-size 8 \
+      --resnet-size 10 \
       --embedding-size 128 \
       --kernel-size 3,3 \
       --milestones 6,10 \
