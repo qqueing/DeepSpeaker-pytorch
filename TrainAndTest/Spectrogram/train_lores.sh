@@ -187,7 +187,7 @@ if [ $stage -le 15 ]; then
       --lr 0.01 \
       --num-valid 2 \
       --margin 0.35 \
-      --s 15 \
+      --s 40 \
       --m 4 \
       --loss-ratio 0.01 \
       --gpu-id 0 \
