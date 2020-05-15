@@ -157,13 +157,13 @@ if [ $stage -le 15 ]; then
       --avg-size 2 \
       --milestones 10,15,20 \
       --channels 64,128,256,512 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_avg12 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_avg12/checkpoint_20.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp05 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
       --lr 0.1 \
       --num-valid 2 \
       --gpu-id 0 \
-      --dropout-p 0.25
+      --dropout-p 0.5
   done
 
 #  for loss in amsoft center asoft ; do # 32,128,512; 8,32,128

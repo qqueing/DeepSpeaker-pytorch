@@ -312,7 +312,7 @@ def main():
             model_dict.update(filtered)
             model.load_state_dict(model_dict)
             #
-            model.dropout.p = args.dropout_p
+            # model.dropout.p = args.dropout_p
         else:
             print('=> no checkpoint found at {}'.format(args.resume))
 
@@ -373,6 +373,7 @@ def main():
         for i in range(len(ce)):
             if ce[i] != None:
                 ce[i] = ce[i].cuda()
+        print('Dropout is {}.\n'.format(model.dropout.p))
 
     for epoch in range(start, end):
         # pdb.set_trace()
