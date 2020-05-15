@@ -91,7 +91,7 @@ if [ $stage -le 6 ]; then
       --loss-type ${loss} \
       --trials trials.backup \
       --num-valid 0 \
-      --gpu-id 1
+      --gpu-id 0
   done
 
 #  for loss in center ; do
