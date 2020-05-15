@@ -85,7 +85,7 @@ if [ $stage -le 6 ]; then
       --resnet-size 8 \
       --kernel-size 5,5 \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_wcmvn/checkpoint_24.pth \
+      --resume Data/checkpoint/LoResNet8/spect/soft_wcmvn/checkpoint_24.pth \
       --extract \
       --xvector-dir Data/xvector/LoResNet8/spect/soft_wcmvn \
       --loss-type ${loss} \
