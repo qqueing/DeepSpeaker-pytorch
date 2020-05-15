@@ -81,9 +81,9 @@ if [ $stage -le 6 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --nj 12 \
       --model ${model} \
-      --channels 64,128,256,512 \
-      --resnet-size 10 \
-      --kernel-size 3,3 \
+      --channels 64,128,256 \
+      --resnet-size 8 \
+      --kernel-size 5,5 \
       --embedding-size 128 \
       --resume Data/checkpoint/LoResNet8/spect_cmvn/soft_dp25/checkpoint_24.pth \
       --extract \
