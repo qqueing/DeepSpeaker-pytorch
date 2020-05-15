@@ -150,17 +150,17 @@ if [ $stage -le 15 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --input-per-spks 224 \
       --nj 12 \
-      --epochs 24 \
+      --epochs 6 \
       --resnet-size 10 \
       --embedding-size 128 \
       --kernel-size 3,3 \
       --avg-size 4 \
-      --milestones 10,15,20 \
+      --milestones 4 \
       --channels 64,128,256,512 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp05 \
       --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_24.pth \
       --loss-type ${loss} \
-      --lr 0.1 \
+      --lr 0.01 \
       --num-valid 2 \
       --gpu-id 0 \
       --dropout-p 0.5
