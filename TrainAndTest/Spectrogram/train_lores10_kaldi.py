@@ -297,7 +297,7 @@ def main():
     model = create_model(args.model, **model_kwargs)
 
     start_epoch = 0
-    if args.save_init:
+    if args.save_init and not args.finetune:
         check_path = '{}/checkpoint_{}.pth'.format(args.check_path, start_epoch)
         torch.save(model, check_path)
 
@@ -455,11 +455,12 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
                     total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
 
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
-    torch.save({'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'criterion': ce},
-               check_path)
+    if epoch % 2 == 1 or epoch == args.epochs:
+        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
+        torch.save({'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'criterion': ce},
+                   check_path)
 
     print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch, 100 * float(
         correct) / total_datasize, total_loss / len(train_loader)))
