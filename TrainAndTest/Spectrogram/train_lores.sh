@@ -155,12 +155,12 @@ if [ $stage -le 15 ]; then
       --embedding-size 128 \
       --kernel-size 3,3 \
       --avg-size 4 \
-      --milestones 4 \
+      --milestones 2 \
       --channels 64,128,256,512 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp05 \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_24.pth \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp05/checkpoint_30.pth \
       --loss-type ${loss} \
-      --lr 0.01 \
+      --lr 0.001 \
       --num-valid 2 \
       --gpu-id 0 \
       --dropout-p 0.5
