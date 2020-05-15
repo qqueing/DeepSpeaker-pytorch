@@ -383,6 +383,13 @@ def main():
         print(' \33[0m')
 
         train(train_loader, model, ce, optimizer, scheduler, epoch)
+        if epoch % 2 == 1 or epoch == (end - 1):
+            check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
+            torch.save({'epoch': epoch,
+                        'state_dict': model.state_dict(),
+                        'criterion': ce},
+                       check_path)
+
         test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
@@ -430,11 +437,12 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
 
         predicted_labels = output_softmax(classfier_label)
         predicted_one_labels = torch.max(predicted_labels, dim=1)[1]
-        minibatch_acc = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item()) / len(
-            predicted_one_labels)
-        correct += float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
+        minibatch_correct = float((predicted_one_labels.cuda() == true_labels.cuda()).sum().item())
+        minibatch_acc = minibatch_correct / len(predicted_one_labels)
+        correct += minibatch_correct
+
         total_datasize += len(predicted_one_labels)
-        total_loss += loss.item()
+        total_loss += float(loss.item())
 
         # compute gradient and update weights
         optimizer.zero_grad()
@@ -455,13 +463,6 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
                     100. * batch_idx / len(train_loader),
                     total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
-
-    if epoch % 2 == 1 or epoch == args.epochs:
-        check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
-        torch.save({'epoch': epoch,
-                    'state_dict': model.state_dict(),
-                    'criterion': ce},
-                   check_path)
 
     print('\n\33[91mTrain Epoch {}: Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch, 100 * float(
         correct) / total_datasize, total_loss / len(train_loader)))
