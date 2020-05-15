@@ -51,9 +51,29 @@ if [ $stage -le 5 ]; then
 fi
 
 if [ $stage -le 6 ]; then
-  model=LoResNet10
-#  --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128/checkpoint_24.pth \
+#  model=LoResNet10
+##  --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_128/checkpoint_24.pth \
+##  for loss in soft ; do
 #  for loss in soft ; do
+#    echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 64,128,256,512 \
+#      --resnet-size 10 \
+#      --kernel-size 3,3 \
+#      --embedding-size 128 \
+#      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
+#      --xvector-dir Data/xvector/LoResNet10/spect/soft_dp25 \
+#      --loss-type ${loss} \
+#      --trials trials.backup \
+#      --num-valid 0 \
+#      --gpu-id 1
+#  done
+
+  model=LoResNet10
   for loss in soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
     python TrainAndTest/test_vox1.py \
@@ -65,8 +85,8 @@ if [ $stage -le 6 ]; then
       --resnet-size 10 \
       --kernel-size 3,3 \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
-      --xvector-dir Data/xvector/LoResNet10/spect/soft_dp25 \
+      --resume Data/checkpoint/LoResNet8/spect/soft_dp25/checkpoint_24.pth \
+      --xvector-dir Data/xvector/LoResNet8/spect/soft_wcmvn \
       --loss-type ${loss} \
       --trials trials.backup \
       --num-valid 0 \
