@@ -23,8 +23,8 @@ if [ $stage -le 0 ]; then
       --embedding-size 128 \
       --milestones 10,15,20 \
       --channels 64,128,256 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_wcmvn \
-      --resume Data/checkpoint/LoResNet10/spect/${loss}_wcmvn/checkpoint_20.pth \
+      --check-path Data/checkpoint/LoResNet8/spect/${loss}_wcmvn \
+      --resume Data/checkpoint/LoResNet8/spect/${loss}_wcmvn/checkpoint_20.pth \
       --loss-type ${loss} \
       --num-valid 2 \
       --dropout-p 0.25
@@ -142,31 +142,7 @@ fi
 
 
 if [ $stage -le 15 ]; then
-#  for loss in soft ; do # 32,128,512; 8,32,128
-#  for loss in soft ; do # 32,128,512; 8,32,128
-#    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
-#    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-#      --model LoResNet10 \
-#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
-#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
-#      --input-per-spks 224 \
-#      --nj 12 \
-#      --epochs 24 \
-#      --resnet-size 10 \
-#      --embedding-size 128 \
-#      --kernel-size 3,3 \
-#      --milestones 10,15,20 \
-#      --channels 64,128,256,512 \
-#      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-#      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25/checkpoint_20.pth \
-#      --loss-type ${loss} \
-#      --lr 0.1 \
-#      --num-valid 2 \
-#      --gpu-id 0 \
-#      --dropout-p 0.25
-#  done
-
-  for loss in amsoft center asoft ; do # 32,128,512; 8,32,128
+  for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
@@ -174,24 +150,48 @@ if [ $stage -le 15 ]; then
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --input-per-spks 224 \
       --nj 12 \
-      --epochs 12 \
+      --epochs 24 \
       --resnet-size 10 \
       --embedding-size 128 \
       --kernel-size 3,3 \
-      --milestones 6,10 \
+      --avg-size 2 \
+      --milestones 10,15,20 \
       --channels 64,128,256,512 \
-      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
+      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25_avg12 \
+      --resume Data/checkpoint/LoResNet10/spect/${loss}_dp25_avg12/checkpoint_20.pth \
       --loss-type ${loss} \
-      --finetune \
-      --lr 0.01 \
+      --lr 0.1 \
       --num-valid 2 \
-      --margin 0.35 \
-      --s 40 \
-      --m 4 \
-      --loss-ratio 0.01 \
       --gpu-id 0 \
       --dropout-p 0.25
   done
+
+#  for loss in amsoft center asoft ; do # 32,128,512; 8,32,128
+#    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+#    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+#      --model LoResNet10 \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
+#      --input-per-spks 224 \
+#      --nj 12 \
+#      --epochs 12 \
+#      --resnet-size 10 \
+#      --embedding-size 128 \
+#      --kernel-size 3,3 \
+#      --milestones 6,10 \
+#      --channels 64,128,256,512 \
+#      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
+#      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
+#      --loss-type ${loss} \
+#      --finetune \
+#      --lr 0.01 \
+#      --num-valid 2 \
+#      --margin 0.35 \
+#      --s 40 \
+#      --m 4 \
+#      --loss-ratio 0.01 \
+#      --gpu-id 0 \
+#      --dropout-p 0.25
+#  done
 fi
 
