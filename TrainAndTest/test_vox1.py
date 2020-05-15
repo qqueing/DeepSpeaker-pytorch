@@ -282,40 +282,42 @@ def main():
                     'dropout_p': args.dropout_p}
 
     print('Model options: {}'.format(model_kwargs))
-    model = create_model(args.model, **model_kwargs)
-    if args.loss_type == 'asoft':
-        model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
-    elif args.loss_type == 'amsoft':
-        model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
+    if args.valid or args.extract:
+        model = create_model(args.model, **model_kwargs)
+        if args.loss_type == 'asoft':
+            model.classifier = AngleLinear(in_features=args.embedding_size, out_features=train_dir.num_spks, m=args.m)
+        elif args.loss_type == 'amsoft':
+            model.classifier = AdditiveMarginLinear(feat_dim=args.embedding_size, n_classes=train_dir.num_spks)
 
-    assert os.path.isfile(args.resume)
-    print('=> loading checkpoint {}'.format(args.resume))
-    checkpoint = torch.load(args.resume)
-    # start_epoch = checkpoint['epoch']
+        assert os.path.isfile(args.resume)
+        print('=> loading checkpoint {}'.format(args.resume))
+        checkpoint = torch.load(args.resume)
+        # start_epoch = checkpoint['epoch']
 
-    filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
-    # model_dict = model.state_dict()
-    # model_dict.update(filtered)
-    model.load_state_dict(filtered)
-    #
-    try:
-        model.dropout.p = args.dropout_p
-    except:
-        pass
-    start = args.start_epoch
-    print('Epoch is : ' + str(start))
+        filtered = {k: v for k, v in checkpoint['state_dict'].items() if 'num_batches_tracked' not in k}
+        # model_dict = model.state_dict()
+        # model_dict.update(filtered)
+        model.load_state_dict(filtered)
+        #
+        try:
+            model.dropout.p = args.dropout_p
+        except:
+            pass
+        start = args.start_epoch
+        print('Epoch is : ' + str(start))
 
-    if args.cuda:
-        model.cuda()
-    # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
-    if args.valid:
-        valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-        valid(valid_loader, model)
+        if args.cuda:
+            model.cuda()
+        # train_loader = torch.utils.data.DataLoader(train_dir, batch_size=args.batch_size, shuffle=True, **kwargs)
+        if args.valid:
+            valid_loader = torch.utils.data.DataLoader(valid_dir, batch_size=args.test_batch_size, shuffle=False,
+                                                       **kwargs)
+            valid(valid_loader, model)
 
-    if args.extract:
-        verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False,
-                                                    **kwargs)
-        extract(verify_loader, model, args.xvector_dir)
+        if args.extract:
+            verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False,
+                                                        **kwargs)
+            extract(verify_loader, model, args.xvector_dir)
 
     file_loader = read_vec_flt
     test_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials,
