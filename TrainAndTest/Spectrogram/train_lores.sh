@@ -154,7 +154,7 @@ if [ $stage -le 15 ]; then
       --resnet-size 10 \
       --embedding-size 128 \
       --kernel-size 3,3 \
-      --avg-size 2 \
+      --avg-size 4 \
       --milestones 10,15,20 \
       --channels 64,128,256,512 \
       --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp05 \
