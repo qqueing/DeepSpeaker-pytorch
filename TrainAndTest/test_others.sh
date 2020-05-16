@@ -63,6 +63,7 @@ if [ $stage -le 6 ]; then
       --model ${model} \
       --channels 64,128,256,512 \
       --resnet-size 10 \
+      --extract \
       --kernel-size 3,3 \
       --embedding-size 128 \
       --resume Data/checkpoint/LoResNet10/spect/soft_dp05/checkpoint_36.pth \
