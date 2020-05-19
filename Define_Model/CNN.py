@@ -55,14 +55,14 @@ class AlexNet(nn.Module):
         self.fc1 = nn.Sequential(
             nn.Dropout(p=dropout_p),
             nn.Linear(256 * time_dim * avg_size, embedding_size),
-            nn.BatchNorm2d(embedding_size),
+            nn.BatchNorm1d(embedding_size),
             nn.ReLU(inplace=True),
         )
 
         self.fc2 = nn.Sequential(
             nn.Dropout(p=dropout_p),
             nn.Linear(embedding_size, embedding_size),
-            nn.BatchNorm2d(embedding_size),
+            nn.BatchNorm1d(embedding_size),
             nn.ReLU(inplace=True),
         )
 
