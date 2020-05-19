@@ -5,7 +5,7 @@ stage=0
 if [ $stage -le 1 ]; then
   model=AlexNet
   for loss in soft ; do # 32,128,512; 8,32,128
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    echo -e "\n\033[1;4;31m Training ${model} with ${loss}\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
