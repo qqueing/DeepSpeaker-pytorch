@@ -19,7 +19,7 @@ if [ $stage -le 1 ]; then
       --check-path Data/checkpoint/${model}/spect/${loss} \
       --resume Data/checkpoint/${model}/spect/${loss}/checkpoint_29.pth \
       --loss-type ${loss} \
-      --lr 0.001 \
+      --lr 0.01 \
       --num-valid 2 \
       --gpu-id 0 \
       --dropout-p 0.0
