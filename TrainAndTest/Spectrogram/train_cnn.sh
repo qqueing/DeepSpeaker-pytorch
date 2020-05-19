@@ -21,7 +21,7 @@ if [ $stage -le 1 ]; then
       --loss-type ${loss} \
       --lr 0.01 \
       --num-valid 2 \
-      --gpu-id 0 \
+      --gpu-id 1 \
       --dropout-p 0.0
   done
 fi
