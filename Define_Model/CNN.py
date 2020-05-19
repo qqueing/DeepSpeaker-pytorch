@@ -15,7 +15,7 @@ from torch import nn
 class AlexNet(nn.Module):
 
     def __init__(self, num_classes, embedding_size=128, time_dim=2, avg_size=2,
-                 dropout_p=0.0):
+                 dropout_p=0.0, **kwargs):
         self.max = nn.MaxPool2d(kernel_size=3, stride=2)
 
         self.conv1 = nn.Sequential(
