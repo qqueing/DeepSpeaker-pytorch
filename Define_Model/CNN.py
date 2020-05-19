@@ -18,6 +18,7 @@ class AlexNet(nn.Module):
                  dropout_p=0.0, **kwargs):
         super(AlexNet, self).__init__()
         self.max = nn.MaxPool2d(kernel_size=3, stride=2)
+        self.dropout_p = dropout_p
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=2),
