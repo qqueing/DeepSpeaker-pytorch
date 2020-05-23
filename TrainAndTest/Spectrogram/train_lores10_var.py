@@ -166,6 +166,8 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--gpu-id', default='1', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
+parser.add_argument('--pin_memory', action='store_true', default=False,
+                    help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=123456, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=12, metavar='LI',
@@ -198,7 +200,7 @@ if args.cuda:
 writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
-kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': False} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
