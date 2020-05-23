@@ -736,17 +736,17 @@ class LocalResNet(nn.Module):
 
     def l2_norm(self, input, alpha=1.0):
         # alpha = log(p*(class-2)/(1-p))
-        # input_size = input.size()
-        # buffer = torch.pow(input, 2)
-        #
-        # normp = torch.sum(buffer, 1).add_(1e-12)
-        # norm = torch.sqrt(normp)
-        #
-        # _output = torch.div(input, norm.view(-1, 1).expand_as(input))
-        # output = _output.view(input_size)
-        input = input.renorm(p=2, dim=1, maxnorm=1.0)
+        input_size = input.size()
+        buffer = torch.pow(input, 2)
 
-        return input * alpha
+        normp = torch.sum(buffer, 1).add_(1e-12)
+        norm = torch.sqrt(normp)
+
+        _output = torch.div(input, norm.view(-1, 1).expand_as(input))
+        output = _output.view(input_size)
+        # input = input.renorm(p=2, dim=1, maxnorm=1.0)
+
+        return output * alpha
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
