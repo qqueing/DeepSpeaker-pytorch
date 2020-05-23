@@ -37,12 +37,12 @@ if [ $stage -le 0 ]; then
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
-      --nj 12 \
-      --epochs 14 \
+      --nj 4 \
+      --epochs 12 \
       --lr 0.1 \
-      --milestones 7,11 \
+      --milestones 6,10 \
       --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno/checkpoint_1.pth \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno/checkpoint_7.pth \
       --channels 4,16,64 \
       --statis-pooling \
       --embedding-size 128 \
