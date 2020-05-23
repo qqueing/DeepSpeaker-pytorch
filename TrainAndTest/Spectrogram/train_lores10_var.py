@@ -376,6 +376,7 @@ def main():
         for i in range(len(ce)):
             if ce[i] != None:
                 ce[i] = ce[i].cuda()
+        print('Dropout is {}.'.format(model.dropout_p))
 
     for epoch in range(start, end):
         # pdb.set_trace()
@@ -384,7 +385,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        train(train_loader, model, ce, optimizer, scheduler, epoch)
+        train(train_loader, model, ce, optimizer, epoch)
         test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
@@ -394,7 +395,7 @@ def main():
     writer.close()
 
 
-def train(train_loader, model, ce, optimizer, scheduler, epoch):
+def train(train_loader, model, ce, optimizer, epoch):
     # switch to evaluate mode
     model.train()
 

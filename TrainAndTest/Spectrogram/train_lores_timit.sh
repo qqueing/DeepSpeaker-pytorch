@@ -42,7 +42,7 @@ if [ $stage -le 0 ]; then
       --lr 0.1 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno/checkpoint_2.pth \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno/checkpoint_1.pth \
       --channels 4,16,64 \
       --statis-pooling \
       --embedding-size 128 \
@@ -50,7 +50,7 @@ if [ $stage -le 0 ]; then
       --num-valid 1 \
       --weight-decay 0.001 \
       --alpha 10.8 \
-      --dropout-p 0.25 \
+      --dropout-p 0.5 \
       --gpu-id 1 \
       --loss-type ${loss}
   done
