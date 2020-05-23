@@ -37,7 +37,7 @@ if [ $stage -le 0 ]; then
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noc \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noc \
-      --nj 4 \
+      --nj 8 \
       --epochs 12 \
       --lr 0.1 \
       --milestones 6,10 \
