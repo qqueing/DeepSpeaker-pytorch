@@ -13,7 +13,7 @@ import torch.optim as optim
 
 from Define_Model.CNN import AlexNet
 from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet, ResNet, SimpleResNet
-from Define_Model.TDNN import ASTDNN, XVectorTDNN, ETDNN
+from Define_Model.TDNN import ASTDNN, TDNN_v2, ETDNN
 
 
 def create_optimizer(parameters, optimizer, **kwargs):
@@ -50,7 +50,7 @@ __factory = {
     'ExResNet34': ExporingResNet,
     'ResNet': ResNet,
     'ASTDNN': ASTDNN,
-    'TDNN': XVectorTDNN,
+    'TDNN': TDNN_v2,
     'ETDNN': ETDNN,
 }
 
