@@ -49,6 +49,7 @@ if [ $stage -le 0 ]; then
       --input-per-spks 256 \
       --num-valid 1 \
       --weight-decay 0.001 \
+      --alpha 10.8 \
       --dropout-p 0.25 \
       --gpu-id 1 \
       --loss-type ${loss}
