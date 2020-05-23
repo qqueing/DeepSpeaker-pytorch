@@ -443,7 +443,7 @@ class ResNet(nn.Module):
 
     def __init__(self, resnet_size=18, embedding_size=512, block=BasicBlock,
                  channels=[64, 128, 256, 512], num_classes=1000,
-                 expansion=4, zero_init_residual=False, **kwargs):
+                 avg_size=4, zero_init_residual=False, **kwargs):
         super(ResNet, self).__init__()
 
         resnet_layer = {10: [1, 1, 1, 1],
@@ -455,10 +455,10 @@ class ResNet(nn.Module):
         layers = resnet_layer[resnet_size]
         self.layers = layers
 
-        self.expansion = expansion
+        self.avg_size = avg_size
         self.channels = channels
         self.inplanes = self.channels[0]
-        self.conv1 = nn.Conv2d(1, self.channels[0], kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(1, self.channels[0], kernel_size=5, stride=2, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(self.channels[0])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -468,16 +468,16 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, self.channels[2], layers[2], stride=2)
         self.layer4 = self._make_layer(block, self.channels[3], layers[3], stride=2)
 
-        self.avgpool = nn.AdaptiveAvgPool2d((expansion, 1))
+        self.avgpool = nn.AdaptiveAvgPool2d((1, avg_size))
 
         if self.layers[3] == 0:
             self.fc1 = nn.Sequential(
-                nn.Linear(self.channels[2] * expansion, embedding_size),
+                nn.Linear(self.channels[2] * avg_size, embedding_size),
                 nn.BatchNorm1d(embedding_size)
             )
         else:
             self.fc1 = nn.Sequential(
-                nn.Linear(self.channels[3] * expansion, embedding_size),
+                nn.Linear(self.channels[3] * avg_size, embedding_size),
                 nn.BatchNorm1d(embedding_size)
             )
 
@@ -735,16 +735,17 @@ class LocalResNet(nn.Module):
                 m.bias.data.zero_()
 
     def l2_norm(self, input, alpha=1.0):
-        input_size = input.size()
-        buffer = torch.pow(input, 2)
+        # input_size = input.size()
+        # buffer = torch.pow(input, 2)
+        #
+        # normp = torch.sum(buffer, 1).add_(1e-12)
+        # norm = torch.sqrt(normp)
+        #
+        # _output = torch.div(input, norm.view(-1, 1).expand_as(input))
+        # output = _output.view(input_size)
+        input = input.renorm(p=2, dim=1, maxnorm=1.0)
 
-        normp = torch.sum(buffer, 1).add_(1e-10)
-        norm = torch.sqrt(normp)
-
-        _output = torch.div(input, norm.view(-1, 1).expand_as(input))
-        output = _output.view(input_size)
-
-        return output * alpha
+        return input * alpha
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
