@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #stage=3
-stage=6
+stage=0
 
 waited=0
 while [ `ps 128196 | wc -l` -eq 2 ]; do
@@ -50,40 +50,41 @@ if [ $stage -le 0 ]; then
       --num-valid 1 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
+      --gpu-id 1 \
       --loss-type ${loss}
   done
 fi
 
-stage=6
+stage=60
 if [ $stage -le 6 ]; then
   datasets=libri
   model=LoResNet10
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
   for loss in soft ; do
-#    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
-#    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-#      --model ${model} \
-#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
-#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
-#      --nj 14 \
-#      --epochs 15 \
-#      --lr 0.1 \
-#      --milestones 7,11 \
-#      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_128_01 \
-#      --resume Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_128_01/checkpoint_1.pth \
-#      --channels 4,32,128 \
-#      --embedding-size 128 \
-#      --input-per-spks 256 \
-#      --num-valid 1 \
-#      --alpha 12 \
-#      --margin 0.4 \
-#      --s 30 \
-#      --m 3 \
-#      --loss-ratio 0.05 \
-#      --weight-decay 0.001 \
-#      --dropout-p 0.25 \
-#      --loss-type ${loss}
+    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --model ${model} \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_noc \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_noc \
+      --nj 14 \
+      --epochs 15 \
+      --lr 0.1 \
+      --milestones 7,11 \
+      --check-path Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_128_01 \
+      --resume Data/checkpoint/LoResNet10/${datasets}/spect_wcmvn/${loss}_128_01/checkpoint_1.pth \
+      --channels 4,32,128 \
+      --embedding-size 128 \
+      --input-per-spks 256 \
+      --num-valid 1 \
+      --alpha 12 \
+      --margin 0.4 \
+      --s 30 \
+      --m 3 \
+      --loss-ratio 0.05 \
+      --weight-decay 0.001 \
+      --dropout-p 0.25 \
+      --loss-type ${loss}
 
 #    echo -e "\n\033[1;4;31m Training var length with ${loss}\033[0m\n"
 #    python TrainAndTest/Spectrogram/train_lores10_var.py \
