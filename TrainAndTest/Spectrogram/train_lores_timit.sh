@@ -42,7 +42,7 @@ if [ $stage -le 0 ]; then
       --lr 0.1 \
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno/checkpoint_1.pth \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_var_reno/checkpoint_2.pth \
       --channels 4,16,64 \
       --statis-pooling \
       --embedding-size 128 \
