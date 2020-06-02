@@ -684,8 +684,7 @@ class LocalResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
         self.inplanes = channels[0]
-        self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2,
-                               padding=2, bias=False)
+        self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(channels[0])
         # self.maxpool = nn.MaxPool2d(kernel_size=(1, 3), stride=1, padding=1)
         self.layer1 = self._make_layer(block, channels[0], layers[0])
@@ -736,15 +735,18 @@ class LocalResNet(nn.Module):
 
     def l2_norm(self, input, alpha=1.0):
         # alpha = log(p*(class-2)/(1-p))
-        input_size = input.size()
-        buffer = torch.pow(input, 2)
+        # input_size = input.size()
+        # buffer = torch.pow(input, 2)
+        #
+        # normp = torch.sum(buffer, 1).add_(1e-12)
+        # norm = torch.sqrt(normp)
+        #
+        # _output = torch.div(input, norm.view(-1, 1).expand_as(input))
+        # output = _output.view(input_size)
+        # # input = input.renorm(p=2, dim=1, maxnorm=1.0)
 
-        normp = torch.sum(buffer, 1).add_(1e-12)
-        norm = torch.sqrt(normp)
-
-        _output = torch.div(input, norm.view(-1, 1).expand_as(input))
-        output = _output.view(input_size)
-        # input = input.renorm(p=2, dim=1, maxnorm=1.0)
+        norm = input.norm(p=2, dim=1, keepdim=True).add(1e-14)
+        output = input / norm
 
         return output * alpha
 
