@@ -82,7 +82,7 @@ if [ $stage -le 6 ]; then
       --extract \
       --kernel-size 3,3 \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet18/spect/soft_dp05/checkpoint_24.pth \
+      --resume Data/checkpoint/LoResNet18/spect/soft_dp25/checkpoint_24.pth \
       --xvector-dir Data/xvector/LoResNet18/spect/soft_dp05 \
       --loss-type ${loss} \
       --trials trials.backup \
