@@ -724,8 +724,8 @@ class ScriptTrainDataset(data.Dataset):
                     continue
                 uid2feat[uid] = feat_offset
 
-        print('    There are {} utterances in Train Dataset, where {} utterances are removed.'.format(len(uid2feat)),
-              len(invalid_uid))
+        print('    There are {} utterances in Train Dataset, where {} utterances are removed.'.format(len(uid2feat),
+                                                                                                      len(invalid_uid)))
 
         if num_valid > 0:
             valid_set = {}
