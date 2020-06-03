@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=15
+stage=20
 
 waited=0
 while [ `ps 113458 | wc -l` -eq 2 ]; do
@@ -195,3 +195,58 @@ if [ $stage -le 15 ]; then
 #  done
 fi
 
+if [ $stage -le 20 ]; then
+  dataset=aishell2
+
+  for loss in soft ; do # 32,128,512; 8,32,128
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3,3\033[0m\n"
+    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --model LoResNet10 \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/test \
+      --input-per-spks 224 \
+      --nj 12 \
+      --epochs 24 \
+      --resnet-size 18 \
+      --embedding-size 128 \
+      --kernel-size 3,3 \
+      --avg-size 4 \
+      --milestones 10,15,20 \
+      --channels 64,128,256,256 \
+      --check-path Data/checkpoint/LoResNet18/${dataset}/spect/${loss}_dp25 \
+      --resume Data/checkpoint/LoResNet18/${dataset}/spect/${loss}_dp25/checkpoint_1.pth \
+      --loss-type ${loss} \
+      --lr 0.1 \
+      --num-valid 2 \
+      --gpu-id 1 \
+      --dropout-p 0.25
+  done
+
+#  for loss in amsoft center asoft ; do # 32,128,512; 8,32,128
+#    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+#    python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+#      --model LoResNet10 \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
+#      --input-per-spks 224 \
+#      --nj 12 \
+#      --epochs 12 \
+#      --resnet-size 10 \
+#      --embedding-size 128 \
+#      --kernel-size 3,3 \
+#      --milestones 6,10 \
+#      --channels 64,128,256,512 \
+#      --check-path Data/checkpoint/LoResNet10/spect/${loss}_dp25 \
+#      --resume Data/checkpoint/LoResNet10/spect/soft_dp25/checkpoint_24.pth \
+#      --loss-type ${loss} \
+#      --finetune \
+#      --lr 0.01 \
+#      --num-valid 2 \
+#      --margin 0.35 \
+#      --s 40 \
+#      --m 4 \
+#      --loss-ratio 0.01 \
+#      --gpu-id 0 \
+#      --dropout-p 0.25
+#  done
+fi
