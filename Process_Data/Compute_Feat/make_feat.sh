@@ -340,7 +340,7 @@ if [ $stage -le 13 ]; then
 fi
 
 if [ $stage -le 20 ]; then
-  for name in dev test ; do
+  for name in test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/spect \
@@ -351,6 +351,7 @@ if [ $stage -le 20 ]; then
   done
 fi
 
+stage=100
 if [ $stage -le 30 ]; then
   for name in dev enroll test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \

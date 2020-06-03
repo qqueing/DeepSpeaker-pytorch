@@ -74,8 +74,8 @@ args = parser.parse_args()
 
 def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
-    feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    feat_ark = os.path.join(ark_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
+    feat_scp = os.path.join(out_dir, 'feat.%d.temp.scp' % proid)
+    feat_ark = os.path.join(out_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
     utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
@@ -164,8 +164,15 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
     utt2dur_f.close()
     feat_ark_f.close()
     utt2num_frames_f.close()
-    # print('\n>> Process {} finished!'.format(os.getpid()))
 
+    new_feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
+    new_feat_ark = os.path.join(ark_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
+    compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark, new_feat_scp)
+
+    pid, stdout, stderr = RunCommand(compress_command)
+
+    print(stdout)
+    os.remove(feat_ark)
 
 if __name__ == "__main__":
 
