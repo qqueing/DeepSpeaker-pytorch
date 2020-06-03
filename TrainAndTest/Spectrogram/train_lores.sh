@@ -143,7 +143,7 @@ fi
 
 if [ $stage -le 15 ]; then
   for loss in soft ; do # 32,128,512; 8,32,128
-    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5x5\033[0m\n"
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3,3\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \

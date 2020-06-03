@@ -9,9 +9,9 @@
 @Time: 2020/1/8 3:46 PM
 @Overview:
 """
-import torch.nn as nn
 import torch
-import numpy as np
+import torch.nn as nn
+
 
 class CenterLoss(nn.Module):
     """Center loss.
@@ -24,10 +24,12 @@ class CenterLoss(nn.Module):
         feat_dim (int): feature dimension.
     """
 
-    def __init__(self, num_classes=10, feat_dim=2):
+    def __init__(self, num_classes=10, feat_dim=2, alpha=10., partion=0.9):
         super(CenterLoss, self).__init__()
         self.num_classes = num_classes
         self.feat_dim = feat_dim
+        self.alpha = alpha
+        self.partion = partion
 
         self.centers = nn.Parameter(torch.randn(self.num_classes, self.feat_dim))
         self.centers.data.uniform_(-1, 1).renorm_(2, 1, 1e-5).mul_(1e5)  # 初始化权重，在第一维度上做normalize
@@ -38,6 +40,9 @@ class CenterLoss(nn.Module):
             x: feature matrix with shape (batch_size, feat_dim).
             labels: ground truth labels with shape (batch_size).
         """
+        norms = self.centers.data.norm(p=2, dim=1, keepdim=True).add(1e-14)
+        self.centers.data = self.centers.data / norms * self.alpha
+
         batch_size = x.size(0)
         distmat = torch.pow(x, 2).sum(dim=1, keepdim=True).expand(batch_size, self.num_classes) + \
                   torch.pow(self.centers, 2).sum(dim=1, keepdim=True).expand(self.num_classes, batch_size).t()
@@ -55,7 +60,11 @@ class CenterLoss(nn.Module):
 
         # Variance for centers
         # variance = torch.std(self.centers, dim=1).sum()
-        loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
+        # loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
+
+        dist = dist.sum(dim=1).add(1e-14).sqrt()
+        dist = dist.index_select(0, torch.argsort(dist)[-int(self.partion * batch_size):])
+        loss = dist.clamp(min=1e-12, max=1e+12).sum() / int(self.partion * batch_size)
 
         return loss
 

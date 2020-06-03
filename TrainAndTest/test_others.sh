@@ -56,18 +56,34 @@ if [ $stage -le 6 ]; then
 #  for loss in soft ; do
   for loss in soft ; do
     echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+#    python TrainAndTest/test_vox1.py \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
+#      --nj 12 \
+#      --model ${model} \
+#      --channels 64,128,256,512 \
+#      --resnet-size 10 \
+#      --extract \
+#      --kernel-size 3,3 \
+#      --embedding-size 128 \
+#      --resume Data/checkpoint/LoResNet10/spect/soft_dp05/checkpoint_36.pth \
+#      --xvector-dir Data/xvector/LoResNet10/spect/soft_dp05 \
+#      --loss-type ${loss} \
+#      --trials trials.backup \
+#      --num-valid 0 \
+#      --gpu-id 0
     python TrainAndTest/test_vox1.py \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test_wcmvn \
       --nj 12 \
       --model ${model} \
-      --channels 64,128,256,512 \
-      --resnet-size 10 \
+      --channels 64,128,256,256 \
+      --resnet-size 18 \
       --extract \
       --kernel-size 3,3 \
       --embedding-size 128 \
-      --resume Data/checkpoint/LoResNet10/spect/soft_dp05/checkpoint_36.pth \
-      --xvector-dir Data/xvector/LoResNet10/spect/soft_dp05 \
+      --resume Data/checkpoint/LoResNet18/spect/soft_dp05/checkpoint_24.pth \
+      --xvector-dir Data/xvector/LoResNet18/spect/soft_dp05 \
       --loss-type ${loss} \
       --trials trials.backup \
       --num-valid 0 \
