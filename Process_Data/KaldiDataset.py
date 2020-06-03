@@ -675,30 +675,38 @@ class ScriptTrainDataset(data.Dataset):
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
         utt2spk = dir + '/utt2spk'
+        utt2num_frames = dir + '/utt2num_frames'
 
         if not os.path.exists(feat_scp):
             raise FileExistsError(feat_scp)
         if not os.path.exists(spk2utt):
             raise FileExistsError(spk2utt)
 
+        invalid_uid = []
+        with open(utt2num_frames, 'r') as f:
+            for l in f.readlines():
+                uid, num_frames = l.split()
+                if int(num_frames) < 100:
+                    invalid_uid.append(uid)
+
         dataset = {}
         with open(spk2utt, 'r') as u:
             all_cls = u.readlines()
             for line in all_cls:
-                spk_utt = line.split(' ')
+                spk_utt = line.split()
                 spk_name = spk_utt[0]
                 if spk_name not in dataset.keys():
-                    spk_utt[-1] = spk_utt[-1].rstrip('\n')
-                    dataset[spk_name] = spk_utt[1:]
+                    dataset[spk_name] = [x for x in spk_utt[1:] if x not in invalid_uid]
 
         utt2spk_dict = {}
         with open(utt2spk, 'r') as u:
             all_cls = u.readlines()
             for line in all_cls:
-                utt_spk = line.split(' ')
+                utt_spk = line.split()
                 uid = utt_spk[0]
+                if uid in invalid_uid:
+                    continue
                 if uid not in utt2spk_dict.keys():
-                    utt_spk[-1] = utt_spk[-1].rstrip('\n')
                     utt2spk_dict[uid] = utt_spk[-1]
         # pdb.set_trace()
 
@@ -712,9 +720,12 @@ class ScriptTrainDataset(data.Dataset):
         with open(feat_scp, 'r') as f:
             for line in f.readlines():
                 uid, feat_offset = line.split()
+                if uid in invalid_uid:
+                    continue
                 uid2feat[uid] = feat_offset
 
-        print('    There are {} utterances in Train Dataset.'.format(len(uid2feat)))
+        print('    There are {} utterances in Train Dataset, where {} utterances are removed.'.format(len(uid2feat)),
+              len(invalid_uid))
 
         if num_valid > 0:
             valid_set = {}
