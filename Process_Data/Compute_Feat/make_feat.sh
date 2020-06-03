@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=2
+stage=20
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -90,7 +90,7 @@ if [ $stage -le 2 ]; then
   done
 fi
 
-stage=200.0
+#stage=200.0
 if [ $stage -le 2 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -314,7 +314,7 @@ if [ $stage -le 12 ]; then
   done
 fi
 
-stage=100
+#stage=100
 if [ $stage -le 13 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -339,3 +339,26 @@ if [ $stage -le 13 ]; then
   done
 fi
 
+if [ $stage -le 20 ]; then
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/spect \
+      --out-set ${name} \
+      --feat-type spectrogram \
+      --nfft 320 \
+      --windowsize 0.02
+  done
+fi
+
+if [ $stage -le 30 ]; then
+  for name in dev enroll test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect \
+      --out-set ${name} \
+      --feat-type spectrogram \
+      --nfft 320 \
+      --windowsize 0.02
+  done
+fi
