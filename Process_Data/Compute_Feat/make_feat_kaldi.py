@@ -46,7 +46,7 @@ parser.add_argument('--filter-type', type=str,
                     default='mel',
                     help='number of jobs to make feats (default: 10)')
 
-parser.add_argument('--filters', type=int, required=True,
+parser.add_argument('--filters', type=int,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--multi-weight', action='store_true', default=False,
                     help='using Cosine similarity')
