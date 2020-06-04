@@ -686,7 +686,7 @@ class ScriptTrainDataset(data.Dataset):
         with open(utt2num_frames, 'r') as f:
             for l in f.readlines():
                 uid, num_frames = l.split()
-                if int(num_frames) < 60:
+                if int(num_frames) < 50:
                     invalid_uid.append(uid)
 
         dataset = {}
