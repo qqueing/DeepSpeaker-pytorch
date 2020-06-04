@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=20
+stage=30
 
 waited=0
 while [ `ps 113458 | wc -l` -eq 2 ]; do
@@ -224,7 +224,7 @@ if [ $stage -le 20 ]; then
 
 fi
 
-if [ $stage -le 20 ]; then
+if [ $stage -le 30 ]; then
   dataset=cnceleb
 
   for loss in soft ; do # 32,128,512; 8,32,128
@@ -232,7 +232,7 @@ if [ $stage -le 20 ]; then
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/test \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/eval \
       --input-per-spks 384 \
       --nj 12 \
       --epochs 24 \
