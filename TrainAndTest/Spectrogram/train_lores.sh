@@ -233,7 +233,7 @@ if [ $stage -le 30 ]; then
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/eval \
-      --input-per-spks 384 \
+      --input-per-spks 224 \
       --nj 12 \
       --epochs 24 \
       --resnet-size 18 \
