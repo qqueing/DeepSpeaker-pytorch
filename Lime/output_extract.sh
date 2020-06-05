@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=50
+stage=60
 waited=0
 while [ `ps 15414 | wc -l` -eq 2 ]; do
   sleep 60
@@ -287,4 +287,30 @@ if [ $stage -le 50 ]; then
         --loss-type soft \
         --gpu-id 1
     done
+fi
+
+if [ $stage -le 60 ]; then
+  model=LoResNet10
+  feat=spect
+  dataset=cnceleb
+  for loss in soft ; do
+    echo -e "\033[31m==> Loss type: ${loss} \033[0m"
+    python Lime/output_extract.py \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/eval \
+      --nj 14 \
+      --start-epochs 24 \
+      --epochs 24 \
+      --model ${model} \
+      --embedding-size 128 \
+      --sample-utt 2500 \
+      --feat-dim 161 \
+      --kernel-size 3,3 \
+      --channels 64,128,256,256 \
+      --resnet-size 18 \
+      --check-path Data/checkpoint/LoResNet18/${dataset}/spect/${loss}_dp25 \
+      --extract-path Data/gradient/LoResNet18/${dataset}/spect/${loss}_dp25 \
+      --loss-type soft \
+      --gpu-id 1
+  done
 fi
