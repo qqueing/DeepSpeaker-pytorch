@@ -227,7 +227,7 @@ def main():
     for s in train_set_input, valid_set_input, test_a_set_input, test_b_set_input:
         # for s in test_a_set_grad, test_b_set_grad:
         f = interpolate.interp1d(x, s)
-        xnew = np.arange(np.min(x), np.max(x), 50)
+        xnew = np.linspace(np.min(x), np.max(x), 161)
         ynew = f(xnew)
         plt.plot(xnew, ynew)
 
