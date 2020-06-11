@@ -63,7 +63,7 @@ if [ $stage -le 6 ]; then
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
   for loss in soft ; do
-    echo -e "\n\033[1;4;31m Training with ${loss}\033[0m\n"
+    echo -e "\n\033[1;4;31m Training ${model} with ${loss} in ${datasets}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
