@@ -100,8 +100,8 @@ parser.add_argument('--model', type=str,
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
-parser.add_argument('--statis-pooling', action='store_true', default=False,
-                    help='using Cosine similarity')
+parser.add_argument('--inst-norm', action='store_true', default=False,
+                    help='replace batchnorm with instance norm')
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
@@ -284,6 +284,7 @@ def main():
     channels = [int(x) for x in channels]
 
     model_kwargs = {'embedding_size': args.embedding_size,
+                    'inst_norm': args.inst_norm,
                     'resnet_size': args.resnet_size,
                     'num_classes': train_dir.num_spks,
                     'channels': channels,

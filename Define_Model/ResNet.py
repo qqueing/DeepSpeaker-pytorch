@@ -663,7 +663,7 @@ class LocalResNet(nn.Module):
 
     def __init__(self, embedding_size, num_classes, block=BasicBlock,
                  resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
-                 statis_pooling=False, alpha=12,
+                 inst_norm=False, alpha=12,
                  avg_size=4, kernal_size=5, padding=2, **kwargs):
 
         super(LocalResNet, self).__init__()
@@ -685,7 +685,11 @@ class LocalResNet(nn.Module):
 
         self.inplanes = channels[0]
         self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2, padding=2, bias=False)
-        self.bn1 = nn.BatchNorm2d(channels[0])
+        if inst_norm:
+            self.bn1 = nn.InstanceNorm2d(channels[0])
+        else:
+            self.bn1 = nn.BatchNorm2d(channels[0])
+
         # self.maxpool = nn.MaxPool2d(kernel_size=(1, 3), stride=1, padding=1)
         self.layer1 = self._make_layer(block, channels[0], layers[0])
 
