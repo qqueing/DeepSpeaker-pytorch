@@ -59,7 +59,7 @@ fi
 #stage=60
 if [ $stage -le 6 ]; then
   datasets=libri
-  model=LoResNet10
+  model=LoResNet
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
   for loss in soft ; do
@@ -86,6 +86,7 @@ if [ $stage -le 6 ]; then
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
+      --gpu-id 0 \
       --loss-type ${loss}
 
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
@@ -111,6 +112,7 @@ if [ $stage -le 6 ]; then
       --weight-decay 0.001 \
       --dropout-p 0.25 \
       --inst-norm \
+      --gpu-id 0 \
       --loss-type ${loss}
   done
 fi

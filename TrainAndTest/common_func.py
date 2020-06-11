@@ -45,7 +45,7 @@ def create_optimizer(parameters, optimizer, **kwargs):
 
 __factory = {
     'AlexNet': AlexNet,
-    'LoResNet10': LocalResNet,
+    'LoResNet': LocalResNet,
     'ResNet20': ResNet20,
     'SiResNet34': SimpleResNet,
     'ExResNet34': ExporingResNet,
