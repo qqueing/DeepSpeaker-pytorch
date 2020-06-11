@@ -79,7 +79,7 @@ if [ $stage -le 6 ]; then
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
-      --alpha 10 \
+      --alpha 12 \
       --margin 0.4 \
       --s 30 \
       --m 3 \
@@ -104,7 +104,7 @@ if [ $stage -le 6 ]; then
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
-      --alpha 10 \
+      --alpha 12 \
       --margin 0.4 \
       --s 30 \
       --m 3 \
