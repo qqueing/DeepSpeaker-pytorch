@@ -5,6 +5,8 @@ TrainAndTest/data
 __init__.py
 Log/
 Data/
+*.pdf
+*.png
 *.npy
 *.ark
 *.pth

@@ -226,7 +226,6 @@ fi
 
 if [ $stage -le 30 ]; then
   dataset=cnceleb
-
   for loss in soft ; do # 32,128,512; 8,32,128
     echo -e "\n\033[1;4;31m Training with ${loss} kernel 3,3\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \

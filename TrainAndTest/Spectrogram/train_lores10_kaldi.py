@@ -383,7 +383,7 @@ def main():
         print(' \33[0m')
 
         train(train_loader, model, ce, optimizer, scheduler, epoch)
-        if epoch % 2 == 1 or epoch == (end - 1):
+        if epoch % 4 == 1 or epoch == (end - 1):
             check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
             torch.save({'epoch': epoch,
                         'state_dict': model.state_dict(),
