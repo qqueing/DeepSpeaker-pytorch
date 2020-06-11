@@ -9,6 +9,7 @@
 @Time: 2019/12/16 6:36 PM
 @Overview:
 """
+import numpy as np
 import torch.optim as optim
 
 from Define_Model.CNN import AlexNet
@@ -82,3 +83,6 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
+
+def l2_alpha(C):
+    return np.log(0.99 * (C - 2) / (1 - 0.99))
