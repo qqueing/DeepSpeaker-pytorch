@@ -155,18 +155,15 @@ def verification_test(test_loader, dist_type, log_interval):
     # switch to evaluate mode
     labels, distances = [], []
     pbar = tqdm(enumerate(test_loader))
-    if dist_type == 'cos':
-        dist_fn = nn.CosineSimilarity()
-    else:
-        dist_fn = nn.PairwiseDistance(2)
+
+    dist_fn = nn.CosineSimilarity() if dist_type == 'cos' else nn.PairwiseDistance(2)
 
     for batch_idx, (data_a, data_p, label) in pbar:
 
         out_a = torch.tensor(data_a)
         out_p = torch.tensor(data_p)
 
-        dists = dist_fn.forward(out_a, out_p)
-        dists = dists.numpy()
+        dists = dist_fn.forward(out_a, out_p).numpy()
 
         distances.append(dists)
         labels.append(label.numpy())

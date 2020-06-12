@@ -381,6 +381,7 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
+        break
         print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
             print('{:.5f} '.format(param_group['lr']), end='')
@@ -398,13 +399,14 @@ def main():
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
-        break
+
         # exit(1)
 
     extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
     extract_loader = torch.utils.data.DataLoader(extract_dir, batch_size=1, shuffle=False, **kwargs)
     xvector_dir = args.check_path
     xvector_dir = xvector_dir.replace('checkpoint', 'xvector')
+
     verify_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials, xvectors_dir=xvector_dir,
                                      loader=read_vec_flt)
     verify_loader = torch.utils.data.DataLoader(verify_dir, batch_size=64, shuffle=False, **kwargs)
