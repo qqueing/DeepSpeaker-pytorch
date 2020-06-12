@@ -580,7 +580,7 @@ class ScriptVerifyDataset(data.Dataset):
                 uid, feat_offset = line.split()
                 uid2feat[uid] = feat_offset
 
-        print('    There are {} utterances in Verification trials.'.format(len(uid2feat)))
+        print('\n==> There are {} utterances in Verification trials.'.format(len(uid2feat)))
 
         trials_pair = []
         positive_pairs = 0

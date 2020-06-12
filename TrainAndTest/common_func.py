@@ -100,7 +100,7 @@ def verification_extract(extract_loader, model, xvector_dir, ark_num=50000, gpu=
 
     if not os.path.exists(xvector_dir):
         os.makedirs(xvector_dir)
-        print('Creating xvector path: %s' % xvector_dir)
+        # print('Creating xvector path: %s' % xvector_dir)
 
     pbar = tqdm(enumerate(extract_loader))
     uid2vectors = {}
@@ -147,7 +147,7 @@ def verification_extract(extract_loader, model, xvector_dir, ark_num=50000, gpu=
                 # print(ark.tell())
                 scp.write(str(uids[i]) + ' ' + str(ark_file) + ':' + str(ark.tell() - len_vec - 10) + '\n')
     scp.close()
-    print('There are %d vectors. Saving to %s' % (len(uids), xvector_dir))
+    print('Saving %d xvectors to %s' % (len(uids), xvector_dir))
     torch.cuda.empty_cache()
 
 

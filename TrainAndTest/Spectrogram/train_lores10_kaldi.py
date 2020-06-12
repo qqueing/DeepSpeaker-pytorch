@@ -381,7 +381,6 @@ def main():
 
     for epoch in range(start, end):
         # pdb.set_trace()
-        break
         print('\n\33[1;34m Current \'{}\' learning rate is '.format(args.optimizer), end='')
         for param_group in optimizer.param_groups:
             print('{:.5f} '.format(param_group['lr']), end='')
