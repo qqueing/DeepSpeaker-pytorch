@@ -10,7 +10,6 @@
 @Overview:
 """
 import os
-import pdb
 
 import kaldi_io
 import numpy as np
@@ -158,7 +157,6 @@ def verification_test(test_loader, dist_type, log_interval):
     dist_fn = nn.CosineSimilarity() if dist_type == 'cos' else nn.PairwiseDistance(2)
 
     pbar = tqdm(enumerate(test_loader))
-    pdb.set_trace()
     for batch_idx, (data_a, data_p, label) in pbar:
 
         out_a = torch.tensor(data_a)

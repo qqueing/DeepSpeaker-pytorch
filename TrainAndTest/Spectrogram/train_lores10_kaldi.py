@@ -406,12 +406,11 @@ def main():
     extract_loader = torch.utils.data.DataLoader(extract_dir, batch_size=1, shuffle=False, **kwargs)
     xvector_dir = args.check_path
     xvector_dir = xvector_dir.replace('checkpoint', 'xvector')
+    verification_extract(extract_loader, model, xvector_dir)
 
     verify_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials, xvectors_dir=xvector_dir,
                                      loader=read_vec_flt)
     verify_loader = torch.utils.data.DataLoader(verify_dir, batch_size=64, shuffle=False, **kwargs)
-
-    verification_extract(extract_loader, model, xvector_dir)
     verification_test(test_loader=verify_loader, dist_type=('cos' if args.cos_sim else 'l2'),
                       log_interval=args.log_interval)
 
