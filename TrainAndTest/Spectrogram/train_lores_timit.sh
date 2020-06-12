@@ -74,8 +74,8 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33_max \
-      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33_max/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33_max_01 \
+      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33_max_01/checkpoint_1.pth \
       --kernel-size 3,3 \
       --channels 4,16,64 \
       --embedding-size 128 \
@@ -87,7 +87,7 @@ if [ $stage -le 6 ]; then
       --m 3 \
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
-      --dropout-p 0.25 \
+      --dropout-p 0.1 \
       --gpu-id 0 \
       --loss-type ${loss}
 
