@@ -128,7 +128,7 @@ def verification_extract(extract_loader, model, xvector_dir, ark_num=50000, gpu=
             batch_idx, len(extract_loader.dataset), 100. * batch_idx / len(extract_loader)))
 
     uids = list(uid2vectors.keys())
-    print('There are %d vectors' % len(uids))
+    # print('There are %d vectors' % len(uids))
     scp_file = xvector_dir + '/xvectors.scp'
     scp = open(scp_file, 'w')
 
@@ -172,7 +172,7 @@ def verification_test(test_loader, dist_type, log_interval):
         labels.append(label.numpy())
 
         if batch_idx % log_interval == 0:
-            pbar.set_description('Test: [{}/{} ({:.0f}%)]'.format(
+            pbar.set_description('Verification: [{}/{} ({:.0f}%)]'.format(
                 batch_idx * len(data_a), len(test_loader.dataset), 100. * batch_idx / len(test_loader)))
 
     labels = np.array([sublabel for label in labels for sublabel in label])
