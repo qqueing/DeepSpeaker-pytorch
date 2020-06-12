@@ -60,7 +60,7 @@ fi
 if [ $stage -le 6 ]; then
   datasets=libri
   model=LoResNet
-  resnet_size=10
+  resnet_size=8
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
   for loss in soft ; do
@@ -74,10 +74,10 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33 \
-      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33_max \
+      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33_max/checkpoint_1.pth \
       --kernel-size 3,3 \
-      --channels 4,16,64,64 \
+      --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
