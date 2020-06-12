@@ -65,7 +65,7 @@ if [ $stage -le 6 ]; then
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
   for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss} in ${datasets}\033[0m\n"
-    python TrainAndTest/Spectrogram/train_lores10_var.py \
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
@@ -74,8 +74,8 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_var \
-      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_var/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss} \
+      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}/checkpoint_1.pth \
       --kernel-size 5,5 \
       --channels 4,16,64 \
       --embedding-size 128 \
