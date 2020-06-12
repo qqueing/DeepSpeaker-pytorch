@@ -24,7 +24,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
-from kaldi_io import read_mat
+from kaldi_io import read_mat, read_vec_flt
 from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR
@@ -33,10 +33,11 @@ from tqdm import tqdm
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, KaldiExtractDataset, \
+    ScriptVerifyDataset
 from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
-from TrainAndTest.common_func import create_optimizer, create_model
+from TrainAndTest.common_func import create_optimizer, create_model, verification_extract, verification_test
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -62,6 +63,8 @@ parser = argparse.ArgumentParser(description='PyTorch Speaker Recognition')
 parser.add_argument('--train-dir', type=str,
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
+                    help='path to voxceleb1 test dataset')
+parser.add_argument('--trials', type=str, default='trials',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
@@ -96,7 +99,7 @@ parser.add_argument('--model', type=str, choices=['LoResNet10', 'ResNet20', 'SiR
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
-parser.add_argument('--statis-pooling', action='store_true', default=False,
+parser.add_argument('--inst-norm', action='store_true', default=False,
                     help='using Cosine similarity')
 parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
@@ -283,11 +286,12 @@ def main():
     channels = [int(x) for x in channels]
 
     model_kwargs = {'embedding_size': args.embedding_size,
+                    'inst_norm': args.inst_norm,
                     'resnet_size': args.resnet_size,
                     'num_classes': train_dir.num_spks,
                     'channels': channels,
-                    'alpha': args.alpha,
                     'avg_size': args.avg_size,
+                    'alpha': args.alpha,
                     'kernel_size': kernel_size,
                     'padding': padding,
                     'dropout_p': args.dropout_p}
@@ -388,11 +392,31 @@ def main():
         print(' \33[0m')
 
         train(train_loader, model, ce, optimizer, epoch)
-        test(test_loader, valid_loader, model, epoch)
+        if epoch % 4 == 1 or epoch == (end - 1):
+            check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
+            torch.save({'epoch': epoch,
+                        'state_dict': model.state_dict(),
+                        'criterion': ce},
+                       check_path)
+
+        if epoch % 2 == 1 and epoch != (end - 1):
+            test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
         # exit(1)
+
+    extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
+    extract_loader = torch.utils.data.DataLoader(extract_dir, batch_size=1, shuffle=False, **kwargs)
+    xvector_dir = args.check_path
+    xvector_dir = xvector_dir.replace('checkpoint', 'xvector')
+    verification_extract(extract_loader, model, xvector_dir)
+
+    verify_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials, xvectors_dir=xvector_dir,
+                                     loader=read_vec_flt)
+    verify_loader = torch.utils.data.DataLoader(verify_dir, batch_size=64, shuffle=False, **kwargs)
+    verification_test(test_loader=verify_loader, dist_type=('cos' if args.cos_sim else 'l2'),
+                      log_interval=args.log_interval)
 
     writer.close()
 
@@ -461,12 +485,6 @@ def train(train_loader, model, ce, optimizer, epoch):
                     data.shape[2],
                     total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
-
-    check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
-    torch.save({'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'criterion': ce},
-               check_path)
 
     print('\nTrain Epoch {}:\n ' \
           '\33[91m  Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch,
