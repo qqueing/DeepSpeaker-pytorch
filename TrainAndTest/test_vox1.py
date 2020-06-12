@@ -472,8 +472,6 @@ def test(test_loader):
     print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
     print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f}.\33[0m'.format(mindcf_01, mindcf_001))
 
-    torch.cuda.empty_cache()
-
 
 def sitw_test(sitw_test_loader, model, epoch):
     # switch to evaluate mode

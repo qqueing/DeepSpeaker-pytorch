@@ -24,7 +24,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
-from kaldi_io import read_mat
+from kaldi_io import read_mat, read_vec_flt
 from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR, ExponentialLR
@@ -34,10 +34,11 @@ from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
 from Process_Data import constants as c
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, KaldiExtractDataset, \
+    ScriptVerifyDataset
 from Process_Data.audio_processing import concateinputfromMFB, to2tensor
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
-from TrainAndTest.common_func import create_optimizer, create_model
+from TrainAndTest.common_func import create_optimizer, create_model, verification_test, verification_extract
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -65,6 +66,8 @@ parser.add_argument('--train-dir', type=str,
                     help='path to dataset')
 parser.add_argument('--test-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect/test',
+                    help='path to voxceleb1 test dataset')
+parser.add_argument('--trials', type=str, default='trials',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
@@ -395,7 +398,20 @@ def main():
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
+        break
         # exit(1)
+
+    verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
+    verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=1, shuffle=False, **kwargs)
+    xvector_dir = args.check_path
+    xvector_dir = xvector_dir.replace('checkpoint', 'xvector')
+
+    verification_extract(verify_loader, model, xvector_dir)
+    test_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials, xvectors_dir=xvector_dir,
+                                   loader=read_vec_flt)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=64, shuffle=False, **kwargs)
+    verification_test(test_loader=test_loader, dist_type='cos' if args.cos_sim else 'l2',
+                      log_interval=args.log_interval)
 
     writer.close()
 

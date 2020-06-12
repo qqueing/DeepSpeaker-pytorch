@@ -22,7 +22,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torchvision.transforms as transforms
-from kaldi_io import read_mat
+from kaldi_io import read_mat, read_vec_flt
 from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import MultiStepLR
@@ -31,9 +31,10 @@ from tqdm import tqdm
 from Define_Model.LossFunction import CenterLoss
 from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarginLinear, AMSoftmaxLoss
 from Define_Model.model import PairwiseDistance
-from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset
+from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, KaldiExtractDataset, \
+    ScriptVerifyDataset
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, concateinputfromMFB, to2tensor, mvnormal
-from TrainAndTest.common_func import create_optimizer, create_model
+from TrainAndTest.common_func import create_optimizer, create_model, verification_extract, verification_test
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 from logger import NewLogger
 
@@ -348,8 +349,18 @@ def main():
 
         scheduler.step()
         # break
+    verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
+    verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=args.test_batch_size, shuffle=False,
+                                                **kwargs)
+    verification_extract(verify_loader, model, args.xvector_dir)
+    file_loader = read_vec_flt
+    test_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials,
+                                   xvectors_dir=args.xvector_dir, loader=file_loader)
+    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=args.test_batch_size * 64, shuffle=False, **kwargs)
+    verification_test(test_loader=test_loader, dist_type='cos' if args.cos_sim else 'l2',
+                      log_interval=args.log_interval)
 
-    # writer.close()
+    writer.close()
 
 
 def train(train_loader, model, optimizer, ce, scheduler, epoch):
