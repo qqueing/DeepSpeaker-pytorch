@@ -545,7 +545,7 @@ class KaldiExtractDataset(data.Dataset):
 
         utts = [uid for uid in uid2feat.keys()]
         utts.sort()
-        print('==> There are {} utterance in Verifcation set to extract vectors.'.format(len(utts)))
+        print('\n==> There are {} utterance in Verifcation set to extract vectors.'.format(len(utts)))
 
         self.uid2feat = uid2feat
         self.transform = transform

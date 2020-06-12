@@ -410,7 +410,7 @@ def main():
     verify_loader = torch.utils.data.DataLoader(verify_dir, batch_size=64, shuffle=False, **kwargs)
 
     verification_extract(extract_loader, model, xvector_dir)
-    verification_test(test_loader=verify_loader, dist_type='cos' if args.cos_sim else 'l2',
+    verification_test(test_loader=verify_loader, dist_type=('cos' if args.cos_sim else 'l2'),
                       log_interval=args.log_interval)
 
     writer.close()
