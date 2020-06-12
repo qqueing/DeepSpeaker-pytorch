@@ -394,7 +394,8 @@ def main():
                         'criterion': ce},
                        check_path)
 
-        test(test_loader, valid_loader, model, epoch)
+        if epoch % 2 == 1 and epoch != (end - 1):
+            test(test_loader, valid_loader, model, epoch)
         # sitw_test(sitw_test_loader, model, epoch)
         # sitw_test(sitw_dev_loader, model, epoch)
         scheduler.step()
