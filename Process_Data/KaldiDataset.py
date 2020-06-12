@@ -599,8 +599,8 @@ class ScriptVerifyDataset(data.Dataset):
         trials_pair = np.array(trials_pair)
         trials_pair = trials_pair[trials_pair[:, 2].argsort()[::-1]]
 
-        print('    There are {} pairs in verification set with {} positive pairs'.format(len(trials_pair),
-                                                                                         positive_pairs))
+        print('    There are {} pairs in trials with {} positive pairs'.format(len(trials_pair),
+                                                                               positive_pairs))
 
         self.uid2feat = uid2feat
         self.trials_pair = trials_pair
