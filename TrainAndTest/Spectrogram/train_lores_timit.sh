@@ -60,23 +60,24 @@ fi
 if [ $stage -le 6 ]; then
   datasets=libri
   model=LoResNet
+  resnet_size=10
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-  for loss in asoft ; do
+  for loss in soft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss} in ${datasets}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
-      --resnet-size 8 \
+      --resnet-size ${resnet_size} \
       --nj 12 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_33_we \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_33_we/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33 \
+      --resume Data/checkpoint/${model}${resnet_size}/${datasets}/spect_wcmvn/${loss}_33/checkpoint_1.pth \
       --kernel-size 3,3 \
-      --channels 4,16,64 \
+      --channels 4,16,64,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
       --num-valid 1 \
