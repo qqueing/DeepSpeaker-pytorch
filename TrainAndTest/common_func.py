@@ -184,4 +184,4 @@ def verification_test(test_loader, dist_type, log_interval):
 
     print('\nFor %s_distance, %d pairs:' % (dist_type, len(labels)))
     print('  \33[91mTest ERR is {:.4f}%, Threshold is {}'.format(100. * eer, eer_threshold))
-    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f}.\33[0m'.format(mindcf_01, mindcf_001))
+    print('  mindcf-0.01 {:.4f}, mindcf-0.001 {:.4f}.\33[0m\n'.format(mindcf_01, mindcf_001))
