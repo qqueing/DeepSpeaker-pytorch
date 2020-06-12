@@ -63,7 +63,7 @@ if [ $stage -le 6 ]; then
   resnet_size=8
 #  --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
 #  --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-  for loss in soft ; do
+  for loss in asoft ; do
     echo -e "\n\033[1;4;31m Training ${model} with ${loss} in ${datasets}\033[0m\n"
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
