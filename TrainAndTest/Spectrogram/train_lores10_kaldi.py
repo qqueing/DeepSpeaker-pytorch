@@ -36,7 +36,7 @@ from Define_Model.model import PairwiseDistance
 from Process_Data import constants as c
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, KaldiExtractDataset, \
     ScriptVerifyDataset
-from Process_Data.audio_processing import concateinputfromMFB, to2tensor
+from Process_Data.audio_processing import concateinputfromMFB, to2tensor, varLengthFeat
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer, create_model, verification_test, verification_extract
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -228,6 +228,10 @@ if args.acoustic_feature == 'fbank':
         # varLengthFeat(),
         to2tensor()
     ])
+    transform_V = transforms.Compose([
+        varLengthFeat(remove_vad=args.remove_vad),
+        to2tensor()
+    ])
 
 else:
     transform = transforms.Compose([
@@ -402,7 +406,7 @@ def main():
 
         # exit(1)
 
-    extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
+    extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_V, filer_loader=file_loader)
     extract_loader = torch.utils.data.DataLoader(extract_dir, batch_size=1, shuffle=False, **kwargs)
     xvector_dir = args.check_path
     xvector_dir = xvector_dir.replace('checkpoint', 'xvector')

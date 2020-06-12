@@ -35,7 +35,7 @@ from Define_Model.SoftmaxLoss import AngleSoftmaxLoss, AngleLinear, AdditiveMarg
 from Define_Model.model import PairwiseDistance
 from Process_Data.KaldiDataset import ScriptTrainDataset, ScriptTestDataset, ScriptValidDataset, KaldiExtractDataset, \
     ScriptVerifyDataset
-from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate
+from Process_Data.audio_processing import to2tensor, varLengthFeat, PadCollate, concateinputfromMFB
 from Process_Data.audio_processing import toMFB, totensor, truncatedinput, read_audio
 from TrainAndTest.common_func import create_optimizer, create_model, verification_extract, verification_test
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
@@ -218,14 +218,19 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
         # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
-        varLengthFeat(),
+        varLengthFeat(remove_vad=args.remove_vad),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        # concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
-        varLengthFeat(),
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file,
+                            remove_vad=args.remove_vad),
+        # varLengthFeat(),
         to2tensor(),
         # tonormal()
+    ])
+    transform_V = transforms.Compose([
+        varLengthFeat(remove_vad=args.remove_vad),
+        to2tensor()
     ])
 
 else:
@@ -406,7 +411,7 @@ def main():
         scheduler.step()
         # exit(1)
 
-    extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
+    extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_V, filer_loader=file_loader)
     extract_loader = torch.utils.data.DataLoader(extract_dir, batch_size=1, shuffle=False, **kwargs)
     xvector_dir = args.check_path
     xvector_dir = xvector_dir.replace('checkpoint', 'xvector')
