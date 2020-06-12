@@ -102,7 +102,7 @@ class AngleSoftmaxLoss(nn.Module):
 
         index = cos_theta.data * 0.0
         index.scatter_(1, y.data.view(-1, 1), 1)#将label存成稀疏矩阵
-        index = index.byte()
+        index = index.bool()
         index = Variable(index)
 
         # set lamb, change the rate of softmax and A-softmax
