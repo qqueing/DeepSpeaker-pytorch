@@ -73,8 +73,8 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss} \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_fc \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_fc/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
@@ -98,8 +98,8 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm_fc \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm_fc/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \

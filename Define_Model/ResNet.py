@@ -721,10 +721,12 @@ class LocalResNet(nn.Module):
         #     self.inplanes *= 2
         #     self.std_pool = AdaptiveStdPooling2d((1, 4))
 
-        self.fc = nn.Sequential(
-            nn.Linear(self.inplanes * avg_size, embedding_size),
-            nn.BatchNorm1d(embedding_size)
-        )
+        # self.fc = nn.Sequential(
+        #     nn.Linear(self.inplanes * avg_size, embedding_size),
+        #     nn.BatchNorm1d(embedding_size)
+        # )
+
+        self.fc = nn.Linear(self.inplanes * avg_size, embedding_size)
 
         self.classifier = nn.Linear(self.embedding_size, num_classes)
 
