@@ -52,14 +52,15 @@ class AngleLinear(nn.Module):#定义最后一层
                x ** 8 / math.factorial(8) - x ** 9 / math.factorial(9)
 
     def forward(self, x):#前向过程，输入x
-        w = self.weight
+        # ww = w.renorm(2, 1, 1e-5).mul(1e5)#方向0上做normalize
+        x_modulus = x.norm(p=2, dim=1, keepdim=True)
+        w_modulus = self.weight.norm(p=2, dim=0, keepdim=True)
 
-        ww = w.renorm(2, 1, 1e-5).mul(1e5)#方向0上做normalize
-        x_len = x.pow(2).sum(1).pow(0.5)
-        w_len = ww.pow(2).sum(0).pow(0.5)
+        # x_len = x.pow(2).sum(1).pow(0.5)
+        # w_len = ww.pow(2).sum(0).pow(0.5)
 
-        cos_theta = x.mm(ww)
-        cos_theta = cos_theta / x_len.view(-1, 1) / w_len.view(1, -1)
+        cos_theta = x.mm(self.weight)
+        cos_theta = cos_theta / x_modulus / w_modulus
         cos_theta = cos_theta.clamp(-1, 1)
 
         if self.phiflag:
@@ -73,8 +74,8 @@ class AngleLinear(nn.Module):#定义最后一层
             phi_theta = self.myphi(theta, self.m)#得到/phi(/theta)
             phi_theta = phi_theta.clamp(-1*self.m, 1)#控制在-m和1之间
 
-        cos_theta = cos_theta * x_len.view(-1, 1)
-        phi_theta = phi_theta * x_len.view(-1, 1)
+        cos_theta = cos_theta * w_modulus * x_modulus
+        phi_theta = phi_theta * w_modulus * x_modulus
         output = [cos_theta, phi_theta]#返回/cos(/theta)和/phi(/theta)
         return output
 
