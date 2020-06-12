@@ -19,11 +19,11 @@ https://github.com/CoinCheung/pytorch-loss/blob/master/amsoftmax.py
 "Center Loss" is based on https://github.com/KaiyangZhou/pytorch-center-loss/blob/master/center_loss.py
 """
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import pdb
 
 __all__=["AngleLinear", "AngleSoftmaxLoss", "AngularSoftmax", "AMSoftmax"]
 
@@ -154,15 +154,18 @@ class AngularSoftmax(nn.Module):
         assert x.size()[1] == self.in_feats
 
         # pdb.set_trace()
-        w = self.W.renorm(2, 1, 1e-5).mul(1e5) #[batch, out_planes]
-        x_modulus = x.pow(2).sum(1).pow(0.5) #[batch]
-        w_modulus = w.pow(2).sum(0).pow(0.5) #[out_planes]
+        # w_norm = self.W.norm(p=2, dim=1, keepdim=True)
+        w = self.W  # / w_norm #[batch, out_planes]
+
+        x_modulus = x.norm(p=2, dim=1, keepdim=True)
+        w_modulus = w.norm(p=2, dim=0, keepdim=True)
 
         # get w@x=||w||*||x||*cos(theta)
         # w = w.cuda()
         inner_wx = x.mm(w) # [batch,out_planes]
-        cos_theta = (inner_wx/x_modulus.view(-1,1))/w_modulus.view(1,-1)
-        cos_theta = cos_theta.clamp(-1,1)
+        cos_theta = (inner_wx / x_modulus) / w_modulus
+
+        cos_theta = cos_theta.clamp(-1, 1)
 
         # get cos(m*theta)
         cos_m_theta = self.cos_function[self.m](cos_theta)
@@ -178,15 +181,15 @@ class AngularSoftmax(nn.Module):
         # get cos_x and phi_x
         # cos_x = cos(theta)*||x||
         # phi_x = phi(theta)*||x||
-        cos_x = cos_theta * x_modulus.view(-1,1)
-        phi_x = phi_theta * x_modulus.view(-1,1)
+        cos_x = cos_theta * x_modulus * w_modulus
+        phi_x = phi_theta * x_modulus * w_modulus
 
-        target = label.view(-1, 1)
+        target = label.unsqueeze(-1)
 
         # get one_hot mat
         index = cos_x.data * 0.0  # size=(B,Classnum)
         index.scatter_(1, target.data.view(-1, 1), 1)
-        index = index.byte()
+        index = index.bool()
         index = Variable(index)
 
         # set lamb, change the rate of softmax and A-softmax
@@ -198,6 +201,7 @@ class AngularSoftmax(nn.Module):
         # output[index] += (phi_x[index] * 1.0 / (self.lamb))
         output[index] -= cos_x[index]
         output[index] += phi_x[index]
+
         loss = self.ce(output, label)
 
         return loss
