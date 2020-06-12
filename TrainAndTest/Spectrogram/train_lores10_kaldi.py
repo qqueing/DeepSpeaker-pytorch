@@ -401,16 +401,16 @@ def main():
         break
         # exit(1)
 
-    verfify_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
-    verify_loader = torch.utils.data.DataLoader(verfify_dir, batch_size=1, shuffle=False, **kwargs)
+    extract_dir = KaldiExtractDataset(dir=args.test_dir, transform=transform_T, filer_loader=file_loader)
+    extract_loader = torch.utils.data.DataLoader(extract_dir, batch_size=1, shuffle=False, **kwargs)
     xvector_dir = args.check_path
     xvector_dir = xvector_dir.replace('checkpoint', 'xvector')
 
-    verification_extract(verify_loader, model, xvector_dir)
-    test_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials, xvectors_dir=xvector_dir,
+    verification_extract(extract_loader, model, xvector_dir)
+    verify_dir = ScriptVerifyDataset(dir=args.test_dir, trials_file=args.trials, xvectors_dir=xvector_dir,
                                    loader=read_vec_flt)
-    test_loader = torch.utils.data.DataLoader(test_dir, batch_size=64, shuffle=False, **kwargs)
-    verification_test(test_loader=test_loader, dist_type='cos' if args.cos_sim else 'l2',
+    verify_loader = torch.utils.data.DataLoader(verify_dir, batch_size=64, shuffle=False, **kwargs)
+    verification_test(test_loader=verify_loader, dist_type='cos' if args.cos_sim else 'l2',
                       log_interval=args.log_interval)
 
     writer.close()
