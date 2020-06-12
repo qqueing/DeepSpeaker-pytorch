@@ -105,6 +105,9 @@ parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
+parser.add_argument('--remove-vad', action='store_true', default=False,
+                    help='using Cosine similarity')
+
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
                     help='kernel size of conv filters')
 parser.add_argument('--cos-sim', action='store_true', default=True,

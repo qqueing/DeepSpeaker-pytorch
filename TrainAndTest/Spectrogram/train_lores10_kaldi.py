@@ -109,6 +109,9 @@ parser.add_argument('--channels', default='64,128,256', type=str,
                     metavar='CHA', help='The channels of convs layers)')
 parser.add_argument('--feat-dim', default=161, type=int, metavar='FEAT',
                     help='acoustic feature dimension')
+parser.add_argument('--remove-vad', action='store_true', default=False,
+                    help='using Cosine similarity')
+
 parser.add_argument('--alpha', default=12, type=float, metavar='FEAT',
                     help='acoustic feature dimension')
 parser.add_argument('--kernel-size', default='5,5', type=str, metavar='KE',
@@ -219,12 +222,13 @@ l2_dist = nn.CosineSimilarity(dim=1, eps=1e-6) if args.cos_sim else PairwiseDist
 
 if args.acoustic_feature == 'fbank':
     transform = transforms.Compose([
-        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=False),
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, remove_vad=args.remove_vad),
         # varLengthFeat(),
         to2tensor()
     ])
     transform_T = transforms.Compose([
-        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file, remove_vad=False),
+        concateinputfromMFB(num_frames=c.NUM_FRAMES_SPECT, input_per_file=args.test_input_per_file,
+                            remove_vad=args.remove_vad),
         # varLengthFeat(),
         to2tensor()
     ])
