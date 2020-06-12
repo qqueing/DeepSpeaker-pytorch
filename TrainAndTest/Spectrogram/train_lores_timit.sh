@@ -87,7 +87,7 @@ if [ $stage -le 6 ]; then
       --m 3 \
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
-      --dropout-p 0.23 \
+      --dropout-p 0.25 \
       --gpu-id 0 \
       --loss-type ${loss}
 
