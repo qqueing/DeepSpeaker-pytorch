@@ -73,8 +73,9 @@ if [ $stage -le 6 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_fc \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_fc/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_33 \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_33/checkpoint_1.pth \
+      --kernel-size 3,3 \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
@@ -89,31 +90,31 @@ if [ $stage -le 6 ]; then
       --gpu-id 0 \
       --loss-type ${loss}
 
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
-      --resnet-size 8 \
-      --nj 12 \
-      --epochs 15 \
-      --lr 0.1 \
-      --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm_fc \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm_fc/checkpoint_1.pth \
-      --channels 4,16,64 \
-      --embedding-size 128 \
-      --input-per-spks 256 \
-      --num-valid 1 \
-      --alpha 10 \
-      --margin 0.4 \
-      --s 30 \
-      --m 3 \
-      --loss-ratio 0.05 \
-      --weight-decay 0.001 \
-      --dropout-p 0.25 \
-      --inst-norm \
-      --gpu-id 0 \
-      --loss-type ${loss}
+#    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+#      --model ${model} \
+#      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/dev_wcmvn \
+#      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/spect/test_wcmvn \
+#      --resnet-size 8 \
+#      --nj 12 \
+#      --epochs 15 \
+#      --lr 0.1 \
+#      --milestones 7,11 \
+#      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm_fc \
+#      --resume Data/checkpoint/LoResNet8/${datasets}/spect_wcmvn/${loss}_norm_fc/checkpoint_1.pth \
+#      --channels 4,16,64 \
+#      --embedding-size 128 \
+#      --input-per-spks 256 \
+#      --num-valid 1 \
+#      --alpha 10 \
+#      --margin 0.4 \
+#      --s 30 \
+#      --m 3 \
+#      --loss-ratio 0.05 \
+#      --weight-decay 0.001 \
+#      --dropout-p 0.25 \
+#      --inst-norm \
+#      --gpu-id 0 \
+#      --loss-type ${loss}
   done
 fi
 

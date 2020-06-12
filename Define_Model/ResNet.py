@@ -721,12 +721,12 @@ class LocalResNet(nn.Module):
         #     self.inplanes *= 2
         #     self.std_pool = AdaptiveStdPooling2d((1, 4))
 
-        # self.fc = nn.Sequential(
-        #     nn.Linear(self.inplanes * avg_size, embedding_size),
-        #     nn.BatchNorm1d(embedding_size)
-        # )
+        self.fc = nn.Sequential(
+            nn.Linear(self.inplanes * avg_size, embedding_size),
+            nn.BatchNorm1d(embedding_size)
+        )
 
-        self.fc = nn.Linear(self.inplanes * avg_size, embedding_size)
+        # self.fc = nn.Linear(self.inplanes * avg_size, embedding_size)
 
         self.classifier = nn.Linear(self.embedding_size, num_classes)
 
@@ -854,7 +854,7 @@ class AdaptiveStdPooling2d(nn.Module):
                 y_start = int(np.floor(y_idx * y_stride))
                 y_end = int(np.ceil((y_idx + 1) * y_stride))
                 stds = input[:, :, y_start:y_end, x_start:x_end].var(dim=2, unbiased=False, keepdim=True).add_(
-                    1e-12).sqrt()
+                    1e-14).sqrt()
                 # stds = torch.std(input[:, :, y_start:y_end, x_start:x_end] , dim=2, )
                 sum_std = torch.sum(stds, dim=3, keepdim=True)
 
