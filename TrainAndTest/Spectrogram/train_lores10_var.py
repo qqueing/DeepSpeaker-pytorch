@@ -491,10 +491,9 @@ def train(train_loader, model, ce, optimizer, epoch):
                     total_loss / (batch_idx + 1),
                     100. * minibatch_acc))
 
-    print('\nTrain Epoch {}:\n ' \
-          '\33[91m  Train Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch,
-                                                                        100 * float(correct) / total_datasize,
-                                                                        total_loss / len(train_loader)))
+    print('\33[91mTrain Epoch {}: Accuracy:{:.6f}%, Avg loss: {}.\33[0m'.format(epoch,
+                                                                                100 * float(correct) / total_datasize,
+                                                                                total_loss / len(train_loader)))
     writer.add_scalar('Train/Accuracy', correct / total_datasize, epoch)
     writer.add_scalar('Train/Loss', total_loss / len(train_loader), epoch)
 
