@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=7
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -177,7 +177,7 @@ if [ $stage -eq 7 ]; then
   done
 fi
 
-#stage=11
+stage=20
 if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
