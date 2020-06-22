@@ -74,7 +74,7 @@ args = parser.parse_args()
 
 def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
-    feat_scp = os.path.join(out_dir, 'feat.%d.temp.scp' % proid)
+    feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
     feat_ark = os.path.join(out_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
     utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
