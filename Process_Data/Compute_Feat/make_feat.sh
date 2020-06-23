@@ -147,6 +147,7 @@ if [ $stage -le 5 ]; then
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/spect \
       --out-set ${name}_noc \
+      --nfft 320 \
       --windowsize 0.02 \
       --feat-type spectrogram
   done
