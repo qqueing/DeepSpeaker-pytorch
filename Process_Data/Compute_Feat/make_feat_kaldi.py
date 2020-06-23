@@ -179,7 +179,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
 
     compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark, new_feat_scp)
 
-    pid, stdout, stderr = RunCommand(compress_command)
+    # pid, stdout, stderr = RunCommand(compress_command)
     # print(stdout)
     if os.path.exists(new_feat_scp) and os.path.exists(new_feat_ark):
         # os.remove(feat_ark)
