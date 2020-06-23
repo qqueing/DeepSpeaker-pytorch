@@ -142,7 +142,7 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                 feat = feat.astype(np.float32)
                 kaldi_io.write_mat(feat_ark_f, feat, key='')
                 offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
-
+                print(offsets)
                 feat_scp_f.write(key + ' ' + offsets + '\n')
                 utt2dur_f.write('%s %.6f\n' % (key, duration))
                 utt2num_frames_f.write('%s %d\n' % (key, len(feat)))
