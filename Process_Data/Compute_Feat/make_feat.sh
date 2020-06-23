@@ -177,7 +177,7 @@ if [ $stage -eq 7 ]; then
   done
 fi
 
-stage=20
+stage=100
 if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
