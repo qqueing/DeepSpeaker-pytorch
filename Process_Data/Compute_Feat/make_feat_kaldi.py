@@ -246,7 +246,7 @@ if __name__ == "__main__":
         print('\n>> Saving Completed without errors.!')
 
     Split_dir = os.path.join(out_dir, 'Split%d' % nj)
-    print('\n>> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
+    print('  >> Splited Data root is %s. Concat all scripts together.' % str(Split_dir))
 
     all_scp_path = [os.path.join(Split_dir, '%d/feat.%d.scp' % (i, i)) for i in range(nj)]
     feat_scp = os.path.join(out_dir, 'feats.scp')

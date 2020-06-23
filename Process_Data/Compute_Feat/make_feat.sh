@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=7
+stage=5
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -145,7 +145,7 @@ if [ $stage -le 5 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1/spect \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/spect \
       --out-set ${name}_noc \
       --nfft 320 \
       --windowsize 0.02 \
@@ -153,7 +153,7 @@ if [ $stage -le 5 ]; then
   done
 fi
 
-#stage=200
+stage=7
 # sitw
 if [ $stage -le 6 ]; then
   for name in dev eval ; do
@@ -171,14 +171,14 @@ if [ $stage -eq 7 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect \
-      --out-set ${name}_noco \
+      --out-set ${name}_noc \
       --feat-type spectrogram \
       --nfft 320 \
       --windowsize 0.02
   done
 fi
 
-stage=200
+stage=20
 if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -345,7 +345,7 @@ if [ $stage -le 20 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/spect \
-      --out-set ${name} \
+      --out-set ${name}_noc \
       --feat-type spectrogram \
       --nfft 320 \
       --windowsize 0.02
@@ -358,7 +358,7 @@ if [ $stage -le 30 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect \
-      --out-set ${name} \
+      --out-set ${name}_noc \
       --feat-type spectrogram \
       --nfft 320 \
       --windowsize 0.02
