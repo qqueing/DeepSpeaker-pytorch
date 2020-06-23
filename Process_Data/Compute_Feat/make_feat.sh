@@ -171,6 +171,7 @@ if [ $stage -eq 7 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect \
+      --nj 12 \
       --out-set ${name}_noc \
       --feat-type spectrogram \
       --nfft 320 \
@@ -345,6 +346,7 @@ if [ $stage -le 20 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/spect \
+      --nj 20 \
       --out-set ${name}_noc \
       --feat-type spectrogram \
       --nfft 320 \
