@@ -166,15 +166,20 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
     utt2num_frames_f.close()
 
     new_feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    new_feat_ark = os.path.join(ark_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
+    new_feat_ark = os.path.join(ark_dir, ark_prefix, 'feat.%d.ark' % proid)
+    if not os.path.exists(os.path.dirname(new_feat_ark)):
+        os.makedirs(os.path.dirname(new_feat_ark))
+
     if os.path.exists(feat_scp):
         print(feat_scp)
+
     compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark, new_feat_scp)
 
     pid, stdout, stderr = RunCommand(compress_command)
     # print(stdout)
     if os.path.exists(new_feat_scp) and os.path.exists(new_feat_ark):
-        os.remove(feat_ark)
+        # os.remove(feat_ark)
+        pass
 
 if __name__ == "__main__":
 
