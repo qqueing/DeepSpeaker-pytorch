@@ -14,7 +14,6 @@ from __future__ import print_function
 
 import argparse
 import os
-import shutil
 import sys
 import time
 from multiprocessing import Pool, Manager
@@ -279,7 +278,7 @@ if __name__ == "__main__":
         print('Errors in %s ?' % utt2num_frames)
 
     print('Delete tmp files in: %s' % Split_dir)
-    shutil.rmtree(Split_dir)
+    # shutil.rmtree(Split_dir)
     end_time = time.time()
     print('For multi process Completed, write all files in: %s. And %.2fs collapse.' % (out_dir, end_time - start_time))
     sys.exit()
