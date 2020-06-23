@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=7
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -171,14 +171,14 @@ if [ $stage -eq 7 ]; then
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect \
-      --out-set ${name}_noc \
+      --out-set ${name}_noco \
       --feat-type spectrogram \
       --nfft 320 \
       --windowsize 0.02
   done
 fi
 
-#stage=20
+stage=200
 if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \

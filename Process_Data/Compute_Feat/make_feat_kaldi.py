@@ -63,6 +63,8 @@ parser.add_argument('--nfft', type=int, required=True,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--normalize', action='store_true', default=False,
                     help='using Cosine similarity')
+parser.add_argument('--compress', action='store_true', default=False,
+                    help='using Cosine similarity')
 
 parser.add_argument('--conf', type=str, default='condf/spect.conf', metavar='E',
                     help='number of epochs to train (default: 10)')
@@ -166,16 +168,20 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
     utt2num_frames_f.close()
 
     new_feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    new_feat_ark = os.path.join(ark_dir, ark_prefix, 'feat.%d.ark' % proid)
-    if not os.path.exists(os.path.dirname(new_feat_ark)):
-        os.makedirs(os.path.dirname(new_feat_ark))
+    if args.compress:
+        new_feat_ark = os.path.join(ark_dir, ark_prefix, 'feat.%d.ark' % proid)
+        if not os.path.exists(os.path.dirname(new_feat_ark)):
+            os.makedirs(os.path.dirname(new_feat_ark))
 
-    compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark, new_feat_scp)
+        compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark,
+                                                                                    new_feat_scp)
 
-    pid, stdout, stderr = RunCommand(compress_command)
-    # print(stdout)
-    if os.path.exists(new_feat_scp) and os.path.exists(new_feat_ark):
-        os.remove(feat_ark)
+        pid, stdout, stderr = RunCommand(compress_command)
+        # print(stdout)
+        if os.path.exists(new_feat_scp) and os.path.exists(new_feat_ark):
+            os.remove(feat_ark)
+    else:
+        shutil.copy(feat_scp, new_feat_scp)
         # pass
 
 if __name__ == "__main__":
@@ -276,7 +282,8 @@ if __name__ == "__main__":
         print('Errors in %s ?' % utt2num_frames)
 
     print('Delete tmp files in: %s' % Split_dir)
-    shutil.rmtree(Split_dir)
+    if args.compress:
+        shutil.rmtree(Split_dir)
     end_time = time.time()
     print('For multi process Completed, write all files in: %s. And %.2fs collapse.' % (out_dir, end_time - start_time))
     sys.exit()
