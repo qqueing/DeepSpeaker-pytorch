@@ -14,6 +14,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import shutil
 import sys
 import time
 from multiprocessing import Pool, Manager
@@ -169,14 +170,6 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
     if not os.path.exists(os.path.dirname(new_feat_ark)):
         os.makedirs(os.path.dirname(new_feat_ark))
 
-    # if os.path.exists(feat_scp):
-    #     print(feat_scp)
-
-    # with open(feat_scp, 'r') as f:
-    #     for l in f.readlines():
-    #         print('first line of feat.scp is: ', l)
-    #         break
-
     compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark, new_feat_scp)
 
     pid, stdout, stderr = RunCommand(compress_command)
@@ -283,7 +276,7 @@ if __name__ == "__main__":
         print('Errors in %s ?' % utt2num_frames)
 
     print('Delete tmp files in: %s' % Split_dir)
-    # shutil.rmtree(Split_dir)
+    shutil.rmtree(Split_dir)
     end_time = time.time()
     print('For multi process Completed, write all files in: %s. And %.2fs collapse.' % (out_dir, end_time - start_time))
     sys.exit()
