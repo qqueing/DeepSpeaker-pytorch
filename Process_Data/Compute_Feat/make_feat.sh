@@ -4,7 +4,7 @@ stage=50
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --nj 16 \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64 \
@@ -41,7 +41,7 @@ fi
 
 if [ $stage -le 1 ]; then
   for name in dev test ; do
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --nj 16 \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_pyfb64 \
@@ -50,7 +50,7 @@ if [ $stage -le 1 ]; then
 #      --filters 64 \
 #      --feat-type fbank
 
-#     python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#     python Process_Data/Compute_Feat/make_feat.py \
 #      --nj 16 \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_fb64/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/Vox1_spect \
@@ -197,7 +197,7 @@ fi
 #stage=100
 if [ $stage -le 9 ]; then
   for name in train test ; do
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
 #      --out-set ${name}_fb40_20 \
@@ -207,7 +207,7 @@ if [ $stage -le 9 ]; then
 #      --windowsize 0.02 \
 #      --filters 40
 
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
 #      --out-set ${name}_fb40_dnn_20 \
@@ -216,7 +216,7 @@ if [ $stage -le 9 ]; then
 #      --nfft 320 \
 #      --windowsize 0.02 \
 #      --filters 40
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/pyfb \
 #      --out-set ${name}_fb30 \
@@ -226,7 +226,7 @@ if [ $stage -le 9 ]; then
 #      --windowsize 0.02 \
 #      --filters 30
 #
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/pyfb \
 #      --out-set ${name}_dfb30_fix \
@@ -251,7 +251,7 @@ fi
 #stage=100
 #if [ $stage -le 10 ]; then
 #  for name in train test ; do
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
 #      --out-set ${name}_mfcc_20 \
@@ -263,7 +263,7 @@ fi
 #      --filters 30 \
 #      --numcep 24
 #
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit \
 #      --out-set ${name}_mfcc_dnn_20 \
@@ -304,7 +304,7 @@ if [ $stage -le 12 ]; then
       --windowsize 0.025 \
       --filters 80
 
-#     python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#     python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri \
 #      --out-set ${name}_fb40_dnn_20 \
@@ -329,7 +329,7 @@ if [ $stage -le 13 ]; then
       --windowsize 0.02 \
       --filters 24
 
-#    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+#    python Process_Data/Compute_Feat/make_feat.py \
 #      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/${name} \
 #      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/libri/pyfb \
 #      --out-set ${name}_dfb24_var \

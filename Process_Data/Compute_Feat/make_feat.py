@@ -5,7 +5,7 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: make_feat_kaldi.py
+@File: make_feat.py
 @Time: 2020/4/1 11:25 AM
 @Overview:
 """
@@ -37,6 +37,9 @@ parser.add_argument('--data-format', type=str,
 parser.add_argument('--out-dir', type=str, required=True,
                     help='number of jobs to make feats (default: 10)')
 parser.add_argument('--out-set', type=str, default='dev_reverb',
+                    help='number of jobs to make feats (default: 10)')
+parser.add_argument('--feat-format', type=str,
+                    default='kaldi', choices=['kaldi', 'npy'],
                     help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--feat-type', type=str,
@@ -77,14 +80,22 @@ args = parser.parse_args()
 def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue):
     #  wav_scp = os.path.join(data_path, 'wav.scp')
     feat_scp = os.path.join(out_dir, 'feat.%d.temp.scp' % proid)
-    feat_ark = os.path.join(out_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
+
     utt2dur = os.path.join(out_dir, 'utt2dur.%d' % proid)
     utt2num_frames = os.path.join(out_dir, 'utt2num_frames.%d' % proid)
 
     feat_scp_f = open(feat_scp, 'w')
     utt2dur_f = open(utt2dur, 'w')
-    feat_ark_f = open(feat_ark, 'wb')
+
+    if args.feat_format == 'kaldi':
+        feat_ark = os.path.join(out_dir, '%s_feat.%d.ark' % (ark_prefix, proid))
+        feat_ark_f = open(feat_ark, 'wb')
+
     utt2num_frames_f = open(utt2num_frames, 'w')
+    feat_dir = os.path.join(ark_dir, ark_prefix)
+    if not os.path.exists(feat_dir):
+        os.makedirs(feat_dir)
+
     temp_dir = out_dir + '/temp'
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
@@ -143,10 +154,16 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
                     # feat = np.load(pair[1]).astype(np.float32)
 
                 feat = feat.astype(np.float32)
-                kaldi_io.write_mat(feat_ark_f, feat, key='')
-                offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
-                # print(offsets)
-                feat_scp_f.write(key + ' ' + offsets + '\n')
+                if args.feat_format == 'kaldi':
+                    kaldi_io.write_mat(feat_ark_f, feat, key='')
+                    offsets = feat_ark + ':' + str(feat_ark_f.tell() - len(feat.tobytes()) - 15)
+                    # print(offsets)
+                    feat_scp_f.write(key + ' ' + offsets + '\n')
+                elif args.feat_format == 'npy':
+                    npy_path = os.path.join(feat_dir, '%s.npy' % key)
+                    np.save(npy_path, feat)
+                    feat_scp_f.write(key + ' ' + npy_path + '\n')
+
                 utt2dur_f.write('%s %.6f\n' % (key, duration))
                 utt2num_frames_f.write('%s %d\n' % (key, len(feat)))
             except Exception as e:
@@ -164,15 +181,13 @@ def MakeFeatsProcess(lock, out_dir, ark_dir, ark_prefix, proid, t_queue, e_queue
 
     feat_scp_f.close()
     utt2dur_f.close()
-    feat_ark_f.close()
+    if args.feat_format == 'kaldi':
+        feat_ark_f.close()
     utt2num_frames_f.close()
 
     new_feat_scp = os.path.join(out_dir, 'feat.%d.scp' % proid)
-    if args.compress:
-        new_feat_ark = os.path.join(ark_dir, ark_prefix, 'feat.%d.ark' % proid)
-        if not os.path.exists(os.path.dirname(new_feat_ark)):
-            os.makedirs(os.path.dirname(new_feat_ark))
-
+    if args.feat_format == 'kaldi' and args.compress:
+        new_feat_ark = os.path.join(feat_dir, 'feat.%d.ark' % proid)
         compress_command = "copy-feats --compress=true scp:{} ark,scp:{},{}".format(feat_scp, new_feat_ark,
                                                                                     new_feat_scp)
 
