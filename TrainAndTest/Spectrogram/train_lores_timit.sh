@@ -160,7 +160,7 @@ if [ $stage -le 15 ]; then
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_dev_10k \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/ddata/army/aiox1_test \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_test \
       --resnet-size 8 \
       --nj 12 \
       --epochs 15 \
