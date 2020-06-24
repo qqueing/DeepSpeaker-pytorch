@@ -159,10 +159,10 @@ if [ $stage -le 15 ]; then
   for loss in soft; do
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/spect/dev_noc \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/spect/test_noc \
+      --train-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/vox1/spect/dev_noc \
+      --test-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/vox1/spect/test_noc \
       --resnet-size 8 \
-      --nj 12 \
+      --nj 10 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
