@@ -73,6 +73,9 @@ parser.add_argument('--sitw-dir', type=str,
                     default='/home/yangwenhao/local/project/lstm_speaker_verification/data/sitw',
                     help='path to voxceleb1 test dataset')
 parser.add_argument('--nj', default=12, type=int, metavar='NJOB', help='num of job')
+parser.add_argument('--feat-format', type=str,
+                    default='kaldi', choices=['kaldi', 'npy'],
+                    help='number of jobs to make feats (default: 10)')
 
 parser.add_argument('--check-path', default='Data/checkpoint/LoResNet10/spect/soft',
                     help='folder to output model checkpoints')
@@ -247,7 +250,10 @@ else:
     file_loader = read_audio
 
 # pdb.set_trace()
-file_loader = read_mat
+if args.feat_format == 'kaldi':
+    file_loader = read_mat
+elif args.feat_format == 'npy':
+    file_loader = np.load
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
                                transform=transform, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
