@@ -797,11 +797,11 @@ class ScriptTrainDataset(data.Dataset):
             feature = self.loader(self.uid2feat[utts[uid]])
 
             # Get the index of feature
-            if n_samples == 0:
-                start = int(random.uniform(0, len(feature)))
-            else:
-                start = 0
-            stop = int(min(len(feature) - 1, max(1.0, start + frames - n_samples)))
+            # if n_samples == 0:
+            #     start = int(random.uniform(0, len(feature)))
+            # else:
+            start = 0
+            stop = int(min(len(feature) - 1, max(1.0, frames - n_samples)))
             y = np.concatenate((y, feature[start:stop]), axis=0)
             n_samples = len(y)
             # transform features if required
