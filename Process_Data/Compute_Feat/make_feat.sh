@@ -388,6 +388,6 @@ if [ $stage -le 50 ]; then
     python Process_Data/Compute_Feat/make_feat_npy.py \
       --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/${name} \
       --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect/${name} \
-      --nj 20 \
+      --nj 20
   done
 fi
