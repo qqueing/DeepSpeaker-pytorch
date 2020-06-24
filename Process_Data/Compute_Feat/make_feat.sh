@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=40
+stage=20
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -342,7 +342,8 @@ if [ $stage -le 13 ]; then
 fi
 
 if [ $stage -le 20 ]; then
-  for name in dev ; do
+# dev
+  for name in test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/aishell2/spect \
@@ -354,7 +355,7 @@ if [ $stage -le 20 ]; then
   done
 fi
 
-#stage=100
+stage=1000
 if [ $stage -le 30 ]; then
 #enroll
   for name in dev test ; do
