@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=40
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -362,6 +362,19 @@ if [ $stage -le 30 ]; then
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect \
       --out-set ${name}_noc \
+      --feat-type spectrogram \
+      --nfft 320 \
+      --windowsize 0.02
+  done
+fi
+
+if [ $stage -le 40 ]; then
+#enroll
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_${name} \
+      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_spect \
+      --out-set ${name} \
       --feat-type spectrogram \
       --nfft 320 \
       --windowsize 0.02
