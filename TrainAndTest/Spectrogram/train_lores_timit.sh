@@ -180,7 +180,6 @@ if [ $stage -le 15 ]; then
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
-      --inst-norm \
       --gpu-id 0 \
       --loss-type ${loss}
   done
