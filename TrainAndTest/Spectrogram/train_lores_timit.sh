@@ -162,7 +162,7 @@ if [ $stage -le 15 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_spect/dev_10k \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_spect/test \
       --resnet-size 8 \
-      --nj 16 \
+      --nj 24 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
