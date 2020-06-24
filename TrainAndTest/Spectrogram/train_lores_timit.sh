@@ -159,8 +159,8 @@ if [ $stage -le 15 ]; then
   for loss in soft; do
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_dev_10k \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_test \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_spect/dev_10k \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_spect/test \
       --resnet-size 8 \
       --nj 12 \
       --epochs 15 \
