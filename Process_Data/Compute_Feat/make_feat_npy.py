@@ -5,21 +5,20 @@
 @Author: yangwenhao
 @Contact: 874681044@qq.com
 @Software: PyCharm
-@File: make_spectrogram_npy.py
+@File: make_feat_npy.py
 @Time: 2020/3/5 10:37 PM
 @Overview:
 """
 from __future__ import print_function
+
 import argparse
 import os
-import pathlib
 import sys
-import pdb
-from multiprocessing import Process, Queue, Pool, Manager
 import time
+from multiprocessing import Pool, Manager
+
 import numpy as np
-from kaldi_io import kaldi_io
-import Process_Data.constants as c
+
 from Process_Data.audio_processing import Make_Spect
 
 
