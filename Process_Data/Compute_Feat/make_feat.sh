@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=5
+stage=30
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -153,7 +153,7 @@ if [ $stage -le 5 ]; then
   done
 fi
 
-stage=7
+#stage=7
 # sitw
 if [ $stage -le 6 ]; then
   for name in dev eval ; do
@@ -179,7 +179,7 @@ if [ $stage -eq 7 ]; then
   done
 fi
 
-stage=20
+#stage=20
 if [ $stage -le 8 ]; then
   for name in train test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
@@ -356,7 +356,8 @@ fi
 
 #stage=100
 if [ $stage -le 30 ]; then
-  for name in enroll ; do
+#enroll
+  for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/${name} \
       --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect \
