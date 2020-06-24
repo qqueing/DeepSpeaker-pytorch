@@ -153,21 +153,21 @@ if [ $stage -le 10 ]; then
 fi
 
 if [ $stage -le 15 ]; then
-  datasets=timit
+  datasets=aiox1
   model=LoResNet
   resnet_size=8
   for loss in soft; do
     python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model ${model} \
-      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/train_noco \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/timit/spect/test_noco \
+      --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/army/aiox1_dev_10k \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/ddata/army/aiox1_test \
       --resnet-size 8 \
       --nj 12 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noco/${loss} \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noco/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss} \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 256 \
