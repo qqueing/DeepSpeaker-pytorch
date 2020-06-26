@@ -171,7 +171,7 @@ if [ $stage -le 15 ]; then
       --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
-      --input-per-spks 256 \
+      --input-per-spks 192 \
       --num-valid 1 \
       --alpha 10 \
       --margin 0.4 \

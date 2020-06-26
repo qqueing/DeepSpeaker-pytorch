@@ -447,14 +447,14 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
     for batch_idx, (data, label) in pbar:
 
         if args.cuda:
-            data = data.float().cuda()
+            data = data.cuda()
+
         data, label = Variable(data), Variable(label)
         # end_time = time.time()
 
         # this_time = end_time - start_time
         # print(this_time)
         # start_time = time.time()
-
         # continue
         # pdb.set_trace()
         classfier, feats = model(data)
