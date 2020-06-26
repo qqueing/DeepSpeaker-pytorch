@@ -13,6 +13,7 @@ import os
 import pathlib
 import pdb
 import random
+import time
 
 import kaldi_io
 import numpy as np
@@ -776,7 +777,7 @@ class ScriptTrainDataset(data.Dataset):
 
 
     def __getitem__(self, sid):
-
+        start_time = time.time()
         if self.return_uid:
             uid, label = self.utt_dataset[sid]
             y = self.loader(self.uid2feat[uid])
@@ -808,6 +809,8 @@ class ScriptTrainDataset(data.Dataset):
 
         feature = self.transform(y)
         label = sid
+        end_time = time.time()
+        print('Get %s used %d' % (uid, end_time - start_time))
         return feature, label
 
     def __len__(self):
