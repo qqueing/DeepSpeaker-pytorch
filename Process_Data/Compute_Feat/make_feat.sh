@@ -390,6 +390,7 @@ if [ $stage -le 50 ]; then
       --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect \
       --out-set ${name} \
       --feat-type spectrogram \
+      --feat-format npy \
       --nfft 320 \
       --windowsize 0.02 \
       --nj 20
