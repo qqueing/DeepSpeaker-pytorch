@@ -169,7 +169,7 @@ if [ $stage -le 15 ]; then
       --milestones 7,11 \
       --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss} \
       --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
-      --channels 4,16,64 \
+      --channels 64,128,256 \
       --embedding-size 128 \
       --input-per-spks 192 \
       --num-valid 1 \
