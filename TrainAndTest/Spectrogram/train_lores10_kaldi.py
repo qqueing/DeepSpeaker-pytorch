@@ -254,6 +254,7 @@ if args.feat_format == 'kaldi':
     file_loader = read_mat
 elif args.feat_format == 'npy':
     file_loader = np.load
+
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
                                transform=transform, num_valid=args.num_valid)
 test_dir = ScriptTestDataset(dir=args.test_dir, loader=file_loader, transform=transform_T)
@@ -400,7 +401,7 @@ def main():
             print('{:.5f} '.format(param_group['lr']), end='')
         print(' \33[0m')
 
-        train(train_loader, model, ce, optimizer, scheduler, epoch)
+        train(train_loader, model, ce, optimizer, epoch)
         if epoch % 4 == 1 or epoch == (end - 1):
             check_path = '{}/checkpoint_{}.pth'.format(args.check_path, epoch)
             torch.save({'epoch': epoch,
@@ -431,7 +432,7 @@ def main():
     writer.close()
 
 
-def train(train_loader, model, ce, optimizer, scheduler, epoch):
+def train(train_loader, model, ce, optimizer, epoch):
     # switch to evaluate mode
     model.train()
 
