@@ -443,19 +443,19 @@ def train(train_loader, model, ce, optimizer, scheduler, epoch):
     ce_criterion, xe_criterion = ce
     pbar = tqdm(enumerate(train_loader))
     output_softmax = nn.Softmax(dim=1)
-    start_time = time.time()
+    # start_time = time.time()
     for batch_idx, (data, label) in pbar:
 
         if args.cuda:
             data = data.float().cuda()
         data, label = Variable(data), Variable(label)
-        end_time = time.time()
+        # end_time = time.time()
 
-        this_time = end_time - start_time
-        print(this_time)
-        start_time = time.time()
+        # this_time = end_time - start_time
+        # print(this_time)
+        # start_time = time.time()
 
-        continue
+        # continue
         # pdb.set_trace()
         classfier, feats = model(data)
         true_labels = label.cuda()

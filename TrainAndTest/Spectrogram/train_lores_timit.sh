@@ -163,7 +163,7 @@ if [ $stage -le 15 ]; then
       --test-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect/test \
       --feat-format npy \
       --resnet-size 8 \
-      --nj 10 \
+      --nj 8 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \

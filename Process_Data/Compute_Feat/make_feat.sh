@@ -385,9 +385,13 @@ fi
 if [ $stage -le 50 ]; then
 #enroll
   for name in dev test ; do
-    python Process_Data/Compute_Feat/make_feat_npy.py \
+    python Process_Data/Compute_Feat/make_feat.py \
       --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/${name} \
-      --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect/${name} \
+      --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect \
+      --out-set ${name} \
+      --feat-type spectrogram \
+      --nfft 320 \
+      --windowsize 0.02 \
       --nj 20
   done
 fi
