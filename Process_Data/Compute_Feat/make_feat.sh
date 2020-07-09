@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=50
+stage=60
 # voxceleb1
 if [ $stage -le 0 ]; then
   for name in dev test ; do
@@ -388,6 +388,21 @@ if [ $stage -le 50 ]; then
     python Process_Data/Compute_Feat/make_feat.py \
       --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/${name} \
       --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect \
+      --out-set ${name} \
+      --feat-type spectrogram \
+      --feat-format npy \
+      --nfft 320 \
+      --windowsize 0.02 \
+      --nj 20
+  done
+fi
+
+if [ $stage -le 60 ]; then
+#enroll
+  for name in dev test ; do
+    python Process_Data/Compute_Feat/make_feat.py \
+      --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/army/${name} \
+      --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/army/spect \
       --out-set ${name} \
       --feat-type spectrogram \
       --feat-format npy \
