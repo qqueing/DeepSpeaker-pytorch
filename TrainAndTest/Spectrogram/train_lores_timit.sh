@@ -4,7 +4,7 @@
 stage=15
 
 waited=0
-while [ `ps 128196 | wc -l` -eq 2 ]; do
+while [ `ps 27212 | wc -l` -eq 2 ]; do
   sleep 60
   waited=$(expr $waited + 1)
   echo -en "\033[1;4;31m Having waited for ${waited} minutes!\033[0m\r"
