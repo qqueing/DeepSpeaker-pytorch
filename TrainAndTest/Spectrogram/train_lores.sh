@@ -253,7 +253,7 @@ if [ $stage -le 30 ]; then
 fi
 
 if [ $stage -le 40 ]; then
-  datasets=army
+  datasets=all_army
   model=LoResNet
   resnet_size=8
   for loss in soft; do
