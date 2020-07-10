@@ -401,8 +401,8 @@ if [ $stage -le 60 ]; then
 #enroll
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat.py \
-      --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/army/${name} \
-      --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/army/spect \
+      --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/all_army/${name} \
+      --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/all_army/spect \
       --out-set ${name} \
       --feat-type spectrogram \
       --feat-format npy \
