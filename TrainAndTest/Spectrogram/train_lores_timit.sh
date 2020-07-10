@@ -167,8 +167,8 @@ if [ $stage -le 15 ]; then
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss} \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_norm \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}_norm/checkpoint_1.pth \
       --channels 4,16,64 \
       --embedding-size 128 \
       --input-per-spks 192 \
@@ -177,6 +177,7 @@ if [ $stage -le 15 ]; then
       --margin 0.4 \
       --s 30 \
       --m 3 \
+      --inst-norm \
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
