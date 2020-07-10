@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=30
+stage=40
 
 waited=0
 while [ `ps 113458 | wc -l` -eq 2 ]; do
@@ -250,4 +250,37 @@ if [ $stage -le 30 ]; then
       --dropout-p 0.25
   done
 
+fi
+
+if [ $stage -le 40 ]; then
+  datasets=army
+  model=LoResNet
+  resnet_size=8
+  for loss in soft; do
+    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+      --model ${model} \
+      --train-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/all_army/spect/dev \
+      --test-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/all_army/spect/test \
+      --feat-format npy \
+      --resnet-size 8 \
+      --nj 10 \
+      --epochs 15 \
+      --lr 0.1 \
+      --milestones 7,11 \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss} \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_noc/${loss}/checkpoint_1.pth \
+      --channels 64,128,256 \
+      --embedding-size 128 \
+      --input-per-spks 192 \
+      --num-valid 1 \
+      --alpha 12 \
+      --margin 0.4 \
+      --s 30 \
+      --m 3 \
+      --loss-ratio 0.05 \
+      --weight-decay 0.001 \
+      --dropout-p 0.25 \
+      --gpu-id 0 \
+      --loss-type ${loss}
+  done
 fi
