@@ -211,7 +211,7 @@ writer = SummaryWriter(logdir=args.check_path, filename_suffix='_first')
 
 sys.stdout = NewLogger(osp.join(args.check_path, 'log.txt'))
 
-kwargs = {'num_workers': args.nj, 'pin_memory': True} if args.cuda else {}
+kwargs = {'num_workers': args.nj, 'pin_memory': False} if args.cuda else {}
 if not os.path.exists(args.check_path):
     os.makedirs(args.check_path)
 
