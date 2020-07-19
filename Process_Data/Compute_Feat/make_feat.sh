@@ -143,7 +143,7 @@ fi
 #vox1 spectrogram 161
 if [ $stage -le 5 ]; then
   for name in dev test ; do
-    python Process_Data/Compute_Feat/make_feat_kaldi.py \
+    python Process_Data/Compute_Feat/make_feat.py \
       --nj 16 \
       --data-dir ${lstm_dir}/data/vox1/${name} \
       --out-dir ${lstm_dir}/data/vox1/spect \
