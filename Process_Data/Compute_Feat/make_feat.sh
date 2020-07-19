@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-stage=60
+stage=5
 # voxceleb1
+lstm_dir=/home/work2020/yangwenhao/project/lstm_speaker_verification
 if [ $stage -le 0 ]; then
   for name in dev test ; do
 #    python Process_Data/Compute_Feat/make_feat.py \
@@ -144,16 +145,17 @@ if [ $stage -le 5 ]; then
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat_kaldi.py \
       --nj 16 \
-      --data-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/${name} \
-      --out-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/vox1/spect \
-      --out-set ${name}_noc \
+      --data-dir ${lstm_dir}/data/vox1/${name} \
+      --out-dir ${lstm_dir}/data/vox1/spect \
+      --out-set ${name} \
       --nfft 320 \
       --windowsize 0.02 \
+      --feat-format npy \
       --feat-type spectrogram
   done
 fi
 
-#stage=7
+stage=50
 # sitw
 if [ $stage -le 6 ]; then
   for name in dev eval ; do
@@ -386,8 +388,8 @@ if [ $stage -le 50 ]; then
 #enroll
   for name in dev test ; do
     python Process_Data/Compute_Feat/make_feat.py \
-      --data-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/${name} \
-      --out-dir /home/storage/yangwenhao/project/lstm_speaker_verification/data/cnceleb/spect \
+      --data-dir ${lstm_dir}/data/cnceleb/${name} \
+      --out-dir ${lstm_dir}/data/cnceleb/spect \
       --out-set ${name} \
       --feat-type spectrogram \
       --feat-format npy \
@@ -397,6 +399,7 @@ if [ $stage -le 50 ]; then
   done
 fi
 
+stage=100
 if [ $stage -le 60 ]; then
 #enroll
   for name in dev test ; do
