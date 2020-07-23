@@ -14,7 +14,6 @@ from __future__ import print_function
 import argparse
 import os
 import os.path as osp
-import pdb
 import sys
 import time
 # Version conflict
@@ -454,7 +453,7 @@ def train(train_loader, model, ce, optimizer, epoch):
         true_labels_a = label_a.cuda()
         true_labels_b = label_b.cuda()
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         # cos_theta, phi_theta = classfier
         spk_label = logits_spk
