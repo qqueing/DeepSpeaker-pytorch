@@ -29,8 +29,8 @@ if [ $stage -le 40 ]; then
       --lr 0.1 \
       --milestones 7,11 \
       --kernel-size ${kernel_size} \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_04/${loss}_33 \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_04/${loss}_33/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/spect_04/${loss}_33 \
+      --resume Data/checkpoint/${model}/${datasets}/spect_04/${loss}_33/checkpoint_1.pth \
       --channels 8,32,128 \
       --embedding-size-a 128 \
       --embedding-size-b 64 \
