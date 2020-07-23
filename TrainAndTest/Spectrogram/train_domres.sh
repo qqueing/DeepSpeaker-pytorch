@@ -16,7 +16,7 @@ if [ $stage -le 40 ]; then
   model=DomResNet
   resnet_size=8
   for loss in soft; do
-    python TrainAndTest/Spectrogram/train_lores10_kaldi.py \
+    python TrainAndTest/Spectrogram/train_domres_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/dev_04 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/test \
