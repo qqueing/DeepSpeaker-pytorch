@@ -505,7 +505,7 @@ def train(train_loader, model, ce, optimizer, epoch):
 
         if batch_idx % args.log_interval == 0:
             pbar.set_description(
-                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.4f} Spk Loss: {:.4f} Dom Loss: {:.4f} \n' \
+                'Train Epoch {:2d}: [{:8d}/{:8d} ({:3.0f}%)] Avg Loss: {:.4f} Spk Loss: {:.4f} Dom Loss: {:.4f} ' \
                 'Batch: Spk Accuracy: {:.4f}%, Dom Accuracy: {:.4f}%'.format(
                     epoch,
                     batch_idx * len(data),
