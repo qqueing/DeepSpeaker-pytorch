@@ -34,6 +34,7 @@ if [ $stage -le 40 ]; then
       --embedding-size-o 32 \
       --input-per-spks 192 \
       --num-valid 1 \
+      --domain \
       --alpha 9 \
       --dom-ratio 0.5 \
       --loss-ratio 0.05 \

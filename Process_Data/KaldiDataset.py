@@ -795,7 +795,7 @@ class ScriptTrainDataset(data.Dataset):
         self.spk_to_idx = spk_to_idx
         self.idx_to_spk = idx_to_spk
         self.num_spks = len(speakers)
-        self.num_doms = len(dom_to_idx) if dom_to_idx != None else 0
+        self.num_doms = len(self.dom_to_idx) if dom_to_idx != None else 0
 
         self.loader = loader
         self.feat_dim = loader(uid2feat[dataset[speakers[0]][0]]).shape[1]
