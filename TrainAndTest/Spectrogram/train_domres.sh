@@ -16,8 +16,9 @@ if [ $stage -le 40 ]; then
   model=DomResNet
   resnet_size=8
   kernel_size=3,3
+  channels=8,32,128
   for loss in soft; do
-    echo "Train ${model} with ${loss} loss in ${datasets}, kernel_size is ${kernel_size} for connection."
+    echo "\033[1;4;31m Train ${model} with ${loss} loss in ${datasets}, \n    kernel_size is ${kernel_size} for connection, channels are ${channels}.\033[0m\n"
     python TrainAndTest/Spectrogram/train_domres_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/dev_04 \
@@ -29,9 +30,10 @@ if [ $stage -le 40 ]; then
       --lr 0.1 \
       --milestones 7,11 \
       --kernel-size ${kernel_size} \
-      --check-path Data/checkpoint/${model}/${datasets}/spect_04/${loss}_33 \
-      --resume Data/checkpoint/${model}/${datasets}/spect_04/${loss}_33/checkpoint_1.pth \
-      --channels 8,32,128 \
+      --check-path Data/checkpoint/${model}/${datasets}/spect_04/${loss}_33_inst \
+      --resume Data/checkpoint/${model}/${datasets}/spect_04/${loss}_33_inst/checkpoint_1.pth \
+      --channels ${channels} \
+      --inst-norm \
       --embedding-size-a 128 \
       --embedding-size-b 64 \
       --embedding-size-o 32 \
