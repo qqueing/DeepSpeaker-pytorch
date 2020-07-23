@@ -18,7 +18,7 @@ if [ $stage -le 40 ]; then
   kernel_size=5,5
   channels=8,32,128
   for loss in soft; do
-    echo "\033[1;4;31m Train ${model} with ${loss} loss in ${datasets}, \n    kernel_size is ${kernel_size} for connection, channels are ${channels}.\033[0m\n"
+    echo -e "\033[1;4;31m Train ${model} with ${loss} loss in ${datasets}, \n    kernel_size is ${kernel_size} for connection, channels are ${channels}.\033[0m\n"
     python TrainAndTest/Spectrogram/train_domres_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/dev_04 \
@@ -57,7 +57,7 @@ if [ $stage -le 41 ]; then
   kernel_size=5,5
   channels=16,64,128
   for loss in soft; do
-    echo "\033[1;4;31m Train ${model} with ${loss} loss in ${datasets}, \n    kernel_size is ${kernel_size} for connection, channels are ${channels}.\033[0m\n"
+    echo -e "\033[1;4;31m Train ${model} with ${loss} loss in ${datasets}, \n    kernel_size is ${kernel_size} for connection, channels are ${channels}.\033[0m\n"
     python TrainAndTest/Spectrogram/train_domres_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/dev_04 \
