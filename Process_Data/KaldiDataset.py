@@ -953,6 +953,7 @@ class ScriptTestDataset(data.Dataset):
                     positive_pairs += 1
 
                 trials_pair.append((pair[0], pair[1], pair_true))
+
         trials_pair = np.array(trials_pair)
         trials_pair = trials_pair[trials_pair[:, 2].argsort()[::-1]]
 

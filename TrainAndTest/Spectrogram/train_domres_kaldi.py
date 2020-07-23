@@ -249,9 +249,10 @@ else:
     file_loader = read_audio
 
 # pdb.set_trace()
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 if args.feat_format == 'kaldi':
     file_loader = read_mat
-    torch.multiprocessing.set_sharing_strategy('file_system')
 elif args.feat_format == 'npy':
     file_loader = np.load
 
