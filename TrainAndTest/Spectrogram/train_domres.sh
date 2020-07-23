@@ -15,19 +15,22 @@ if [ $stage -le 40 ]; then
   datasets=cnceleb
   model=DomResNet
   resnet_size=8
+  kernel_size=3,3
   for loss in soft; do
+    echo "Train ${model} with ${loss} loss in ${datasets}, kernel_size is ${kernel_size} for connection."
     python TrainAndTest/Spectrogram/train_domres_kaldi.py \
       --model ${model} \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/dev_04 \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/cnceleb/spect/test \
       --feat-format npy \
-      --resnet-size 8 \
+      --resnet-size ${resnet_size} \
       --nj 10 \
       --epochs 15 \
       --lr 0.1 \
       --milestones 7,11 \
-      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_04/${loss} \
-      --resume Data/checkpoint/LoResNet8/${datasets}/spect_04/${loss}/checkpoint_1.pth \
+      --kernel-size ${kernel_size} \
+      --check-path Data/checkpoint/LoResNet8/${datasets}/spect_04/${loss}_33 \
+      --resume Data/checkpoint/LoResNet8/${datasets}/spect_04/${loss}_33/checkpoint_1.pth \
       --channels 8,32,128 \
       --embedding-size-a 128 \
       --embedding-size-b 64 \
