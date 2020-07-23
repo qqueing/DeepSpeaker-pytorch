@@ -14,3 +14,5 @@ Data/
 *.json
 *.wav
 
+*.bin
+Lime/SuResCNN10/data
