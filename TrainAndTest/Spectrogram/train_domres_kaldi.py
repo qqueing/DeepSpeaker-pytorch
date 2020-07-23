@@ -14,6 +14,7 @@ from __future__ import print_function
 import argparse
 import os
 import os.path as osp
+import pdb
 import sys
 import time
 # Version conflict
@@ -474,6 +475,7 @@ def train(train_loader, model, ce, optimizer, epoch):
         loss = spk_loss + dom_loss
 
         predicted_labels_a = output_softmax(spk_label)
+        pdb.set_trace()
         predicted_one_labels_a = torch.max(predicted_labels_a, dim=1)[1]
         minibatch_correct_a = float((predicted_one_labels_a.cuda() == true_labels_a.cuda()).sum().item())
         minibatch_acc_a = minibatch_correct_a / len(predicted_one_labels_a)
