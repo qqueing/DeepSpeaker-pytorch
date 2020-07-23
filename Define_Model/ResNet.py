@@ -935,7 +935,7 @@ class DomainResNet(nn.Module):
         self.dropout = nn.Dropout(self.dropout_p)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, avg_size))
 
-        self.fc1 = nn.Sequential(
+        self.fc = nn.Sequential(
             nn.Linear(self.inplanes * avg_size, self.embedding_size),
             nn.BatchNorm1d(self.embedding_size)
         )
