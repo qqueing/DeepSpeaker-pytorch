@@ -875,7 +875,7 @@ class DomainResNet(nn.Module):
     Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
     """
 
-    def __init__(self, embedding_size_a, embedding_size_b, embedding_o,
+    def __init__(self, embedding_size_a, embedding_size_b, embedding_size_o,
                  num_classes_a, num_classes_b,
                  block=BasicBlock,
                  resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
@@ -897,7 +897,7 @@ class DomainResNet(nn.Module):
 
         self.embedding_size_a = embedding_size_a
         self.embedding_size_b = embedding_size_b
-        self.embedding_size = embedding_size_a + embedding_size_b - embedding_o
+        self.embedding_size = embedding_size_a + embedding_size_b - embedding_size_o
 
         # self.relu = nn.LeakyReLU()
         self.relu = nn.ReLU(inplace=True)
