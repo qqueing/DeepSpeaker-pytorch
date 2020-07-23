@@ -292,7 +292,7 @@ def main():
 
     model_kwargs = {'embedding_size_a': args.embedding_size_a,
                     'embedding_size_b': args.embedding_size_b,
-                    'embedding_size_o': args.embedding_size_c,
+                    'embedding_size_o': args.embedding_size_o,
                     'inst_norm': args.inst_norm,
                     'resnet_size': args.resnet_size,
                     'num_classes_a': train_dir.num_spks,
