@@ -802,7 +802,7 @@ class ScriptTrainDataset(data.Dataset):
         self.transform = transform
         self.samples_per_speaker = samples_per_speaker
 
-        if self.return_uid:
+        if self.return_uid or self.domain:
             self.utt_dataset = []
             for i in range(self.samples_per_speaker * self.num_spks):
                 sid = i % self.num_spks
