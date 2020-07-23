@@ -36,7 +36,7 @@ if [ $stage -le 40 ]; then
       --num-valid 1 \
       --domain \
       --alpha 9 \
-      --dom-ratio 0.5 \
+      --dom-ratio 0.1 \
       --loss-ratio 0.05 \
       --weight-decay 0.001 \
       --dropout-p 0.25 \
