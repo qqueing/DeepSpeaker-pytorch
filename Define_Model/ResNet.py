@@ -438,7 +438,6 @@ class AttenSiResNet(nn.Module):
     # Allow for accessing forward method in a inherited class
     forward = _forward
 
-
 class ResNet(nn.Module):
 
     def __init__(self, resnet_size=18, embedding_size=512, block=BasicBlock,
@@ -1020,7 +1019,7 @@ class DomainResNet(nn.Module):
         x = self.fc(x)
 
         spk_x = x[:, :self.embedding_size_a]
-        dom_x = x[:, self.embedding_size_b:]
+        dom_x = x[:, -self.embedding_size_b:]
 
         if self.alpha:
             spk_x = self.l2_norm(spk_x, alpha=self.alpha)
