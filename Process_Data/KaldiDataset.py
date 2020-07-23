@@ -731,7 +731,8 @@ class ScriptTrainDataset(data.Dataset):
                     if uid not in utt2dom_dict.keys():
                         utt2dom_dict[uid] = utt_dom[-1]
 
-            domains = [utt2dom_dict[dom] for dom in utt2dom_dict.keys()]
+            all_domains = [utt2dom_dict[u] for u in utt2dom_dict.keys()]
+            domains = list(set(all_domains))
             domains.sort()
             dom_to_idx = {domains[i]: i for i in range(len(domains))}
             self.dom_to_idx = dom_to_idx
