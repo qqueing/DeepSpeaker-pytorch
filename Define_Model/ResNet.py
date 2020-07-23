@@ -868,8 +868,164 @@ class AdaptiveStdPooling2d(nn.Module):
 
         return output
 
-# from Define_Model.ResNet import AdaptiveStdPooling2d
-# st = AdaptiveStdPooling2d((None, 3))
-# import torch
-# a = torch.rand(12, 1, 300, 14)
-# st(a).shape
+
+class DomainResNet(nn.Module):
+    """
+    Define the ResNet model with A-softmax and AM-softmax loss.
+    Added dropout as https://github.com/nagadomi/kaggle-cifar10-torch7 after average pooling and fc layer.
+    """
+
+    def __init__(self, embedding_size_a, embedding_size_b, embedding_o,
+                 num_classes_a, num_classes_b,
+                 block=BasicBlock,
+                 resnet_size=8, channels=[64, 128, 256], dropout_p=0.,
+                 inst_norm=False, alpha=12,
+                 avg_size=4, kernal_size=5, padding=2, **kwargs):
+
+        super(DomainResNet, self).__init__()
+        resnet_type = {8: [1, 1, 1, 0],
+                       10: [1, 1, 1, 1],
+                       18: [2, 2, 2, 2],
+                       34: [3, 4, 6, 3],
+                       50: [3, 4, 6, 3],
+                       101: [3, 4, 23, 3]}
+
+        layers = resnet_type[resnet_size]
+        self.alpha = alpha
+        self.layers = layers
+        self.dropout_p = dropout_p
+
+        self.embedding_size_a = embedding_size_a
+        self.embedding_size_b = embedding_size_b
+        self.embedding_size = embedding_size_a + embedding_size_b - embedding_o
+
+        # self.relu = nn.LeakyReLU()
+        self.relu = nn.ReLU(inplace=True)
+
+        self.inplanes = channels[0]
+        self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2, padding=2, bias=False)
+        if inst_norm:
+            self.bn1 = nn.InstanceNorm2d(channels[0])
+        else:
+            self.bn1 = nn.BatchNorm2d(channels[0])
+
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layer1 = self._make_layer(block, channels[0], layers[0])
+
+        self.inplanes = channels[1]
+        self.conv2 = nn.Conv2d(channels[0], channels[1], kernel_size=kernal_size, stride=2,
+                               padding=padding, bias=False)
+        self.bn2 = nn.BatchNorm2d(channels[1])
+        self.layer2 = self._make_layer(block, channels[1], layers[1])
+
+        self.inplanes = channels[2]
+        self.conv3 = nn.Conv2d(channels[1], channels[2], kernel_size=kernal_size, stride=2,
+                               padding=padding, bias=False)
+        self.bn3 = nn.BatchNorm2d(channels[2])
+        self.layer3 = self._make_layer(block, channels[2], layers[2])
+
+        if layers[3] != 0:
+            assert len(channels) == 4
+            self.inplanes = channels[3]
+            self.conv4 = nn.Conv2d(channels[2], channels[3], kernel_size=kernal_size, stride=2,
+                                   padding=padding, bias=False)
+            self.bn4 = nn.BatchNorm2d(channels[3])
+            self.layer4 = self._make_layer(block=block, planes=channels[3], blocks=layers[3])
+
+        self.dropout = nn.Dropout(self.dropout_p)
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, avg_size))
+
+        self.fc1 = nn.Sequential(
+            nn.Linear(self.inplanes * avg_size, self.embedding_size),
+            nn.BatchNorm1d(self.embedding_size)
+        )
+
+        self.classifier_spk = nn.Linear(self.embedding_size_a, num_classes_a)
+        self.classifier_dom = nn.Linear(self.embedding_size_b, num_classes_b)
+
+        for m in self.modules():  # 对于各层参数的初始化
+            if isinstance(m, nn.Conv2d):  # 以2/n的开方为标准差，做均值为0的正态分布
+                # n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                # m.weight.data.normal_(0, math.sqrt(2. / n))
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.GroupNorm)):  # weight设置为1，bias为0
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+    def l2_norm(self, input, alpha=1.0):
+        # alpha = log(p * (
+        #
+        # class -2) / (1-p))
+        input_size = input.size()
+        buffer = torch.pow(input, 2)
+
+        normp = torch.sum(buffer, 1).add_(1e-12)
+        norm = torch.sqrt(normp)
+
+        _output = torch.div(input, norm.view(-1, 1).expand_as(input))
+        output = _output.view(input_size)
+        # # # input = input.renorm(p=2, dim=1, maxnorm=1.0)
+        #
+        # norm = input.norm(p=2, dim=1, keepdim=True).add(1e-14)
+        # output = input / norm
+
+        return output * alpha
+
+    def _make_layer(self, block, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                conv1x1(self.inplanes, planes * block.expansion, stride),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.inplanes, planes, stride, downsample))
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        # x = self.maxpool(x)
+
+        x = self.layer1(x)
+
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu(x)
+        x = self.layer2(x)
+
+        x = self.conv3(x)
+        x = self.bn3(x)
+        x = self.relu(x)
+        x = self.layer3(x)
+
+        if self.layers[3] != 0:
+            x = self.conv4(x)
+            x = self.bn4(x)
+            x = self.relu(x)
+            x = self.layer4(x)
+
+        if self.dropout_p > 0:
+            x = self.dropout(x)
+
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
+
+        x = self.fc(x)
+
+        spk_x = x[:, :self.embedding_size_a]
+        dom_x = x[:, self.embedding_size_b:]
+
+        if self.alpha:
+            spk_x = self.l2_norm(spk_x, alpha=self.alpha)
+
+        spk_logits = self.classifier_spk(spk_x)
+        dom_logits = self.classifier_dom(dom_x)
+
+        return spk_logits, spk_x, dom_logits, dom_x

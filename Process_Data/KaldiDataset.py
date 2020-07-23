@@ -671,12 +671,16 @@ class ScriptVerifyDataset(data.Dataset):
         return len(self.trials_pair)
 
 class ScriptTrainDataset(data.Dataset):
-    def __init__(self, dir, samples_per_speaker, transform, num_valid=5, loader=np.load, return_uid=False):
+    def __init__(self, dir, samples_per_speaker, transform, num_valid=5, loader=np.load, return_uid=False,
+                 domain=False):
+        self.return_uid = return_uid
+        self.domain = domain
 
         feat_scp = dir + '/feats.scp'
         spk2utt = dir + '/spk2utt'
         utt2spk = dir + '/utt2spk'
         utt2num_frames = dir + '/utt2num_frames'
+        utt2dom = dir + '/utt2dom'
 
         if not os.path.exists(feat_scp):
             raise FileExistsError(feat_scp)
@@ -709,12 +713,37 @@ class ScriptTrainDataset(data.Dataset):
                     continue
                 if uid not in utt2spk_dict.keys():
                     utt2spk_dict[uid] = utt_spk[-1]
+
+        self.dom_to_idx = None
+        self.utt2dom_dict = None
+        if self.domain:
+            if not os.path.exists(utt2dom):
+                raise FileExistsError(utt2dom)
+
+            utt2dom_dict = {}
+            with open(utt2dom, 'r') as u:
+                all_cls = u.readlines()
+                for line in all_cls:
+                    utt_dom = line.split()
+                    uid = utt_dom[0]
+                    if uid in invalid_uid:
+                        continue
+                    if uid not in utt2dom_dict.keys():
+                        utt2dom_dict[uid] = utt_dom[-1]
+
+            domains = [utt2dom_dict[dom] for dom in utt2dom_dict.keys()]
+            domains.sort()
+            dom_to_idx = {domains[i]: i for i in range(len(domains))}
+            self.dom_to_idx = dom_to_idx
+            self.utt2dom_dict = utt2dom_dict
+
         # pdb.set_trace()
 
         speakers = [spk for spk in dataset.keys()]
         speakers.sort()
         print('==> There are {} speakers in Dataset.'.format(len(speakers)))
         spk_to_idx = {speakers[i]: i for i in range(len(speakers))}
+
         idx_to_spk = {i: speakers[i] for i in range(len(speakers))}
 
         uid2feat = {}  # 'Eric_McCormack-Y-qKARMSO7k-0001.wav': feature[frame_length, feat_dim]
@@ -727,11 +756,16 @@ class ScriptTrainDataset(data.Dataset):
 
         print('    There are {} utterances in Train Dataset, where {} utterances are removed.'.format(len(uid2feat),
                                                                                                       len(invalid_uid)))
+        self.valid_set = None
+        self.valid_uid2feat = None
+        self.valid_utt2spk_dict = None
+        self.valid_utt2dom_dict = None
 
         if num_valid > 0:
             valid_set = {}
             valid_uid2feat = {}
             valid_utt2spk_dict = {}
+            valid_utt2dom_dict = {}
 
             for spk in speakers:
                 if spk not in valid_set.keys():
@@ -745,11 +779,14 @@ class ScriptTrainDataset(data.Dataset):
 
                         valid_uid2feat[valid_set[spk][-1]] = uid2feat.pop(valid_set[spk][-1])
                         valid_utt2spk_dict[utt] = utt2spk_dict[utt]
+                        if self.domain:
+                            valid_utt2dom_dict[utt] = utt2dom_dict[utt]
 
             print('    Spliting {} utterances for Validation.'.format(len(valid_uid2feat)))
             self.valid_set = valid_set
             self.valid_uid2feat = valid_uid2feat
             self.valid_utt2spk_dict = valid_utt2spk_dict
+            self.valid_utt2dom_dict = valid_utt2dom_dict
 
 
         self.speakers = speakers
@@ -763,7 +800,6 @@ class ScriptTrainDataset(data.Dataset):
         self.feat_dim = loader(uid2feat[dataset[speakers[0]][0]]).shape[1]
         self.transform = transform
         self.samples_per_speaker = samples_per_speaker
-        self.return_uid = return_uid
 
         if self.return_uid:
             self.utt_dataset = []
@@ -777,11 +813,16 @@ class ScriptTrainDataset(data.Dataset):
 
     def __getitem__(self, sid):
         # start_time = time.time()
-        if self.return_uid:
+        if self.return_uid or self.domain:
             uid, label = self.utt_dataset[sid]
             y = self.loader(self.uid2feat[uid])
             feature = self.transform(y)
-            return feature, label, uid
+
+            if self.domain:
+                label_b = self.dom_to_idx[self.utt2dom_dict[uid]]
+                return feature, label, label_b
+            else:
+                return feature, label, uid
 
         sid %= self.num_spks
         spk = self.idx_to_spk[sid]
@@ -796,10 +837,6 @@ class ScriptTrainDataset(data.Dataset):
             uid = random.randrange(0, len(utts))
             feature = self.loader(self.uid2feat[utts[uid]])
 
-            # Get the index of feature
-            # if n_samples == 0:
-            #     start = int(random.uniform(0, len(feature)))
-            # else:
             start = 0
             stop = int(min(len(feature) - 1, max(1.0, frames - n_samples)))
             y = np.concatenate((y, feature[start:stop]), axis=0)
@@ -817,18 +854,25 @@ class ScriptTrainDataset(data.Dataset):
 
 
 class ScriptValidDataset(data.Dataset):
-    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict, transform, loader=np.load,
-                 return_uid=False):
+    def __init__(self, valid_set, spk_to_idx, dom_to_idx, valid_uid2feat, valid_utt2spk_dict, valid_utt2dom_dict,
+                 transform, loader=np.load,
+                 return_uid=False, domain=False):
         speakers = [spk for spk in valid_set.keys()]
         speakers.sort()
+
+        self.dom_to_idx = dom_to_idx
+        self.utt2dom_dict = valid_utt2dom_dict
+
         self.speakers = speakers
         self.dataset = valid_set
         self.valid_set = valid_set
         self.uid2feat = valid_uid2feat
+        self.domain = domain
 
         uids = list(valid_uid2feat.keys())
         uids.sort()
-        print(uids[:10])
+        print('Examples uids: ', uids[:5])
+
         self.uids = uids
         self.utt2spk_dict = valid_utt2spk_dict
         self.spk_to_idx = spk_to_idx
@@ -845,6 +889,9 @@ class ScriptValidDataset(data.Dataset):
 
         feature = self.transform(y)
         label = self.spk_to_idx[spk]
+
+        if self.domain:
+            return feature, label, self.dom_to_idx[self.utt2dom_dict[uid]]
 
         if self.return_uid:
             return feature, label, uid

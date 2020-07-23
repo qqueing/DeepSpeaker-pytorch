@@ -20,7 +20,7 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 from Define_Model.CNN import AlexNet
-from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet, ResNet, SimpleResNet
+from Define_Model.ResNet import LocalResNet, ResNet20, ExporingResNet, ResNet, SimpleResNet, DomainResNet
 from Define_Model.TDNN import ASTDNN, TDNN_v2, ETDNN
 from eval_metrics import evaluate_kaldi_eer, evaluate_kaldi_mindcf
 
@@ -54,6 +54,7 @@ def create_optimizer(parameters, optimizer, **kwargs):
 __factory = {
     'AlexNet': AlexNet,
     'LoResNet': LocalResNet,
+    'DomResNet': DomainResNet,
     'ResNet20': ResNet20,
     'SiResNet34': SimpleResNet,
     'ExResNet34': ExporingResNet,
@@ -117,7 +118,11 @@ def verification_extract(extract_loader, model, xvector_dir, ark_num=50000, gpu=
         data = Variable(data)
 
         # compute output
-        _, out = model(data)
+        model_out = model(data)
+        try:
+            _, out, _, _ = model_out
+        except:
+            _, out = model_out
 
         if vec_shape[1] != 1:
             out = out.reshape(vec_shape[0], vec_shape[1], out.shape[-1]).mean(axis=1)
