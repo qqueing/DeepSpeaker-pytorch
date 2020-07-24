@@ -102,8 +102,7 @@ parser.add_argument('--veri-pairs', type=int, default=12800, metavar='VP',
 
 # Training options
 # Model options
-parser.add_argument('--model', type=str,
-                    help='path to voxceleb1 test dataset')
+parser.add_argument('--model', type=str, help='path to voxceleb1 test dataset')
 parser.add_argument('--resnet-size', default=8, type=int,
                     metavar='RES', help='The channels of convs layers)')
 parser.add_argument('--inst-norm', action='store_true', default=False,

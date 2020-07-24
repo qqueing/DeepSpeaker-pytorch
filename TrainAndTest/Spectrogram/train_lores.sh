@@ -226,17 +226,19 @@ fi
 
 if [ $stage -le 30 ]; then
   dataset=cnceleb
+  model=LoResNet
+  resnet_size=8
   for loss in soft ; do # 32,128,512; 8,32,128
-    echo -e "\n\033[1;4;31m Training with ${loss} kernel 3,3\033[0m\n"
+    echo -e "\n\033[1;4;31m Training with ${loss} kernel 5,5\033[0m\n"
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
-      --model LoResNet10 \
+      --model LoResNet \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/test \
       --input-per-spks 224 \
       --feat-format npy \
       --nj 12 \
       --epochs 24 \
-      --resnet-size 8 \
+      --resnet-size ${resnet_size} \
       --embedding-size 128 \
       --avg-size 4 \
       --milestones 10,15,20 \
