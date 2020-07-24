@@ -857,8 +857,8 @@ class ScriptTrainDataset(data.Dataset):
 
 
 class ScriptValidDataset(data.Dataset):
-    def __init__(self, valid_set, spk_to_idx, dom_to_idx, valid_uid2feat, valid_utt2spk_dict,
-                 transform, valid_utt2dom_dict=None, loader=np.load,
+    def __init__(self, valid_set, spk_to_idx, valid_uid2feat, valid_utt2spk_dict,
+                 transform, dom_to_idx=None, valid_utt2dom_dict=None, loader=np.load,
                  return_uid=False, domain=False):
         speakers = [spk for spk in valid_set.keys()]
         speakers.sort()
