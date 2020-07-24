@@ -252,9 +252,9 @@ else:
 # pdb.set_trace()
 if args.feat_format == 'kaldi':
     file_loader = read_mat
-    torch.multiprocessing.set_sharing_strategy('file_system')
 elif args.feat_format == 'npy':
     file_loader = np.load
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 train_dir = ScriptTrainDataset(dir=args.train_dir, samples_per_speaker=args.input_per_spks, loader=file_loader,
                                transform=transform, num_valid=args.num_valid)

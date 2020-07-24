@@ -233,6 +233,7 @@ if [ $stage -le 30 ]; then
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
       --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/test \
       --input-per-spks 224 \
+      --feat-format npy \
       --nj 12 \
       --epochs 24 \
       --resnet-size 8 \
