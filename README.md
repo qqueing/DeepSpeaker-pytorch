@@ -1,31 +1,68 @@
 # Speaker Verification Systems - Pytorch Implementation 
 
 This project was stared from the [qqueing/DeepSpeaker-pytorch](https://github.com/qqueing/DeepSpeaker-pytorch). 
+And it will be my main work.
 
 ## Datasets
 
 - Development:
 > Voxceleb1
 > Voxceleb2
+> CNCELEB
+> Aishell-2
 
 - Augmentation:
 > MUSAN
 > RIRS
+> RADIO NOISE
 
 - Test:
 > SITW
 > Librispeech
 > TIMIT
 
-## Implemented Verification Systems
+## Pre-Processing
 
-### TDNN
+- Resample
 
-### SuResCNN
+- Butter Bandpass Filtering
 
-### LSTM
+- Augmentation
 
-### ResNet
+- [ ] LMS Filtering
+
+
+## Implemented DNN Verification Systems
+
+- TDNN
+The newest TDNN is  implemented from 'https://github.com/cvqluu/TDNN/blob/master/tdnn.py'
+
+- ResCNN
+
+- LSTM & Attention-based LSTM
+
+Input 40-dimensional MFCC.
+
+- ResNet
+
+ResNet34 with Fbank64.
+
+## Implemented Loss Type
+
+- A-Softmax
+
+- AM-Softmax
+
+- Center Loss
+
+## Implemented Pooling Type
+
+- Self-Attention
+
+- Statistic Pooling
+
+- Attention Statistic Pooling
+
 
 ## To do list
 Work accomplished so far:
@@ -37,8 +74,8 @@ Work accomplished so far:
 
 ## Timeline
 - [x] Extract x-vectors from trained Neural Network in 20190626
-- [ ] Code cleanup
-- [ ] Modified preprocessing
+- [x] Code cleanup (factory model creation) 20200725
+- [x] Modified preprocessing
 - [x] Modified model for ResNet34,50,101 in 20190625
 - [x] Added cosine distance in Triplet Loss(The previous distance is l2) in 20190703
 - [ ] Adding scoring for identification
