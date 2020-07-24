@@ -716,6 +716,7 @@ class ScriptTrainDataset(data.Dataset):
 
         self.dom_to_idx = None
         self.utt2dom_dict = None
+        dom_to_idx = None
         if self.domain:
             if not os.path.exists(utt2dom):
                 raise FileExistsError(utt2dom)
