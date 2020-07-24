@@ -988,7 +988,7 @@ class DomainResNet(nn.Module):
 
     def forward(self, x):
         if self.inst_norm:
-            x = self.inst_norm(x)
+            x = self.inst(x)
 
         x = self.conv1(x)
         x = self.bn1(x)
