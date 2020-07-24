@@ -901,12 +901,12 @@ class DomainResNet(nn.Module):
         # self.relu = nn.LeakyReLU()
         self.relu = nn.ReLU(inplace=True)
 
+        self.inst_norm = inst_norm
+        self.inst = nn.InstanceNorm2d(1)
+
         self.inplanes = channels[0]
         self.conv1 = nn.Conv2d(1, channels[0], kernel_size=5, stride=2, padding=2, bias=False)
-        if inst_norm:
-            self.bn1 = nn.InstanceNorm2d(channels[0])
-        else:
-            self.bn1 = nn.BatchNorm2d(channels[0])
+        self.bn1 = nn.BatchNorm2d(channels[0])
 
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, channels[0], layers[0])
@@ -987,6 +987,9 @@ class DomainResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        if self.inst_norm:
+            x = self.inst_norm(x)
+
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)

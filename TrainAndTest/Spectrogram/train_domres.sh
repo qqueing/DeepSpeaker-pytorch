@@ -30,8 +30,8 @@ if [ $stage -le 40 ]; then
       --lr 0.1 \
       --milestones 7,11 \
       --kernel-size ${kernel_size} \
-      --check-path Data/checkpoint/${model}/${datasets}/spect_04/${loss}_inst \
-      --resume Data/checkpoint/${model}/${datasets}/spect_04/${loss}_inst/checkpoint_1.pth \
+      --check-path Data/checkpoint/${model}/${datasets}/spect_04/${loss}_inst_f \
+      --resume Data/checkpoint/${model}/${datasets}/spect_04/${loss}_inst_f/checkpoint_1.pth \
       --channels ${channels} \
       --inst-norm \
       --embedding-size-a 128 \
@@ -49,6 +49,8 @@ if [ $stage -le 40 ]; then
       --loss-type ${loss}
   done
 fi
+
+stage=100
 
 if [ $stage -le 41 ]; then
   datasets=cnceleb
