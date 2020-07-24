@@ -3,6 +3,7 @@
 import os
 import pathlib
 import pdb
+import traceback
 
 import librosa
 import numpy as np
@@ -13,6 +14,7 @@ from pydub import AudioSegment
 from python_speech_features import fbank, delta, sigproc
 from scipy import signal
 from scipy.io import wavfile
+from scipy.signal import butter, sosfilt
 from speechpy.feature import mfe
 from speechpy.processing import cmvn, cmvnw
 
@@ -47,6 +49,29 @@ def mk_MFB(filename, sample_rate=c.SAMPLE_RATE, use_delta=c.USE_DELTA, use_scale
 
     return
 
+
+def resample_wav(in_wav, out_wav, sr):
+    try:
+        samples, samplerate = sf.read(in_wav, dtype='float32')
+        samples = np.asfortranarray(samples)
+        samples = librosa.resample(samples, samplerate, sr)
+
+        sf.write(file=out_wav, data=samples, samplerate=sr, format='WAV')
+    except Exception as e:
+        traceback.print_exc()
+        raise (e)
+
+
+def butter_bandpass(cutoff, fs, order=15):
+    nyq = 0.5 * fs
+    sos = butter(order, np.array(cutoff) / nyq, btype='bandpass', analog=False, output='sos')
+    return sos
+
+
+def butter_bandpass_filter(data, cutoff, fs, order=15):
+    sos = butter_bandpass(cutoff, fs, order=order)
+    y = sosfilt(sos, data)
+    return y  # Filter requirements.
 
 def make_Fbank(filename, write_path,  # sample_rate=c.SAMPLE_RATE,
                use_delta=c.USE_DELTA,
@@ -204,7 +229,7 @@ def GenerateSpect(wav_path, write_path, windowsize=25, stride=10, nfft=c.NUM_FFT
 
 
 def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
-               lowfreq=0,
+               bandpass=False, lowfreq=0, highfreq=0,
                preemph=0.97, duration=False, nfft=None, normalize=True):
     """
     read wav as float type. [-1.0 ,1.0]
@@ -216,7 +241,11 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
     """
 
     # samplerate, samples = wavfile.read(wav_path)
-    samples, samplerate = sf.read(wav_path, dtype='int16')
+    samples, samplerate = sf.read(wav_path, dtype='float32')
+
+    if bandpass and highfreq > lowfreq:
+        samples = butter_bandpass_filter(data=samples, cutoff=[lowfreq, highfreq], fs=samplerate)
+
     signal = sigproc.preemphasis(samples, preemph)
     frames = sigproc.framesig(signal, windowsize * samplerate, stride * samplerate, winfunc=window)
 
@@ -230,7 +259,7 @@ def Make_Spect(wav_path, windowsize, stride, window=np.hamming,
     #                  window=window(int(windowsize * samplerate)))  # 进行短时傅里叶变换，参数意义在一开始有定义
     # feature, _ = librosa.magphase(S)
     # feature = np.log1p(feature)  # log1p操作
-    feature = np.log(pspec)
+    feature = np.log(pspec).astype(np.float32)
     # feature = feature.transpose()
     if normalize:
         feature = normalize_frames(feature)
