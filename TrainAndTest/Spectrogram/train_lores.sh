@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stage=40
+stage=30
 
 waited=0
 while [ `ps 113458 | wc -l` -eq 2 ]; do
@@ -231,27 +231,27 @@ if [ $stage -le 30 ]; then
     python -W ignore TrainAndTest/Spectrogram/train_lores10_kaldi.py \
       --model LoResNet10 \
       --train-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/dev \
-      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/eval \
+      --test-dir /home/yangwenhao/local/project/lstm_speaker_verification/data/${dataset}/spect/test \
       --input-per-spks 224 \
       --nj 12 \
       --epochs 24 \
-      --resnet-size 18 \
+      --resnet-size 8 \
       --embedding-size 128 \
-      --kernel-size 3,3 \
       --avg-size 4 \
       --milestones 10,15,20 \
-      --channels 64,128,256,256 \
-      --check-path Data/checkpoint/LoResNet18/${dataset}/spect/${loss}_dp25 \
-      --resume Data/checkpoint/LoResNet18/${dataset}/spect/${loss}_dp25/checkpoint_1.pth \
+      --channels 64,128,256 \
+      --check-path Data/checkpoint/LoResNet8/${dataset}/spect/${loss}_dp25 \
+      --resume Data/checkpoint/LoResNet8/${dataset}/spect/${loss}_dp25/checkpoint_1.pth \
       --loss-type ${loss} \
       --lr 0.1 \
       --num-valid 2 \
-      --gpu-id 1 \
+      --gpu-id 0 \
       --dropout-p 0.25
   done
 
 fi
 
+stage=50
 if [ $stage -le 40 ]; then
   datasets=all_army
   model=LoResNet
